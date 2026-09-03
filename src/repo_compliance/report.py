@@ -81,9 +81,7 @@ def _compose_rule_catalogue(rules: Sequence[RuleDefinition]) -> str:
         "| --- | --- | --- | --- |",
     ]
     for rule in rules:
-        linked_title = (
-            f"[{_compose_table_text(rule.title)}]({rule.documentation_url})"
-        )
+        linked_title = f"[{_compose_table_text(rule.title)}]({rule.documentation_url})"
         lines.append(
             f"| `{rule.id}` {linked_title} | `{rule.category.value}` | "
             f"{rule.confidence.value.title()} | "

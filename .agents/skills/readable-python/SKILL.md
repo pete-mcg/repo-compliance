@@ -18,10 +18,12 @@ def process_order(order_id: str) -> None:
         raise ValueError("invalid total")
     db.save_invoice(order)
 
+
 # ✅ GOOD: each function has one clear job
 def validate_order(order: Order) -> None:
     if order.total <= 0:
         raise ValueError("invalid total")
+
 
 def create_invoice(order_id: str) -> None:
     order = db.fetch_order(order_id)
@@ -49,6 +51,7 @@ def process_order(order: Order) -> None:
 
     charge_customer(order)
     send_confirmation(order)
+
 
 # ✅ GOOD: each line describes one step at the same level
 def process_order(order: Order) -> None:
@@ -80,6 +83,7 @@ def process_order(order):
                 if order.address_valid:
                     # 4 levels deep!
                     ...
+
 
 # ✅ GOOD: Early returns + helper functions
 def process_order(order: Order) -> None:
@@ -134,16 +138,20 @@ Keep mutable state local and pass dependencies as arguments. Avoid assigning to 
 # ❌ BAD: hidden shared state makes behavior hard to follow
 count = 0
 
+
 def increment():
     global count
     count += 1
 
+
 increment()
 print(count)  # 1
+
 
 # ✅ GOOD: state is explicit at the call site
 def increment(count: int) -> int:
     return count + 1
+
 
 count = 0
 count = increment(count)
@@ -173,6 +181,7 @@ def save_order(db, order_id):
         order.status = "standard_shipping"
 
     db.save(order)
+
 
 # ✅ GOOD: business rule is isolated and testable
 def shipping_status_for(order):
@@ -215,6 +224,7 @@ PREMIUM_USER = "premium"
 PREMIUM_DISCOUNT_THRESHOLD = 100
 PREMIUM_DISCOUNT_MULTIPLIER = 0.85
 
+
 def calculate_discount(user_type, order_total):
     if user_type == PREMIUM_USER and order_total > PREMIUM_DISCOUNT_THRESHOLD:
         return order_total * PREMIUM_DISCOUNT_MULTIPLIER
@@ -238,10 +248,12 @@ Use an enum when a value must be one of a constrained set. Do not scatter raw st
 if order.status == "shippped":
     notify_customer(order)
 
+
 # ✅ GOOD: allowed values are centralized
 class OrderStatus(StrEnum):
     PAID = "paid"
     SHIPPED = "shipped"
+
 
 if order.status is OrderStatus.SHIPPED:
     notify_customer(order)
@@ -266,11 +278,13 @@ invoice = {
 # ✅ GOOD: shape and intent are explicit
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class InvoiceSummary:
     id: str
     total: Decimal
     paid: bool
+
 
 invoice = InvoiceSummary(
     id="INV-123",
@@ -300,12 +314,15 @@ def process_user_data(data: dict) -> None:
     name = data["name"]  # Could fail, no validation
     age = data.get("age", 0)  # Type is Any
 
+
 # ✅ GOOD: Pydantic model + immediate validation
 from pydantic import BaseModel, Field
+
 
 class UserData(BaseModel):
     name: str = Field(min_length=1)
     age: int = Field(ge=0, le=150)
+
 
 def process_user_data(data: dict) -> None:
     user = UserData.model_validate(data)  # Fails fast with clear errors
@@ -403,6 +420,7 @@ Use type hints for function parameters, return values, and important variables.
 def calculate_tax(amount, rate):
     return amount * rate
 
+
 # ✅ GOOD: types make the contract clear
 def calculate_tax(amount: Decimal, rate: Decimal) -> Decimal:
     return amount * rate
@@ -423,9 +441,11 @@ Do not use `Any` to silence type errors in normal application code. If a value i
 def customer_name(customer: Any) -> str:
     return customer["name"]
 
+
 # ✅ GOOD: the expected shape is explicit
 class CustomerPayload(TypedDict):
     name: str
+
 
 def customer_name(customer: CustomerPayload) -> str:
     return customer["name"]
@@ -450,6 +470,7 @@ def save_user(user):
     database.save(user)
     print("Finished task")
 
+
 def send_email(email):
     print("Starting task")
     email_service.send(email)
@@ -463,6 +484,7 @@ def log_task(func):
         result = func(*args, **kwargs)
         print("Finished task")
         return result
+
     return wrapper
 
 
@@ -495,25 +517,23 @@ A developer should be able to predict what your code looks like before they open
 
 ```python
 # BAD: the same role has three different names
-class UserService:
-    ...
+class UserService: ...
 
-class ProductManager:
-    ...
 
-class InvoiceHandler:
-    ...
+class ProductManager: ...
+
+
+class InvoiceHandler: ...
 
 
 # GOOD: the naming convention communicates the architecture
-class UserService:
-    ...
+class UserService: ...
 
-class ProductService:
-    ...
 
-class InvoiceService:
-    ...
+class ProductService: ...
+
+
+class InvoiceService: ...
 ```
 
 ```text
@@ -559,48 +579,36 @@ get_customer()
 ```python
 # BAD: service classes all expose their actions differently
 class UserService:
-    def create(self):
-        ...
+    def create(self): ...
 
-    def update(self):
-        ...
+    def update(self): ...
 
-    def delete(self):
-        ...
+    def delete(self): ...
 
 
 class ProductService:
-    def add_product(self):
-        ...
+    def add_product(self): ...
 
-    def modify_product(self):
-        ...
+    def modify_product(self): ...
 
-    def remove_product(self):
-        ...
+    def remove_product(self): ...
 
 
 # GOOD: related classes have the same shape
 class UserService:
-    def create(self):
-        ...
+    def create(self): ...
 
-    def update(self):
-        ...
+    def update(self): ...
 
-    def delete(self):
-        ...
+    def delete(self): ...
 
 
 class ProductService:
-    def create(self):
-        ...
+    def create(self): ...
 
-    def update(self):
-        ...
+    def update(self): ...
 
-    def delete(self):
-        ...
+    def delete(self): ...
 ```
 
 ```python

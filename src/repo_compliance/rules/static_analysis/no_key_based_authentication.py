@@ -138,8 +138,7 @@ def _get_line_evidence(
     line: str,
 ) -> tuple[Evidence, ...]:
     return tuple(
-        Evidence(str(path), line_number, marker)
-        for marker in _get_line_markers(line)
+        Evidence(str(path), line_number, marker) for marker in _get_line_markers(line)
     )
 
 
