@@ -7,9 +7,9 @@ Build synchronous, typed Python CLI using existing `httpx`, Pydantic, PyYAML, an
 ## Interfaces and Configuration
 
 - Add CLI entry point:
-  `repo-compliance [--config repositories.yml] [--output compliance-report.md]`
+  `repo-compliance [--config config/repositories.yml] [--output compliance-report.md]`
 - Read token only at CLI boundary from `GITHUB_TOKEN`; pass plain token into `GitHubClient`. Missing token, invalid config, output failure, or unexpected checker bug returns nonzero.
-- Add root `repositories.yml`:
+- Add `config/repositories.yml`:
   ```yaml
   repositories:
     - repository: owner/name

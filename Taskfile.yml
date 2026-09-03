@@ -1,0 +1,9 @@
+version: "3"
+
+tasks:
+  ci:
+    cmds:
+      - uv run --frozen ruff check .
+      - uv run --frozen pyrefly check
+      - uv run --frozen pytest --cov --cov-report=term-missing
+      - uv run --frozen deptry .

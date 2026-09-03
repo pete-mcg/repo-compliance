@@ -98,7 +98,9 @@ def test_default_paths_work_from_current_directory(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    write_empty_config(tmp_path / "repositories.yml")
+    config_directory = tmp_path / "config"
+    config_directory.mkdir()
+    write_empty_config(config_directory / "repositories.yml")
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("GITHUB_TOKEN", "token")
 

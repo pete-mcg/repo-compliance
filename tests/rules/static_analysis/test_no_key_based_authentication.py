@@ -10,8 +10,7 @@ from repo_compliance.rules.static_analysis.no_key_based_authentication import (
     MAX_FILE_BYTES,
     check,
 )
-
-from .fakes import FakeGitHub
+from tests.fakes import FakeGitHub
 
 REPOSITORY = "example/service"
 

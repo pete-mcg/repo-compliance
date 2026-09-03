@@ -50,7 +50,11 @@ def _parse_options(argv: Sequence[str] | None) -> CliOptions:
     parser = argparse.ArgumentParser(
         description="Check configured GitHub repositories for compliance.",
     )
-    parser.add_argument("--config", type=Path, default=Path("repositories.yml"))
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=Path("config/repositories.yml"),
+    )
     parser.add_argument("--output", type=Path, default=Path("compliance-report.md"))
     arguments = parser.parse_args(argv)
     return CliOptions.model_validate(vars(arguments))

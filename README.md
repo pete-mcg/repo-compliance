@@ -4,7 +4,7 @@ This repository runs a small Python checker against a visible list of GitHub rep
 
 ## Configure repositories
 
-Edit [`repositories.yml`](repositories.yml). Repository names use `owner/name` format.
+Edit [`config/repositories.yml`](config/repositories.yml). Repository names use `owner/name` format.
 
 ```yaml
 repositories:
@@ -37,7 +37,7 @@ uv run --frozen repo-compliance
 Optional paths:
 
 ```text
-repo-compliance --config repositories.yml --output compliance-report.md
+repo-compliance --config config/repositories.yml --output compliance-report.md
 ```
 
 The application does not depend on how the token was created. A GitHub App token can replace the PAT later without changing rule code.
@@ -69,9 +69,6 @@ Add the PAT as repository secret `REPO_COMPLIANCE_TOKEN`. [`repository-complianc
 
 ## Development checks
 
-```text
-uv run ruff check .
-uv run pyrefly check
-uv run pytest --cov --cov-report=term-missing
-uv run deptry .
+```shell
+task ci
 ```
