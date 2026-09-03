@@ -9,6 +9,9 @@ dependencies = [
     "pyyaml>=6.0.2",
 ]
 
+[project.scripts]
+repo-compliance = "repo_compliance.cli:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -59,6 +62,7 @@ max-nested-blocks = 3
 
 [tool.pyrefly]
 project-includes = ["src", "tests"]
+search-path = ["src", "."]
 preset = "strict"
 min-severity = "warn" # Show warnings and errors.
 

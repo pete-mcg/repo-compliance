@@ -1,0 +1,9 @@
+# Add or remove monitored repositories here.
+repositories: []
+
+# Example:
+# repositories:
+#   - repository: owner/name
+#     exemptions:
+#       - rule: deploy-workflow-present
+#         reason: This service has no deployment.

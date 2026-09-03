@@ -1,0 +1,20 @@
+# Generated reports
+compliance-report.md
+
+# Python environments and bytecode
+.venv/
+__pycache__/
+*.py[cod]
+
+# Tool output
+.coverage
+.pytest_cache/
+.pyrefly/
+.ruff_cache/
+coverage.xml
+htmlcov/
+
+# Build output
+*.egg-info/
+build/
+dist/

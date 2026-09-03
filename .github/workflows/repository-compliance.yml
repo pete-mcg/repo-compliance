@@ -1,0 +1,35 @@
+name: Repository compliance
+
+on:
+  schedule:
+    - cron: "0 6 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          python-version: "3.14"
+
+      - name: Run compliance checks
+        run: uv run --frozen repo-compliance
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_COMPLIANCE_TOKEN }}
+
+      - name: Add report to workflow summary
+        run: cat compliance-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report
+        uses: actions/upload-artifact@v7
+        with:
+          name: repository-compliance-report
+          path: compliance-report.md
