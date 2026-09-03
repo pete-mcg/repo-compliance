@@ -9,7 +9,7 @@ from repo_compliance.config import ComplianceConfig
 from repo_compliance.domain import ResultStatus, RuleDefinition, RuleResult
 
 
-def generate_report(
+def compose_report(
     config: ComplianceConfig,
     rules: Sequence[RuleDefinition],
     results: Sequence[RuleResult],
@@ -20,17 +20,17 @@ def generate_report(
     timestamp = generated_at or datetime.now(UTC)
     sections = [
         "# Repository Compliance Report",
-        f"Generated at `{_utc_timestamp(timestamp)}`.",
-        _totals(config, results),
-        _repository_summary(config, results),
-        _rule_catalogue(rules),
-        _result_table(results),
-        _details(results),
+        f"Generated at `{_compose_utc_timestamp(timestamp)}`.",
+        _compose_totals(config, results),
+        _compose_repository_summary(config, results),
+        _compose_rule_catalogue(rules),
+        _compose_result_table(results),
+        _compose_result_details(results),
     ]
     return "\n\n".join(sections) + "\n"
 
 
-def _totals(config: ComplianceConfig, results: Sequence[RuleResult]) -> str:
+def _compose_totals(config: ComplianceConfig, results: Sequence[RuleResult]) -> str:
     counts = Counter(result.status for result in results)
     return "\n".join(
         (
@@ -46,7 +46,7 @@ def _totals(config: ComplianceConfig, results: Sequence[RuleResult]) -> str:
     )
 
 
-def _repository_summary(
+def _compose_repository_summary(
     config: ComplianceConfig,
     results: Sequence[RuleResult],
 ) -> str:
@@ -65,7 +65,7 @@ def _repository_summary(
             result for result in results if result.repository == repository.repository
         ]
         counts = Counter(result.status for result in repository_results)
-        link = _repository_link(repository.repository)
+        link = _compose_repository_link(repository.repository)
         lines.append(
             f"| {link} | {counts[ResultStatus.PASS]} | {counts[ResultStatus.FAIL]} "
             f"| {counts[ResultStatus.EXEMPT]} | {counts[ResultStatus.ERROR]} |"
@@ -73,7 +73,7 @@ def _repository_summary(
     return "\n".join(lines)
 
 
-def _rule_catalogue(rules: Sequence[RuleDefinition]) -> str:
+def _compose_rule_catalogue(rules: Sequence[RuleDefinition]) -> str:
     lines = [
         "## Rules",
         "",
@@ -81,15 +81,18 @@ def _rule_catalogue(rules: Sequence[RuleDefinition]) -> str:
         "| --- | --- | --- | --- |",
     ]
     for rule in rules:
-        linked_title = f"[{_table_text(rule.title)}]({rule.documentation_url})"
+        linked_title = (
+            f"[{_compose_table_text(rule.title)}]({rule.documentation_url})"
+        )
         lines.append(
             f"| `{rule.id}` {linked_title} | `{rule.category.value}` | "
-            f"{rule.confidence.value.title()} | {_table_text(rule.description)} |"
+            f"{rule.confidence.value.title()} | "
+            f"{_compose_table_text(rule.description)} |"
         )
     return "\n".join(lines)
 
 
-def _result_table(results: Sequence[RuleResult]) -> str:
+def _compose_result_table(results: Sequence[RuleResult]) -> str:
     lines = [
         "## Results",
         "",
@@ -102,14 +105,15 @@ def _result_table(results: Sequence[RuleResult]) -> str:
 
     for result in results:
         lines.append(
-            f"| {_repository_link(result.repository)} | `{result.rule.id}` | "
+            f"| {_compose_repository_link(result.repository)} | `{result.rule.id}` | "
             f"`{result.rule.category.value}` | {result.rule.confidence.value.title()} | "
-            f"**{result.status.value.upper()}** | {_table_text(result.message)} |"
+            f"**{result.status.value.upper()}** | "
+            f"{_compose_table_text(result.message)} |"
         )
     return "\n".join(lines)
 
 
-def _details(results: Sequence[RuleResult]) -> str:
+def _compose_result_details(results: Sequence[RuleResult]) -> str:
     lines = ["## Details"]
     if not results:
         lines.extend(("", "_No results._"))
@@ -119,16 +123,19 @@ def _details(results: Sequence[RuleResult]) -> str:
         lines.extend(
             (
                 "",
-                f"### {_plain_text(result.repository)} / `{result.rule.id}`",
+                f"### {_compose_plain_text(result.repository)} / `{result.rule.id}`",
                 "",
                 f"- Status: **{result.status.value.upper()}**",
-                f"- Details: {_plain_text(result.message)}",
-                f"- Guidance: [{_plain_text(result.rule.title)}]({result.rule.documentation_url})",
+                f"- Details: {_compose_plain_text(result.message)}",
+                (
+                    f"- Guidance: [{_compose_plain_text(result.rule.title)}]"
+                    f"({result.rule.documentation_url})"
+                ),
             )
         )
         if result.evidence:
             lines.append("- Evidence:")
-            lines.extend(_evidence_lines(result))
+            lines.extend(_compose_evidence_lines(result))
         if result.omitted_evidence_count:
             lines.append(
                 f"- {result.omitted_evidence_count} additional location(s) omitted."
@@ -136,27 +143,28 @@ def _details(results: Sequence[RuleResult]) -> str:
     return "\n".join(lines)
 
 
-def _evidence_lines(result: RuleResult) -> list[str]:
+def _compose_evidence_lines(result: RuleResult) -> list[str]:
     return [
-        f"  - {_code_span(f'{item.path}:{item.line}')} — {_code_span(item.marker)}"
+        f"  - {_compose_code_span(f'{item.path}:{item.line}')} — "
+        f"{_compose_code_span(item.marker)}"
         for item in result.evidence
     ]
 
 
-def _repository_link(repository: str) -> str:
+def _compose_repository_link(repository: str) -> str:
     return f"[{repository}](https://github.com/{repository})"
 
 
-def _table_text(value: str) -> str:
-    return _plain_text(value).replace("|", "\\|")
+def _compose_table_text(value: str) -> str:
+    return _compose_plain_text(value).replace("|", "\\|")
 
 
-def _plain_text(value: str) -> str:
+def _compose_plain_text(value: str) -> str:
     single_line = value.replace("\r", " ").replace("\n", " ")
     return re.sub(r"([\\`*_\[\]<>~])", r"\\\1", single_line)
 
 
-def _code_span(value: str) -> str:
+def _compose_code_span(value: str) -> str:
     single_line = value.replace("\r", " ").replace("\n", " ")
     backtick_runs = re.findall(r"`+", single_line)
     fence = "`" * (max(map(len, backtick_runs), default=0) + 1)
@@ -164,5 +172,5 @@ def _code_span(value: str) -> str:
     return f"{fence}{padding}{single_line}{padding}{fence}"
 
 
-def _utc_timestamp(value: datetime) -> str:
+def _compose_utc_timestamp(value: datetime) -> str:
     return value.astimezone(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")

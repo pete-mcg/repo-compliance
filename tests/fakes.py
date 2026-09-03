@@ -18,27 +18,29 @@ class FakeGitHub:
     file_calls: list[tuple[str, str]] = field(default_factory=list)
     classic_calls: int = 0
 
-    def ensure_main_branch(self, repository: str) -> None:
+    def get_main_branch(self, repository: str) -> str:
         self.preflight_calls.append(repository)
         if repository in self.preflight_error_repositories:
             raise GitHubError("main is unavailable")
+        return "main"
 
-    def active_main_rule_types(self, repository: str) -> frozenset[str]:
+    def get_active_main_rule_types(self, repository: str) -> frozenset[str]:
         return self.rule_types
 
-    def classic_allow_deletions(self, repository: str) -> bool | None:
+    def get_classic_deletion_setting(self, repository: str) -> bool | None:
         self.classic_calls += 1
         return self.allow_deletions
 
-    def file_exists(self, repository: str, path: str) -> bool:
+    def has_file(self, repository: str, path: str) -> bool:
         self.file_calls.append((repository, path))
         return path in self.files
 
     def has_critical_dependabot_alerts(self, repository: str) -> bool:
         return self.critical_alerts
 
-    def download_main_archive(self, repository: str, destination: Path) -> None:
+    def get_main_archive(self, repository: str, destination: Path) -> Path:
         self.archive_calls.append(repository)
         if repository in self.archive_error_repositories:
             raise GitHubError("archive is unavailable")
         destination.write_bytes(self.archive_bytes)
+        return destination

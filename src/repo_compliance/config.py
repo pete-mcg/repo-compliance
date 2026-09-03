@@ -41,7 +41,7 @@ class RepositoryConfig(ConfigModel):
 
     @field_validator("repository")
     @classmethod
-    def validate_repository(cls, value: str) -> str:
+    def get_valid_repository(cls, value: str) -> str:
         """Reject values that are not an owner/name pair."""
         parts = value.split("/")
         if len(parts) != 2:
@@ -55,7 +55,7 @@ class RepositoryConfig(ConfigModel):
         return value
 
     @model_validator(mode="after")
-    def reject_duplicate_exemptions(self) -> Self:
+    def get_unique_exemptions(self) -> Self:
         """Reject repeated rule exemptions within a repository."""
         rule_ids = [exemption.rule for exemption in self.exemptions]
         if len(rule_ids) != len(set(rule_ids)):
@@ -69,7 +69,7 @@ class ComplianceConfig(ConfigModel):
     repositories: tuple[RepositoryConfig, ...]
 
     @model_validator(mode="after")
-    def reject_duplicate_repositories(self) -> Self:
+    def get_unique_repositories(self) -> Self:
         """Reject duplicate repositories using GitHub's case-insensitive names."""
         names = [item.repository.casefold() for item in self.repositories]
         if len(names) != len(set(names)):
@@ -77,7 +77,7 @@ class ComplianceConfig(ConfigModel):
         return self
 
 
-def load_config(path: Path, rule_ids: frozenset[str]) -> ComplianceConfig:
+def get_config(path: Path, rule_ids: frozenset[str]) -> ComplianceConfig:
     """Read YAML configuration and validate all repositories and exemptions."""
     try:
         source = path.read_text(encoding="utf-8")
@@ -94,11 +94,11 @@ def load_config(path: Path, rule_ids: frozenset[str]) -> ComplianceConfig:
     except ValidationError as error:
         raise ConfigError(f"Configuration '{path}' is invalid: {error}") from error
 
-    _validate_rule_ids(config, rule_ids, path)
+    _handle_unknown_rule_ids(config, rule_ids, path)
     return config
 
 
-def _validate_rule_ids(
+def _handle_unknown_rule_ids(
     config: ComplianceConfig,
     rule_ids: frozenset[str],
     path: Path,

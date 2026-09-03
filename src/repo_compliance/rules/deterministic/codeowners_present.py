@@ -12,9 +12,9 @@ RULE_ID = "codeowners-present"
 REQUIRED_PATH = ".github/CODEOWNERS"
 
 
-def check(context: RuleContext) -> RuleEvaluation:
+def get_evaluation(context: RuleContext) -> RuleEvaluation:
     """Pass when the exact CODEOWNERS path exists on main."""
-    if context.github.file_exists(context.repository, REQUIRED_PATH):
+    if context.github.has_file(context.repository, REQUIRED_PATH):
         return RuleEvaluation(True, f"{REQUIRED_PATH} exists on main.")
     return RuleEvaluation(False, f"{REQUIRED_PATH} is missing from main.")
 
@@ -26,5 +26,5 @@ RULE = RuleDefinition(
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.HIGH,
     documentation_url="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners",
-    check=check,
+    get_evaluation=get_evaluation,
 )

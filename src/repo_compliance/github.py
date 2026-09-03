@@ -63,45 +63,42 @@ class GitHubClient:
         traceback: TracebackType | None,
     ) -> None:
         """Close network resources when leaving a context manager."""
-        self.close()
-
-    def close(self) -> None:
-        """Close the underlying HTTP client."""
         self._client.close()
 
-    def ensure_main_branch(self, repository: str) -> None:
-        """Confirm that a repository's main branch is accessible."""
+    def get_main_branch(self, repository: str) -> str:
+        """Return the accessible main branch name."""
         resource = f"/repos/{repository}/branches/main"
         response = self._get(resource)
-        branch = _validate(response, BRANCH_ADAPTER, resource)
+        branch = _get_valid_response(response, BRANCH_ADAPTER, resource)
         if branch.name != "main":
             raise GitHubError(f"GitHub returned the wrong branch for '{repository}'.")
+        return branch.name
 
-    def active_main_rule_types(self, repository: str) -> frozenset[str]:
+    def get_active_main_rule_types(self, repository: str) -> frozenset[str]:
         """Return active ruleset rule types applying to main."""
         resource = f"/repos/{repository}/rules/branches/main"
         response = self._get(resource, params={"per_page": 100})
-        rules = _validate(response, RULES_ADAPTER, resource)
+        rules = _get_valid_response(response, RULES_ADAPTER, resource)
         return frozenset(rule.type for rule in rules)
 
-    def classic_allow_deletions(self, repository: str) -> bool | None:
+    def get_classic_deletion_setting(self, repository: str) -> bool | None:
         """Return classic deletion setting, or None when main is unprotected."""
         resource = f"/repos/{repository}/branches/main/protection"
         response = self._get(resource, missing_ok=True)
         if response is None:
             return None
 
-        protection = _validate(response, PROTECTION_ADAPTER, resource)
+        protection = _get_valid_response(response, PROTECTION_ADAPTER, resource)
         return protection.allow_deletions.enabled
 
-    def file_exists(self, repository: str, path: str) -> bool:
+    def has_file(self, repository: str, path: str) -> bool:
         """Return whether an exact file exists on main."""
         resource = f"/repos/{repository}/contents/{path}"
         response = self._get(resource, params={"ref": "main"}, missing_ok=True)
         if response is None:
             return False
 
-        content = _validate(response, CONTENT_ADAPTER, resource)
+        content = _get_valid_response(response, CONTENT_ADAPTER, resource)
         return content.path == path and content.type == "file"
 
     def has_critical_dependabot_alerts(self, repository: str) -> bool:
@@ -111,18 +108,19 @@ class GitHubClient:
             resource,
             params={"state": "open", "severity": "critical", "per_page": 1},
         )
-        alerts = _validate(response, ALERTS_ADAPTER, resource)
+        alerts = _get_valid_response(response, ALERTS_ADAPTER, resource)
         return bool(alerts)
 
-    def download_main_archive(self, repository: str, destination: Path) -> None:
-        """Stream a main branch ZIP archive to destination."""
+    def get_main_archive(self, repository: str, destination: Path) -> Path:
+        """Stream a main branch ZIP archive to destination and return its path."""
         resource = f"/repos/{repository}/zipball/main"
         try:
             with self._client.stream("GET", resource) as response:
                 response.raise_for_status()
-                _write_chunks(destination, response.iter_bytes())
+                _set_archive_content(destination, response.iter_bytes())
         except (httpx.HTTPError, OSError) as error:
-            raise _request_error(resource, error) from error
+            raise _compose_request_error(resource, error) from error
+        return destination
 
     @overload
     def _get(
@@ -152,7 +150,7 @@ class GitHubClient:
         try:
             response = self._client.get(resource, params=params)
         except httpx.RequestError as error:
-            raise _request_error(resource, error) from error
+            raise _compose_request_error(resource, error) from error
 
         if missing_ok and response.status_code == httpx.codes.NOT_FOUND:
             return None
@@ -160,17 +158,17 @@ class GitHubClient:
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as error:
-            raise _request_error(resource, error) from error
+            raise _compose_request_error(resource, error) from error
         return response
 
 
-def _write_chunks(destination: Path, chunks: Iterator[bytes]) -> None:
+def _set_archive_content(destination: Path, chunks: Iterator[bytes]) -> None:
     with destination.open("wb") as archive_file:
         for chunk in chunks:
             archive_file.write(chunk)
 
 
-def _validate[T](
+def _get_valid_response[T](
     response: httpx.Response,
     adapter: TypeAdapter[T],
     resource: str,
@@ -181,7 +179,10 @@ def _validate[T](
         raise GitHubError(f"GitHub returned invalid data for '{resource}'.") from error
 
 
-def _request_error(resource: str, error: httpx.HTTPError | OSError) -> GitHubError:
+def _compose_request_error(
+    resource: str,
+    error: httpx.HTTPError | OSError,
+) -> GitHubError:
     if isinstance(error, httpx.HTTPStatusError):
         status = error.response.status_code
         return GitHubError(

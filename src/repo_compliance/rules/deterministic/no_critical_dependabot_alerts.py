@@ -11,7 +11,7 @@ from repo_compliance.domain import (
 RULE_ID = "no-critical-dependabot-alerts"
 
 
-def check(context: RuleContext) -> RuleEvaluation:
+def get_evaluation(context: RuleContext) -> RuleEvaluation:
     """Pass only when GitHub returns no open Critical alerts."""
     if context.github.has_critical_dependabot_alerts(context.repository):
         return RuleEvaluation(False, "Open Critical Dependabot alerts exist.")
@@ -25,5 +25,5 @@ RULE = RuleDefinition(
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.HIGH,
     documentation_url="https://docs.github.com/en/rest/dependabot/alerts",
-    check=check,
+    get_evaluation=get_evaluation,
 )

@@ -11,16 +11,18 @@ from repo_compliance.domain import (
 RULE_ID = "main-branch-deletion-protected"
 
 
-def check(context: RuleContext) -> RuleEvaluation:
+def get_evaluation(context: RuleContext) -> RuleEvaluation:
     """Pass when a ruleset or classic protection blocks main deletion."""
-    if "deletion" in context.github.active_main_rule_types(context.repository):
+    if "deletion" in context.github.get_active_main_rule_types(context.repository):
         return RuleEvaluation(
             passed=True,
             message="An active ruleset prevents main branch deletion.",
         )
 
-    allow_deletions = context.github.classic_allow_deletions(context.repository)
-    if allow_deletions is False:
+    is_deletion_allowed = context.github.get_classic_deletion_setting(
+        context.repository
+    )
+    if is_deletion_allowed is False:
         return RuleEvaluation(
             passed=True,
             message="Classic branch protection prevents main branch deletion.",
@@ -39,5 +41,5 @@ RULE = RuleDefinition(
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.HIGH,
     documentation_url="https://docs.github.com/en/rest/repos/rules",
-    check=check,
+    get_evaluation=get_evaluation,
 )

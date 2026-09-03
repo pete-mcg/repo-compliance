@@ -35,23 +35,23 @@ class ResultStatus(StrEnum):
 class GitHubApi(Protocol):
     """GitHub operations available to rules and the runner."""
 
-    def ensure_main_branch(self, repository: str) -> None:
-        """Confirm that a repository's main branch is accessible."""
+    def get_main_branch(self, repository: str) -> str:
+        """Return the accessible main branch name."""
 
-    def active_main_rule_types(self, repository: str) -> frozenset[str]:
+    def get_active_main_rule_types(self, repository: str) -> frozenset[str]:
         """Return active ruleset rule types for the main branch."""
 
-    def classic_allow_deletions(self, repository: str) -> bool | None:
+    def get_classic_deletion_setting(self, repository: str) -> bool | None:
         """Return classic branch deletion setting, or None if unprotected."""
 
-    def file_exists(self, repository: str, path: str) -> bool:
+    def has_file(self, repository: str, path: str) -> bool:
         """Return whether an exact file exists on the main branch."""
 
     def has_critical_dependabot_alerts(self, repository: str) -> bool:
         """Return whether a repository has any open Critical alert."""
 
-    def download_main_archive(self, repository: str, destination: Path) -> None:
-        """Stream the main branch ZIP archive to a file."""
+    def get_main_archive(self, repository: str, destination: Path) -> Path:
+        """Stream the main branch ZIP archive to a file and return its path."""
 
 
 @dataclass(frozen=True)
@@ -95,7 +95,7 @@ class RuleDefinition:
     category: RuleCategory
     confidence: Confidence
     documentation_url: str
-    check: RuleCheck
+    get_evaluation: RuleCheck
 
 
 @dataclass(frozen=True)

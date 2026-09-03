@@ -8,12 +8,12 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
-from repo_compliance.config import load_config
+from repo_compliance.config import get_config
 from repo_compliance.errors import CliError, ComplianceError
 from repo_compliance.github import GitHubClient
-from repo_compliance.report import generate_report
+from repo_compliance.report import compose_report
 from repo_compliance.rules.registry import RULE_IDS, RULES
-from repo_compliance.runner import run_checks
+from repo_compliance.runner import get_compliance_results
 
 
 class CliOptions(BaseModel):
@@ -28,9 +28,9 @@ class CliOptions(BaseModel):
 def main(argv: Sequence[str] | None = None) -> int:
     """Run checks, write the report, and return a process exit code."""
     try:
-        options = _parse_options(argv)
-        token = _github_token()
-        _run(options, token)
+        options = _get_cli_options(argv)
+        token = _get_github_token()
+        _handle_compliance_check(options, token)
     except ComplianceError as error:
         print(f"repo-compliance: {error}", file=sys.stderr)
         return 1
@@ -46,7 +46,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def _parse_options(argv: Sequence[str] | None) -> CliOptions:
+def _get_cli_options(argv: Sequence[str] | None) -> CliOptions:
     parser = argparse.ArgumentParser(
         description="Check configured GitHub repositories for compliance.",
     )
@@ -60,16 +60,16 @@ def _parse_options(argv: Sequence[str] | None) -> CliOptions:
     return CliOptions.model_validate(vars(arguments))
 
 
-def _github_token() -> str:
+def _get_github_token() -> str:
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     if not token:
         raise CliError("GITHUB_TOKEN is required.")
     return token
 
 
-def _run(options: CliOptions, token: str) -> None:
-    config = load_config(options.config, RULE_IDS)
+def _handle_compliance_check(options: CliOptions, token: str) -> None:
+    config = get_config(options.config, RULE_IDS)
     with GitHubClient(token) as github:
-        results = run_checks(config, github, RULES)
-    report = generate_report(config, RULES, results)
+        results = get_compliance_results(config, github, RULES)
+    report = compose_report(config, RULES, results)
     options.output.write_text(report, encoding="utf-8")
