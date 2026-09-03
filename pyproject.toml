@@ -1,0 +1,66 @@
+[project]
+name = "repo-compliance"
+version = "0.1.0"
+description = "Monitor GitHub repositories for compliance with team standards"
+requires-python = ">=3.14"
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic>=2.13.4",
+    "pyyaml>=6.0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "deptry>=0.25.1",
+    "pyrefly>=1.0.0",
+    "pytest>=9.1.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.3",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["repo_compliance"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
+[tool.pytest.ini_options]
+strict = true
+testpaths = ["tests"]
+
+[tool.ruff]
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+preview = true  # Look to disable when new preview defaults are stable.
+extend-select = [
+    "D",        # We like docstrings
+    "N",        # We like naming conventions
+    "C901",     # We like enforcing complexity
+    "PLR1702",  # We like restricting nesting
+]
+ignore = ["D203", "D213"] # These rules are incompatible with other D rules.
+
+[tool.ruff.lint.mccabe]
+max-complexity = 5
+
+[tool.ruff.lint.pylint]
+max-nested-blocks = 3
+
+[tool.ruff.lint.per-file-ignores]
+# Test code has a narrower set of rules than production.
+"tests/**" = ["D"]
+
+[tool.pyrefly]
+project-includes = ["src", "tests"]
+preset = "strict"
+min-severity = "warn" # Show warnings and errors.
+
+[tool.deptry]
+known_first_party = ["repo_compliance"]
