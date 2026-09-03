@@ -2,7 +2,7 @@ This repository runs a small Python checker against a visible list of GitHub rep
 
 The original user task was `.task\user-task.md`; the plan implemented was `.task\plan.md`.
 
-Always begin by loading the following skills, when working within this repository:
+If you are asked to edit within this repository, always begin by loading the following skills:
 
 $caveman full
 $ponytail full
