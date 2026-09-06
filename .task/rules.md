@@ -1,0 +1,13 @@
+- commits directly to `main` are prohibited.
+- all projects must have a `main` branch.
+- `main` branch must be protected against deletion.
+- tags on the `main` branch must only be the final released version (e.g. `2.2.4`)
+- all projects following Git Flow must have a `development` branch.
+- possession of a `dependabot.yml`
+- presence of a `pull_request_template.md`
+- commit prefixes only.
+- akido setup
+- copilot setup
+- continuous integration (CI) is mandatory.
+- must follow artefact naming conventions (e.g. containers)
+- health check endpoint (where applicable)

@@ -7,5 +7,7 @@ If you are asked to edit within this repository, always begin by loading the fol
 $caveman full
 $ponytail full
 $readable-python
+$naming-conventions
+Reading CONTRIBUTING.md
 
 The quality gate is `task ci` passing.

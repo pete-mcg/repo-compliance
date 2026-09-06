@@ -1,9 +1,19 @@
-# Add or remove monitored repositories here.
-repositories: []
-
 # Example:
 # repositories:
 #   - repository: owner/name
 #     exemptions:
 #       - rule: deploy-workflow-present
 #         reason: This service has no deployment.
+
+# Add or remove monitored repositories here.
+repositories:
+  - repository: pete-mcg/fast-api-react-template
+    exemptions:
+      - rule: deploy-workflow-present
+        reason: This service has no deployment.
+  - repository: pete-mcg/doc-upload-benefits
+  - repository: pete-mcg/local-rag
+  - repository: pete-mcg/Claude-Course-Material
+  - repository: pete-mcg/linear-debate-app
+  - repository: pete-mcg/rent_vs_buy
+  - repository: pete-mcg/YouTube_Transcript
