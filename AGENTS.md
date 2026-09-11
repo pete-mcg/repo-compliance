@@ -8,9 +8,8 @@ For example, a repository "must possess a `.github/CODEOWNERS` file in the `main
 This repository runs a small Python checker against a visible list of GitHub repositories and writes one Markdown report. GitHub Actions schedules it; the same command works locally.
 
 # Contributing
-The following are paramount and supesede any other instructions:
 - Always begin by loading the following skills: $caveman full; $ponytail full; $readable-python
-- Always simple, obvious and readable code over clever tricks; no over-engineering or over-productionising. This is as a small, **beginner** friendly codebase.
+- Always simple, obvious and readable code over clever tricks; no over-engineering or over-productionising. This is as a small, **beginner** friendly codebase. PRs failing to comply to simplicity, will not be tolerated.
 - Function Design:
 	- Do one thing per function;
 	- Keep to one level of abstraction within a function;
