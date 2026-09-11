@@ -8,7 +8,7 @@ description: >
 
 ### Do One Thing Per Function
 
-A function should be boring and do only the one thing that its name promises and nothing extra; eliminate surprises.
+Function do one named job; no surprises.
 
 ```python
 # ❌ BAD: mixes loading, validation, and saving
@@ -31,13 +31,13 @@ def create_invoice(order_id: str) -> None:
     db.save_invoice(order)
 ```
 
-Small functions are easier to test, reuse and read.
+Small functions easier to test, reuse, read.
 
-**Rule of thumb for spotting violations**: if the function name contains "and", it is probably doing too much.
+**Rule of thumb for spotting violations**: function name containing "and" likely does too much.
 
 ### Keep To One Level Of Abstraction Within A Function
 
-Do not mix high-level workflow steps with low-level details in the same function.
+Do not mix high-level workflow with low-level details in same function.
 
 ```python
 # ❌ BAD: high-level workflow mixed with low-level calculation details
@@ -61,18 +61,18 @@ def process_order(order: Order) -> None:
     send_confirmation(order)
 ```
 
-Consistent abstraction is easier to read. Having to jump between various levels of detail creates cognitive friction.
+Consistent abstraction reads easier. Switching detail levels creates friction.
 
-**Rule of thumb for spotting violations**: if you need to mentally "zoom in" or "zoom out" between adjacent lines, the function is probably mixing levels of abstraction.
+**Rule of thumb for spotting violations**: mental "zoom in" or "zoom out" between adjacent lines signals mixed abstraction levels.
 
 ### Keep Functions Simple
 
-Enforce a:
+Enforce:
 
-- **Max complexity** (McCabe). Aim to have low branching complexity: break complicated decisions into smaller functions.
-- **Max nested blocks** (no deeply nested if/for/while). Flat is better than nested. Use guard clauses to handle invalid or uninteresting cases first. Avoid deep indentation when a simple early return will do.
+- **Max complexity** (McCabe). Keep branching low; split complex decisions into small functions.
+- **Max nested blocks** (no deep if/for/while nesting). Prefer flat code. Handle invalid or uninteresting cases first with guard clauses. Use early returns over deep indentation.
 
-If you hit these limits, refactor.
+Refactor when limits hit.
 
 ```python
 # ❌ BAD: Complex nested logic
@@ -97,9 +97,9 @@ def process_order(order: Order) -> None:
     ship_order(order)
 ```
 
-The simpler the function, the easier it is to read and test.
+Simpler function easier to read and test.
 
-**Rule of thumb for spotting violations**: enforce a max complexity and max nested blocks in your linter.
+**Rule of thumb for spotting violations**: enforce max complexity and nested blocks in linter.
 
 > Ruff Rule: `C901 Complex-Structure`
 >
@@ -107,7 +107,7 @@ The simpler the function, the easier it is to read and test.
 
 ### Prefer Obvious Code Over Clever Code
 
-Write code for the next human reader, not for showing how much Python you know.
+Write for next human reader, not to show Python knowledge.
 
 ```python
 # ❌ BAD: Dense and mentally expensive
@@ -126,13 +126,13 @@ for item in items:
 raise ItemNotFoundError()
 ```
 
-Obvious code lowers review time by increasing clarity.
+Obvious code speeds review.
 
-**Rule of thumb for spotting violations**: if you would need to explain it in, rewrite it. Clear beats impressive.
+**Rule of thumb for spotting violations**: if code needs explanation, rewrite it. Clear beats impressive.
 
 ### Pass State Instead Of Using Globals
 
-Keep mutable state local and pass dependencies as arguments. Avoid assigning to global variables from inside functions.
+Keep mutable state local; pass dependencies as arguments. Do not assign globals inside functions.
 
 ```python
 # ❌ BAD: hidden shared state makes behavior hard to follow
@@ -158,15 +158,15 @@ count = increment(count)
 print(count)  # 1
 ```
 
-Explicit state is easier to test and reason about. Globals create hidden coupling between unrelated code.
+Explicit state easier to test and understand. Globals create hidden coupling.
 
-**Rule of thumb for spotting violations**: monitor for `global` usage; in _most_ cases, `global` is a code smell.
+**Rule of thumb for spotting violations**: monitor `global` usage; usually `global` signals code smell.
 
 > Ruff Rule: `PLW0603 global-statement`
 
 ### Separate Business Logic From Implementation
 
-Keep domain decisions away from databases, HTTP clients, files, and frameworks. Let infrastructure code fetch or save data, and let business code decide what should happen.
+Separate domain decisions from databases, HTTP clients, files, frameworks. Infrastructure code fetches/saves data; business code decides outcomes.
 
 ```python
 # ❌ BAD: business rule is buried inside infrastructure code
@@ -199,17 +199,17 @@ def save_order(db, order_id):
     db.save(order)
 ```
 
-Separated logic is easier to test without external systems. It also prevents business rules from being duplicated across adapters.
+Separated logic tests without external systems and prevents duplicated business rules across adapters.
 
-**Rule of thumb for spotting violations**: if a test needs a database to check a pricing or status rule, the rule is probably in the wrong place. Put decisions in plain Python first.
+**Rule of thumb for spotting violations**: database needed to test pricing/status rule means wrong location. Put decisions in plain Python.
 
 ## Make Illegal States Impossible
 
-Constrain the shape of your data so readers know what can happen. Pydantic at the edges; dataclasses in the core; enums for constrained values.
+Constrain data shape. Pydantic at edges; dataclasses in core; enums for constrained values.
 
 ### Name Magic Values
 
-Move unexplained numbers and strings into named constants. Put shared constants near the top of the module or in a dedicated constants module (e.g. `constants.py`). Use `enums` to group constants together if they logically pertain to the same group.
+Move unexplained numbers/strings into named constants. Put shared constants near module top or dedicated constants module (e.g. `constants.py`). Use `enums` for related constants.
 
 ```python
 # ❌ BAD: the values have no meaning at the call site
@@ -231,17 +231,15 @@ def calculate_discount(user_type, order_total):
     return order_total
 ```
 
-Named values make intent visible and reduce inconsistent copies. They also make policy changes safer.
+Named values show intent, reduce inconsistent copies, and make policy changes safer.
 
-**Rule of thumb for spotting violations**: if a reader must ask "why this value?", name it. Repeated literals deserve names.
+**Rule of thumb for spotting violations**: if reader asks "why this value?", name it. Name repeated literals.
 
 > Ruff Rule: `PLR2004 magic-value-comparison` (partially, identifies unnamed magic numbers but not strings)
 
 ### Use Enums for Constrained Sets of Values
 
-Use an enum when a value must be one of a constrained set. Do not scatter raw status strings through the code.
-
-> Think of it like when you used to define Custom Names in the Name Manager of Excel that you would reference in formulas instead of harcoded text. It's for the same reason!
+Use enum for constrained value set. Do not scatter raw status strings through code.
 
 ```python
 # ❌ BAD: typo-prone magic strings
@@ -259,13 +257,13 @@ if order.status is OrderStatus.SHIPPED:
     notify_customer(order)
 ```
 
-Hard-coding text strings directly in code ("magic strings") are difficult to maintain, prone to errors (e.g. typos breaking logic) and no clear list of valid values. Enums make invalid states harder to create. They also give autocomplete and static analysis more useful information.
+Hard-coded "magic strings" are hard to maintain, error-prone, and hide valid values. Enums prevent invalid states and improve autocomplete/static analysis.
 
-**Rule of thumb for spotting violations**: if a string controls behavior, consider an enum.
+**Rule of thumb for spotting violations**: string controlling behavior suggests enum.
 
 ### Use Dataclasses Not Dictionaries For Domain Data
 
-Dicts are for loose or temporary data (e.g. JSON payloads, metadata, lookup tables and temporary glue code). Prefer dataclasses over anonymous dictionaries for structured, well-defined data, that carry data without validation, persistence, or framework behavior. Use Pydantic instead at IO boundaries where parsing and validation are required.
+Use dicts for loose/temporary data (e.g. JSON payloads, metadata, lookup tables, glue code). Prefer dataclasses over anonymous dictionaries for structured data without validation, persistence, or framework behavior. Use Pydantic at IO boundaries needing parsing/validation.
 
 ```python
 # ❌ BAD: field names and types are implicit
@@ -293,20 +291,20 @@ invoice = InvoiceSummary(
 )
 ```
 
-Named data gives readers and tools something concrete to understand. It also catches field mistakes earlier.
+Named data helps readers/tools understand shape and catches field errors early.
 
-**Rule of thumb for spotting violations**: if the data represents a part of your domain model (e.g. User, Order, Invoice, or similar concept), give it a type. If it's incidental, dynamic or external, a dictionary is fine.
+**Rule of thumb for spotting violations**: type domain data (e.g. User, Order, Invoice). Dictionary fine for incidental, dynamic, or external data.
 
-Use a dataclass when the code needs a clear named shape.
+Use dataclass for clear named shape.
 
 ### Pydantic Models for All IO
 
-Always define a Pydantic model and validate external data immediately at the boundary, before they enter core logic. This includes for example:
+Define Pydantic model; validate external data immediately at boundary before core logic. Examples:
 
 - API responses: `response.json()` → immediate `Model.model_validate()`
 - Config files: `json.load()` → immediate `Model.model_validate()`
 - CLI arguments*: `argparse.Namespace` → convert to Pydantic model
-- Environment variables: Use `pydantic-settings` instead of raw `os.getenv()`
+- Environment variables: use `pydantic-settings` instead of raw `os.getenv()`
 
 ```python
 # ❌ BAD: Raw dict from API/file
@@ -329,15 +327,15 @@ def process_user_data(data: dict) -> None:
     # Now user.name and user.age are fully typed and validated
 ```
 
-Validated inputs keep messy external data out of the core. Failures happen early, close to the boundary.
+Validated inputs keep messy external data outside core. Fail early near boundary.
 
-**Rule of thumb for spotting violations**: use Pydantic at the edges, dataclasses in the core, and enums for constrained values. Do not let raw payloads leak through the application.
+**Rule of thumb for spotting violations**: use Pydantic at edges, dataclasses in core, enums for constrained values. Keep raw payloads out of application.
 
 ## Exception Handling
 
 ### Keep Try Blocks Narrow
 
-Put only the operation that can raise the expected exception inside the try block. Do not hide unrelated work under the same exception handler.
+Put only operation raising expected exception inside try block. Keep unrelated work outside handler.
 
 ```python
 # ❌ BAD: too much code is covered by the same handler
@@ -358,13 +356,13 @@ audit_login(user)
 send_welcome_email(user)
 ```
 
-Narrow handlers make it clear which failure is expected. They also avoid accidentally swallowing bugs from later lines.
+Narrow handlers show expected failure and avoid swallowing later bugs.
 
-**Rule of thumb for spotting violations**: ask whether every line inside the try block can raise the exception being caught. If not, move it out.
+**Rule of thumb for spotting violations**: every try-block line must risk caught exception. Move others out.
 
 ### Avoid Bare Exceptions
 
-Catch the exceptions you know how to handle and do something useful. Avoid bare except blocks, silent pass statements, and empty re-raises.
+Catch known, actionable exceptions. Avoid bare except blocks, silent pass statements, empty re-raises.
 
 ```python
 # ❌ BAD: Hides all errors
@@ -381,15 +379,15 @@ except (ValueError, KeyError) as e:
     raise
 ```
 
-Specific handling tells readers what failure is expected and what the program will do next. Silent failures make systems unreliable and hard to debug.
+Specific handling shows expected failure and next action. Silent failures make systems unreliable, hard to debug.
 
-**Rule of thumb for spotting violations**: if an except block does not log, recover, translate, or add context, question why it exists. Never hide errors by default.
+**Rule of thumb for spotting violations**: except block must log, recover, translate, or add context. Never hide errors by default.
 
 > Ruff Rule: `E722 bare-except`
 
 ### Easier to Ask Forgiveness than Permission (EAFP)
 
-Write code that assumes the existence of valid keys or attributes etc, and handles exceptions if they aren’t present.
+Assume valid keys/attributes exist; handle exceptions when absent.
 
 ```python
 # ❌ BAD: checks first, then performs a separate operation
@@ -405,15 +403,15 @@ except FileNotFoundError:
     content = ""
 ```
 
-Often results in more concise and efficient code, as it minimizes the need for explicit pre-checks.
+Often shorter, faster code with fewer pre-checks.
 
-**Rule of thumb for spotting violations**: if the check only predicts whether the next line will fail, handle the failure instead. Ask for forgiveness when failure is normal and recoverable.
+**Rule of thumb for spotting violations**: if check only predicts next-line failure, handle failure instead. Ask forgiveness when failure normal and recoverable.
 
 ## Types
 
 ### Add Type Hints
 
-Use type hints for function parameters, return values, and important variables.
+Use type hints for function parameters, returns, important variables.
 
 ```python
 # ❌ BAD: callers must guess the expected shape
@@ -426,15 +424,15 @@ def calculate_tax(amount: Decimal, rate: Decimal) -> Decimal:
     return amount * rate
 ```
 
-Types improve readability without changing runtime behavior. They document intent and help tools find bugs before runtime.
+Types improve readability without runtime change. They document intent and help tools find bugs early.
 
-**Rule of thumb for spotting violations**: if another module calls it, type it. Untyped public functions make every caller guess.
+**Rule of thumb for spotting violations**: type anything called by another module. Untyped public functions make callers guess.
 
 > Ruff Rule: `ANN flake8-annotations`
 
 ### Avoid Any Where Possible
 
-Do not use `Any` to silence type errors in normal application code. If a value is truly unknown such as at a boundary and requires `Any`, validate or narrow it as soon as possible.
+Do not use `Any` to silence normal application type errors. If boundary value truly needs `Any`, validate or narrow immediately.
 
 ```python
 # ❌ BAD: Any disables useful checking
@@ -451,9 +449,9 @@ def customer_name(customer: CustomerPayload) -> str:
     return customer["name"]
 ```
 
-Avoiding `Any` preserves the value of type checking. It forces unclear data contracts into the open.
+Avoiding `Any` preserves type checking and exposes unclear data contracts.
 
-**Rule of thumb for spotting violations**: treat `Any` as a temporary quarantine, not a design. Narrow it at the first reasonable point.
+**Rule of thumb for spotting violations**: treat `Any` as temporary quarantine, not design. Narrow at first reasonable point.
 
 > Ruff Rule: `ANN401 any-type`
 
@@ -461,7 +459,7 @@ Avoiding `Any` preserves the value of type checking. It forces unclear data cont
 
 ### Don't Repeat Yourself (DRY)
 
-Extract repeated logic when the copies represent the same rule or workflow. Do not force unrelated code into one abstraction just because it looks similar.
+Extract repeated logic representing same rule/workflow. Do not combine unrelated code because it looks similar.
 
 ```python
 # ❌ BAD: the same logging rule is copied into multiple functions
@@ -498,15 +496,15 @@ def send_email(email):
     email_service.send(email)
 ```
 
-Good deduplication prevents future fixes from being missed in one copy. Poor deduplication creates awkward abstractions that are harder to change.
+Good deduplication keeps fixes synced. Poor deduplication creates awkward, rigid abstractions.
 
-**Rule of thumb for spotting violations**: duplicate knowledge is the problem, not duplicate text. Extract code when the copies should always change together.
+**Rule of thumb for spotting violations**: duplicate knowledge, not text, is problem. Extract copies that must change together.
 
-> SonarQube can help spot duplicate lines of code.
+> SonarQube spots duplicate code lines.
 
 ### Make Structure Consistent Everywhere
 
-A developer should be able to predict what your code looks like before they open the file. E.g. Have consistent:
+Developers should predict code before opening file. Keep consistent:
 
 - Naming
 - File organisation
@@ -696,6 +694,6 @@ billing/
     models.py
 ```
 
-When developers can predict where things live and how they're written, the code feels much simpler.
+Predictable location and style make code simpler.
 
-**Rule of thumb for spotting violations**: before inventing a pattern, look at nearby code. Match the codebase unless there is a clear reason to change it.
+**Rule of thumb for spotting violations**: before new pattern, inspect nearby code. Match codebase unless clear reason to change.

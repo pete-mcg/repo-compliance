@@ -66,9 +66,3 @@ The initial rules check main-branch deletion protection, exact CODEOWNERS and de
 ## GitHub Actions
 
 Add the PAT as repository secret `REPO_COMPLIANCE_TOKEN`. [`repository-compliance.yml`](.github/workflows/repository-compliance.yml) runs at `06:00 UTC` on weekdays and supports manual runs. It appends the report to the workflow summary and uploads artifact `repository-compliance-report`.
-
-## Development checks
-
-```shell
-task ci
-```

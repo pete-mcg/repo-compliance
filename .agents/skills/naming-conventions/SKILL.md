@@ -1,33 +1,14 @@
 ---
 name: naming-conventions
 description: >
-  Naming things is hard. This skill attempts to make it easier.
+  Naming things is hard. This skill makes it easier.
 ---
 
-# Naming cheatsheet
-
-- [English language](#english-language)
-- [Naming convention](#naming-convention)
-- [S-I-D](#s-i-d)
-- [Avoid contractions](#avoid-contractions)
-- [Avoid context duplication](#avoid-context-duplication)
-- [Reflect the expected result](#reflect-the-expected-result)
-- [Naming functions](#naming-functions)
-  - [A/HC/LC pattern](#ahclc-pattern)
-    - [Actions](#actions)
-    - [Context](#context)
-    - [Prefixes](#prefixes)
-- [Singular and Plurals](#singular-and-plurals)
-
----
-
-Naming things is hard. This sheet attempts to make it easier.
-
-Although these suggestions can be applied to any programming language, I will use JavaScript to illustrate them in practice.
+Applies to any programming language. Examples use JavaScript.
 
 ## English language
 
-Use English language when naming your variables and functions.
+Name variables and functions in English.
 
 ```js
 /* Bad */
@@ -39,11 +20,11 @@ const firstName = 'Gustavo'
 const friends = ['Kate', 'John']
 ```
 
-> Like it or not, English is the dominant language in programming: the syntax of all programming languages is written in English, as well as countless documentations and educational materials. By writing your code in English you dramatically increase its cohesiveness.
+> English dominates programming syntax, docs, and learning material. English code improves cohesion.
 
 ## Naming convention
 
-Pick **one** naming convention and follow it. It may be `camelCase`, `PascalCase`, `snake_case`, or anything else, as long as it remains consistent. Many programming languages have their own traditions regarding naming conventions; check the documentation for your language or study some popular repositories on GitHub!
+Pick **one** naming convention; stay consistent. May use `camelCase`, `PascalCase`, `snake_case`, or another. Follow language docs or popular GitHub repositories.
 
 ```js
 /* Bad */
@@ -61,11 +42,11 @@ const should_update = true
 
 ## S-I-D
 
-A name must be _short_, _intuitive_ and _descriptive_:
+Names must be _short_, _intuitive_, _descriptive_:
 
-- **Short**. A name must not take long to type and, therefore, remember;
-- **Intuitive**. A name must read naturally, as close to the common speech as possible;
-- **Descriptive**. A name must reflect what it does/possesses in the most efficient way.
+- **Short**. Quick to type and remember;
+- **Intuitive**. Reads naturally, near common speech;
+- **Descriptive**. Efficiently reflects behavior or contents.
 
 ```js
 /* Bad */
@@ -81,7 +62,7 @@ const shouldPaginate = postCount > 10 // alternatively
 
 ## Avoid contractions
 
-Do **not** use contractions. They contribute to nothing but decreased readability of the code. Finding a short, descriptive name may be hard, but contraction is not an excuse for not doing so.
+Do **not** use contractions. They reduce code readability. Prefer short, descriptive names.
 
 ```js
 /* Bad */
@@ -93,7 +74,7 @@ const onItemClick = () => {}
 
 ## Avoid context duplication
 
-A name should not duplicate the context in which it is defined. Always remove the context from a name if that doesn't decrease its readability.
+Names should not duplicate definition context. Remove context when readability remains.
 
 ```js
 class MenuItem {
@@ -107,7 +88,7 @@ class MenuItem {
 
 ## Reflect the expected result
 
-A name should reflect the expected result.
+Names should reflect expected result.
 
 ```jsx
 /* Bad */
@@ -125,13 +106,13 @@ return <Button disabled={isDisabled} />
 
 ## A/HC/LC Pattern
 
-There is a useful pattern to follow when naming functions:
+Useful function naming pattern:
 
 ```
 prefix? + action (A) + high context (HC) + low context? (LC)
 ```
 
-Take a look at how this pattern may be applied in the table below.
+Pattern examples:
 
 | Name                   | Prefix   | Action (A) | High context (HC) | Low context (LC) |
 | ---------------------- | -------- | ---------- | ----------------- | ---------------- |
@@ -140,18 +121,18 @@ Take a look at how this pattern may be applied in the table below.
 | `handleClickOutside`   |          | `handle`   | `Click`           | `Outside`        |
 | `shouldDisplayMessage` | `should` | `Display`  | `Message`         |                  |
 
-> **Note:** The order of context affects the meaning of a variable. For example, `shouldUpdateComponent` means _you_ are about to update a component, while `shouldComponentUpdate` tells you that _component_ will update itself, and you are only controlling _when_ it should update.
-> In other words, **high context emphasizes the meaning of a variable**.
+> **Note:** Context order changes variable meaning. `shouldUpdateComponent` means _you_ will update component; `shouldComponentUpdate` means _component_ updates itself while you control _when_.
+> **High context emphasizes variable meaning**.
 
 ---
 
 ## Actions
 
-The verb part of your function name. The most important part responsible for describing what the function _does_.
+Function name's verb. Describes what function _does_.
 
 ### `get`
 
-Accesses data immediately (i.e. shorthand getter of internal data).
+Accesses data immediately (shorthand internal-data getter).
 
 ```js
 function getFruitCount() {
@@ -161,7 +142,7 @@ function getFruitCount() {
 
 > See also [compose](#compose).
 
-You can use `get` when performing asynchronous operations as well:
+Use `get` for asynchronous operations too:
 
 ```js
 async function getUser(id) {
@@ -172,7 +153,7 @@ async function getUser(id) {
 
 ### `set`
 
-Sets a variable in a declarative way, with value `A` to value `B`.
+Declaratively changes variable from value `A` to value `B`.
 
 ```js
 let fruits = 0
@@ -187,7 +168,7 @@ console.log(fruits) // 5
 
 ### `reset`
 
-Sets a variable back to its initial value or state.
+Restores variable's initial value or state.
 
 ```js
 const initialFruits = 5
@@ -205,9 +186,9 @@ console.log(fruits) // 5
 
 ### `remove`
 
-Removes something _from_ somewhere.
+Removes item _from_ somewhere.
 
-For example, if you have a collection of selected filters on a search page, removing one of them from the collection is `removeFilter`, **not** `deleteFilter` (and this is how you would naturally say it in English as well):
+Removing selected filter from search-page collection is `removeFilter`, **not** `deleteFilter`:
 
 ```js
 function removeFilter(filterName, filters) {
@@ -222,9 +203,9 @@ removeFilter('price', selectedFilters)
 
 ### `delete`
 
-Completely erases something from the realms of existence.
+Erases something completely.
 
-Imagine you are a content editor, and there is that notorious post you wish to get rid of. Once you clicked a shiny "Delete post" button, the CMS performed a `deletePost` action, **not** `removePost`.
+Deleting post in CMS performs `deletePost`, **not** `removePost`.
 
 ```js
 function deletePost(id) {
@@ -236,15 +217,15 @@ function deletePost(id) {
 
 > **`remove` or `delete`?**
 >
-> When the difference between `remove` and `delete` is not so obvious to you, I'd suggest looking at their opposite actions - `add` and `create`.
-> The key difference between `add` and `create` is that `add` needs a destination while `create` **requires no destination**. You `add` an item _to somewhere_, but you don't "`create` it _to somewhere_".
-> Simply pair `remove` with `add` and `delete` with `create`.
+> To distinguish `remove` and `delete`, compare opposites: `add` and `create`.
+> `add` needs destination; `create` **requires no destination**. You `add` item _to somewhere_; you don't "`create` it _to somewhere_".
+> Pair `remove` with `add`; `delete` with `create`.
 >
 > Explained in detail [here](https://github.com/kettanaito/naming-cheatsheet/issues/74#issue-1174942962).
 
 ### `compose`
 
-Creates new data from the existing one. Mostly applicable to strings, objects, or functions.
+Creates new data from existing data. Mostly strings, objects, or functions.
 
 ```js
 function composePageUrl(pageName, pageId) {
@@ -256,7 +237,7 @@ function composePageUrl(pageName, pageId) {
 
 ### `handle`
 
-Handles an action. Often used when naming a callback method.
+Handles action. Often names callback method.
 
 ```js
 function handleLinkClick() {
@@ -270,9 +251,9 @@ link.addEventListener('click', handleLinkClick)
 
 ## Context
 
-A domain that a function operates on.
+Domain function operates on.
 
-A function is often an action on _something_. It is important to state what its operable domain is, or at least an expected data type.
+Function often acts on _something_. State domain or expected data type.
 
 ```js
 /* A pure function operating with primitives */
@@ -286,17 +267,17 @@ function getRecentPosts(posts) {
 }
 ```
 
-> Some language-specific assumptions may allow omitting the context. For example, in JavaScript, it's common that `filter` operates on Array. Adding explicit `filterArray` would be unnecessary.
+> Language conventions may allow omitted context. In JavaScript, `filter` commonly operates on Array; explicit `filterArray` is unnecessary.
 
 ---
 
 ## Prefixes
 
-Prefix enhances the meaning of a variable. It is rarely used in function names.
+Prefix clarifies variable meaning. Rare in function names.
 
 ### `is`
 
-Describes a characteristic or state of the current context (usually `boolean`).
+Describes current context characteristic or state (usually `boolean`).
 
 ```js
 const color = 'blue'
@@ -310,7 +291,7 @@ if (isBlue && isPresent) {
 
 ### `has`
 
-Describes whether the current context possesses a certain value or state (usually `boolean`).
+Describes whether current context has value or state (usually `boolean`).
 
 ```js
 /* Bad */
@@ -323,7 +304,7 @@ const hasProducts = productsCount > 0
 
 ### `should`
 
-Reflects a positive conditional statement (usually `boolean`) coupled with a certain action.
+Positive conditional statement (usually `boolean`) tied to action.
 
 ```js
 function shouldUpdateUrl(url, expectedUrl) {
@@ -333,7 +314,7 @@ function shouldUpdateUrl(url, expectedUrl) {
 
 ### `min`/`max`
 
-Represents a minimum or maximum value. Used when describing boundaries or limits.
+Represents minimum or maximum value for boundaries or limits.
 
 ```js
 /**
@@ -347,7 +328,7 @@ function renderPosts(posts, minPosts, maxPosts) {
 
 ### `prev`/`next`
 
-Indicate the previous or the next state of a variable in the current context. Used when describing state transitions.
+Indicate previous or next variable state in current context. Used for state transitions.
 
 ```jsx
 async function getPosts() {
@@ -362,7 +343,7 @@ async function getPosts() {
 
 ## Singular and Plurals
 
-Like a prefix, variable names can be made singular or plural depending on whether they hold a single value or multiple values.
+Use singular names for one value; plural names for multiple values.
 
 ```js
 /* Bad */
