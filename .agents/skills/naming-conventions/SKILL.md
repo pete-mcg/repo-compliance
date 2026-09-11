@@ -1,7 +1,7 @@
 ---
 name: naming-conventions
 description: >
-  Naming things is hard. This skill makes it easier.
+  Naming things is hard. This skill makes it easier. Only use if explicitly requested.
 ---
 
 Applies to any programming language. Examples use JavaScript.
