@@ -1,6 +1,7 @@
 # Coding Philosophies
 
-- Prefer simple, obvious and readable code over clever tricks; no over-engineering or over-productionising. Think of it as beginner friendly.
+- Prefer simple, obvious and readable code over clever tricks; no over-engineering or over-productionising. Think of it as beginner friendly codebase.
+- Having a tidy architecture is **king**.
 - Function Design:
 	- Do one thing per function;
 	- Keep to one level of abstraction within a function;
@@ -9,7 +10,11 @@
 
 # Name Conventions
 
-Refer to skill `naming-conventions`.
+Test-Driven Development only.
+
+# Name Conventions
+
+Adhere to the skill `naming-conventions`.
 
 - Names must be **S-I-D: short, intuitive, descriptive**.
 - Function pattern: `prefix? + action + highContext + lowContext`
