@@ -1,3 +1,7 @@
+- git flow branching strategy
+- branch protection on `main` preventing direct commits to this branch
+- branch protection on `main` such that pull requests must be reviewed by at least one other person
+- merges into `main` are _not_ squashed or
 - commits directly to `main` are prohibited.
 - all projects must have a `main` branch.
 - `main` branch must be protected against deletion.
@@ -11,3 +15,5 @@
 - continuous integration (CI) is mandatory.
 - must follow artefact naming conventions (e.g. containers)
 - health check endpoint (where applicable)
+- For **local development**, authenticate to Azure resources using the developers own Entra account, not a shared managed identity. Else, Managed Identity. Never API keys.
+- Health endpoint
