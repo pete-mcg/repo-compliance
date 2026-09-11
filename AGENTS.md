@@ -1,6 +1,6 @@
 This repository runs a small Python checker against a visible list of GitHub repositories and writes one Markdown report. GitHub Actions schedules it; the same command works locally.
 
-The first user task was `.task\user-task.md`; the first plan implemented was `.task\plan.md`.
+The first user task was `.task\user-task.md`; the first plan implemented was `.task\plan.md`. Read these for orientation.
 
 If you are asked to edit within this repository, always begin by loading the following skills:
 

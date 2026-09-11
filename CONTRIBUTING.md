@@ -1,6 +1,6 @@
 # Coding Philosophies
 
-- Prefer simple, obvious and readable code over clever tricks; no over-engineering or over-productionising. Think of it as beginner friendly codebase.
+- Prefer simple, obvious and readable code over clever tricks; no over-engineering or over-productionising. Think of it as a small, lightweight, beginner friendly codebase.
 - Having a tidy architecture is **king**.
 - Function Design:
 	- Do one thing per function;
