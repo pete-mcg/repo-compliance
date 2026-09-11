@@ -9,7 +9,7 @@ This repository runs a small Python checker against a visible list of GitHub rep
 
 # Contributing
 - Always begin by loading the following skills: $caveman full; $ponytail full; $readable-python
-- Always simple, obvious and readable code over clever tricks; no over-engineering or over-productionising. This is as a small, **beginner** friendly codebase. PRs failing to comply to simplicity, will not be tolerated.
+- Always simple, obvious and readable code over clever tricks; no over-engineering or over-productionising. This is as a small, **beginner** friendly codebase. If new code fails to be simple and beginner friendly, it will not be merged.
 - Function Design:
 	- Do one thing per function;
 	- Keep to one level of abstraction within a function;
