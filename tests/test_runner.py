@@ -22,6 +22,8 @@ def compose_rule(
     rule_id: str,
     category: RuleCategory,
     get_evaluation: RuleCheck,
+    *,
+    requires_archive: bool = False,
 ) -> RuleDefinition:
     return RuleDefinition(
         id=rule_id,
@@ -31,6 +33,7 @@ def compose_rule(
         confidence=Confidence.HIGH,
         documentation_url="https://example.com/rule",
         get_evaluation=get_evaluation,
+        requires_archive=requires_archive,
     )
 
 
@@ -38,7 +41,7 @@ def get_passing_evaluation(_context: RuleContext) -> RuleEvaluation:
     return RuleEvaluation(True, "passed")
 
 
-def get_static_evaluation(context: RuleContext) -> RuleEvaluation:
+def get_archive_evaluation(context: RuleContext) -> RuleEvaluation:
     assert context.archive_path is not None
     assert context.archive_path.exists()
     return RuleEvaluation(True, "archive inspected")
@@ -56,7 +59,12 @@ def compose_config(*repositories: RepositoryConfig) -> ComplianceConfig:
 def test_fully_exempt_repository_skips_all_github_work() -> None:
     rules = (
         compose_rule("first", RuleCategory.DETERMINISTIC, get_passing_evaluation),
-        compose_rule("second", RuleCategory.STATIC_ANALYSIS, get_static_evaluation),
+        compose_rule(
+            "second",
+            RuleCategory.DETERMINISTIC,
+            get_archive_evaluation,
+            requires_archive=True,
+        ),
     )
     repository = RepositoryConfig(
         repository="example/service",
@@ -100,7 +108,12 @@ def test_exemption_skips_only_its_check() -> None:
 def test_preflight_failure_errors_active_rules_only() -> None:
     rules = (
         compose_rule("exempt", RuleCategory.DETERMINISTIC, get_passing_evaluation),
-        compose_rule("active", RuleCategory.STATIC_ANALYSIS, get_static_evaluation),
+        compose_rule(
+            "active",
+            RuleCategory.DETERMINISTIC,
+            get_archive_evaluation,
+            requires_archive=True,
+        ),
     )
     repository = RepositoryConfig(
         repository="example/service",
@@ -118,10 +131,20 @@ def test_preflight_failure_errors_active_rules_only() -> None:
     assert github.archive_calls == []
 
 
-def test_downloads_one_archive_for_multiple_static_rules() -> None:
+def test_downloads_one_archive_for_multiple_archive_rules() -> None:
     rules = (
-        compose_rule("static-one", RuleCategory.STATIC_ANALYSIS, get_static_evaluation),
-        compose_rule("static-two", RuleCategory.STATIC_ANALYSIS, get_static_evaluation),
+        compose_rule(
+            "archive-one",
+            RuleCategory.DETERMINISTIC,
+            get_archive_evaluation,
+            requires_archive=True,
+        ),
+        compose_rule(
+            "archive-two",
+            RuleCategory.DETERMINISTIC,
+            get_archive_evaluation,
+            requires_archive=True,
+        ),
     )
     github = FakeGitHub()
 
@@ -138,12 +161,17 @@ def test_downloads_one_archive_for_multiple_static_rules() -> None:
     assert github.archive_calls == ["example/service"]
 
 
-def test_archive_failure_only_errors_static_rules() -> None:
+def test_archive_failure_only_errors_archive_rules() -> None:
     rules = (
         compose_rule(
             "deterministic", RuleCategory.DETERMINISTIC, get_passing_evaluation
         ),
-        compose_rule("static", RuleCategory.STATIC_ANALYSIS, get_static_evaluation),
+        compose_rule(
+            "archive",
+            RuleCategory.DETERMINISTIC,
+            get_archive_evaluation,
+            requires_archive=True,
+        ),
     )
     github = FakeGitHub(archive_error_repositories={"example/service"})
 
@@ -202,7 +230,10 @@ def test_archive_rule_error_becomes_result_data() -> None:
         raise ArchiveError("bad zip")
 
     rule = compose_rule(
-        "archive", RuleCategory.STATIC_ANALYSIS, get_failing_archive_evaluation
+        "archive",
+        RuleCategory.DETERMINISTIC,
+        get_failing_archive_evaluation,
+        requires_archive=True,
     )
 
     results = get_compliance_results(
@@ -238,7 +269,10 @@ def test_archive_path_is_temporary() -> None:
         return RuleEvaluation(True, "seen")
 
     rule = compose_rule(
-        "static", RuleCategory.STATIC_ANALYSIS, get_observed_archive_evaluation
+        "archive",
+        RuleCategory.DETERMINISTIC,
+        get_observed_archive_evaluation,
+        requires_archive=True,
     )
 
     get_compliance_results(
