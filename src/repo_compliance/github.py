@@ -8,14 +8,14 @@ from typing import Literal, Self, overload
 import httpx
 from pydantic import TypeAdapter, ValidationError
 
-from repo_compliance.api_models import (
+from repo_compliance.errors import GitHubError
+from repo_compliance.github_models import (
     GitHubBranch,
     GitHubBranchProtection,
     GitHubContent,
     GitHubDependabotAlert,
     GitHubRule,
 )
-from repo_compliance.errors import GitHubError
 
 API_VERSION = "2026-03-10"
 DEFAULT_TIMEOUT_SECONDS = 30.0
