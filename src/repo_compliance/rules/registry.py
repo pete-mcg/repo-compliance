@@ -12,7 +12,7 @@ from repo_compliance.rules.deterministic.main_branch_deletion_protected import (
 from repo_compliance.rules.deterministic.no_critical_dependabot_alerts import (
     RULE as NO_CRITICAL_DEPENDABOT_ALERTS,
 )
-from repo_compliance.rules.static_analysis.no_key_based_authentication import (
+from repo_compliance.rules.deterministic.no_key_based_authentication import (
     RULE as NO_KEY_BASED_AUTHENTICATION,
 )
 

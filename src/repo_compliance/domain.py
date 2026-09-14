@@ -11,7 +11,6 @@ class RuleCategory(StrEnum):
     """Method used to evaluate a rule."""
 
     DETERMINISTIC = "deterministic"
-    STATIC_ANALYSIS = "static_analysis"
     AGENTIC = "agentic"
 
 
@@ -96,6 +95,7 @@ class RuleDefinition:
     confidence: Confidence
     documentation_url: str
     get_evaluation: RuleCheck
+    requires_archive: bool = False
 
 
 @dataclass(frozen=True)

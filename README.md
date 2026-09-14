@@ -55,13 +55,12 @@ Violations and evaluation errors remain report data, so a completed check exits 
 
 Rule code lives under [`src/repo_compliance/rules`](src/repo_compliance/rules), grouped by evaluation method:
 
-- `deterministic/` for unambiguous API checks
-- `static_analysis/` for fallible source inspection
+- `deterministic/` for repeatable API and source checks
 - `agentic/` for future reasoning-based checks
 
 Each rule has its own file and exports immutable `RULE` metadata plus a typed `get_evaluation` function. To add a rule, create the file in the matching folder and add its `RULE` to the ordered tuple in [`registry.py`](src/repo_compliance/rules/registry.py). To remove a rule, remove that registry entry and any configured exemptions using its ID. Registry order controls report order.
 
-The initial rules check main-branch deletion protection, exact CODEOWNERS and deployment workflow paths, open Critical Dependabot alerts, and possible key-based authentication markers. Static analysis records only path, line number, and marker name; it never puts matched source lines or values in the report.
+The initial rules check main-branch deletion protection, exact CODEOWNERS and deployment workflow paths, open Critical Dependabot alerts, and possible key-based authentication markers. Source inspection records only path, line number, and marker name; it never puts matched source lines or values in the report.
 
 ## GitHub Actions
 

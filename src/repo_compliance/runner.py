@@ -7,7 +7,6 @@ from repo_compliance.config import ComplianceConfig, RepositoryConfig
 from repo_compliance.domain import (
     GitHubApi,
     ResultStatus,
-    RuleCategory,
     RuleContext,
     RuleDefinition,
     RuleEvaluation,
@@ -58,7 +57,7 @@ def _get_preflight_error(repository: str, github: GitHubApi) -> str | None:
 
 
 def _should_get_archive(rules: tuple[RuleDefinition, ...]) -> bool:
-    return any(rule.category is RuleCategory.STATIC_ANALYSIS for rule in rules)
+    return any(rule.requires_archive for rule in rules)
 
 
 def _get_archive_results(
@@ -103,7 +102,7 @@ def _get_rule_results(
         if exemption_reason is not None:
             results.append(_compose_exempt_result(repository, rule, exemption_reason))
             continue
-        if rule.category is RuleCategory.STATIC_ANALYSIS and archive_error is not None:
+        if rule.requires_archive and archive_error is not None:
             results.append(_compose_error_result(repository, rule, archive_error))
             continue
         results.append(_get_rule_result(repository, github, rule, archive_path))

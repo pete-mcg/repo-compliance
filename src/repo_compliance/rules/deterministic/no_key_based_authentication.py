@@ -64,7 +64,7 @@ KEY_MARKER = re.compile(
 def get_evaluation(context: RuleContext) -> RuleEvaluation:
     """Scan safe UTF-8 archive entries for key authentication markers."""
     if context.archive_path is None:
-        raise RuntimeError("Static analysis requires a repository archive.")
+        raise RuntimeError("Rule requires a repository archive.")
 
     evidence, total = _get_archive_evidence(context.archive_path)
     if total == 0:
@@ -173,8 +173,9 @@ RULE = RuleDefinition(
     id=RULE_ID,
     title="No key-based authentication",
     description="Tracked source must not use key-based authentication markers.",
-    category=RuleCategory.STATIC_ANALYSIS,
+    category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.MEDIUM,
     documentation_url="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github",
     get_evaluation=get_evaluation,
+    requires_archive=True,
 )

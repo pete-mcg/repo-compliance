@@ -5,7 +5,7 @@ import pytest
 
 from repo_compliance.domain import RuleContext, RuleEvaluation
 from repo_compliance.errors import ArchiveError
-from repo_compliance.rules.static_analysis.no_key_based_authentication import (
+from repo_compliance.rules.deterministic.no_key_based_authentication import (
     MAX_EVIDENCE,
     MAX_FILE_BYTES,
     get_evaluation,
