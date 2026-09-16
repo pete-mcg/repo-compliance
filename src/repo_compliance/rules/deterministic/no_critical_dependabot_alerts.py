@@ -24,6 +24,6 @@ RULE = RuleDefinition(
     description="Dependabot must report zero open Critical vulnerabilities.",
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.HIGH,
-    documentation_url="https://docs.github.com/en/rest/dependabot/alerts",
+    documentation_url="https://confluence.example.com/display/COMPLIANCE/no-critical-dependabot-alerts",
     check=check,
 )

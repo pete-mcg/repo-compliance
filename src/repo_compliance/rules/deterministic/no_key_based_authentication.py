@@ -175,7 +175,7 @@ RULE = RuleDefinition(
     description="Tracked source must not use key-based authentication markers.",
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.MEDIUM,
-    documentation_url="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github",
+    documentation_url="https://confluence.example.com/display/COMPLIANCE/no-key-based-authentication",
     check=check,
     requires_archive=True,
 )

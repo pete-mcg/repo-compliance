@@ -38,6 +38,6 @@ RULE = RuleDefinition(
     description="The main branch must be protected against deletion.",
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.HIGH,
-    documentation_url="https://docs.github.com/en/rest/repos/rules",
+    documentation_url="https://confluence.example.com/display/COMPLIANCE/main-branch-deletion-protected",
     check=check,
 )

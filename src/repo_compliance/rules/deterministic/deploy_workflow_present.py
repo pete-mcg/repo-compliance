@@ -25,6 +25,6 @@ RULE = RuleDefinition(
     description=f"The main branch must contain {REQUIRED_PATH}.",
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.HIGH,
-    documentation_url="https://docs.github.com/en/actions/writing-workflows",
+    documentation_url="https://confluence.example.com/display/COMPLIANCE/deploy-workflow-present",
     check=check,
 )

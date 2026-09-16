@@ -25,6 +25,6 @@ RULE = RuleDefinition(
     description=f"The main branch must contain {REQUIRED_PATH}.",
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.HIGH,
-    documentation_url="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners",
+    documentation_url="https://confluence.example.com/display/COMPLIANCE/codeowners-present",
     check=check,
 )
