@@ -10,7 +10,8 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "stopOnEntry": true,
+            // Temporary workaround for debugpy corrupting StrEnum construction while stepping.
+            "showReturnValue": false,
             "env": {
                 "GITHUB_TOKEN": "${input:githubToken}"
             }
