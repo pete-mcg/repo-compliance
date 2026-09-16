@@ -77,7 +77,7 @@ class ComplianceConfig(ConfigModel):
         return self
 
 
-def get_config(path: Path, rule_ids: frozenset[str]) -> ComplianceConfig:
+def load_config(path: Path, rule_ids: frozenset[str]) -> ComplianceConfig:
     """Load and validate configuration from a YAML file."""
     source = _read_config_source(path)
     raw_config = _parse_yaml(source, path)

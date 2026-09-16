@@ -11,14 +11,14 @@ from repo_compliance.domain import (
     RuleEvaluation,
     RuleResult,
 )
-from repo_compliance.report import compose_report
+from repo_compliance.report import generate_report
 
 
-def get_unused_evaluation(_context: RuleContext) -> RuleEvaluation:
+def unused_check(_context: RuleContext) -> RuleEvaluation:
     return RuleEvaluation(True, "unused")
 
 
-def compose_rule(
+def make_rule(
     rule_id: str,
     category: RuleCategory = RuleCategory.DETERMINISTIC,
     confidence: Confidence = Confidence.HIGH,
@@ -30,13 +30,13 @@ def compose_rule(
         category=category,
         confidence=confidence,
         documentation_url=f"https://example.com/{rule_id}",
-        get_evaluation=get_unused_evaluation,
+        check=unused_check,
     )
 
 
 def test_report_contains_counts_tables_links_details_and_utc_timestamp() -> None:
-    deterministic = compose_rule("deterministic")
-    agentic = compose_rule(
+    deterministic = make_rule("deterministic")
+    agentic = make_rule(
         "agentic",
         RuleCategory.AGENTIC,
         Confidence.MEDIUM,
@@ -69,7 +69,7 @@ def test_report_contains_counts_tables_links_details_and_utc_timestamp() -> None
         tzinfo=timezone(timedelta(hours=1)),
     )
 
-    report = compose_report(
+    report = generate_report(
         config,
         (deterministic, agentic),
         results,
@@ -92,8 +92,8 @@ def test_report_contains_counts_tables_links_details_and_utc_timestamp() -> None
 
 
 def test_report_preserves_registry_and_configuration_order() -> None:
-    second_rule = compose_rule("second-rule")
-    first_rule = compose_rule("first-rule")
+    second_rule = make_rule("second-rule")
+    first_rule = make_rule("first-rule")
     config = ComplianceConfig(
         repositories=(
             RepositoryConfig(repository="example/zeta"),
@@ -107,7 +107,7 @@ def test_report_preserves_registry_and_configuration_order() -> None:
         RuleResult("example/alpha", first_rule, ResultStatus.PASS, "ok"),
     )
 
-    report = compose_report(
+    report = generate_report(
         config,
         (second_rule, first_rule),
         results,
@@ -127,7 +127,7 @@ def test_report_preserves_registry_and_configuration_order() -> None:
 
 
 def test_empty_configuration_still_produces_complete_report() -> None:
-    report = compose_report(
+    report = generate_report(
         ComplianceConfig(repositories=()),
         (),
         (),

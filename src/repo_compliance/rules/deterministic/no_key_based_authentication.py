@@ -61,12 +61,12 @@ KEY_MARKER = re.compile(
 )
 
 
-def get_evaluation(context: RuleContext) -> RuleEvaluation:
+def check(context: RuleContext) -> RuleEvaluation:
     """Scan safe UTF-8 archive entries for key authentication markers."""
     if context.archive_path is None:
         raise RuntimeError("Rule requires a repository archive.")
 
-    evidence, total = _get_archive_evidence(context.archive_path)
+    evidence, total = _scan_archive(context.archive_path)
     if total == 0:
         return RuleEvaluation(True, "No key-based authentication markers found.")
 
@@ -78,49 +78,49 @@ def get_evaluation(context: RuleContext) -> RuleEvaluation:
     )
 
 
-def _get_archive_evidence(archive_path: Path) -> tuple[tuple[Evidence, ...], int]:
+def _scan_archive(archive_path: Path) -> tuple[tuple[Evidence, ...], int]:
     try:
         archive = ZipFile(archive_path)
     except (BadZipFile, LargeZipFile, OSError) as error:
         raise ArchiveError("Could not inspect the repository archive.") from error
     with archive:
-        return _get_entries_evidence(archive)
+        return _scan_entries(archive)
 
 
-def _get_entries_evidence(archive: ZipFile) -> tuple[tuple[Evidence, ...], int]:
+def _scan_entries(archive: ZipFile) -> tuple[tuple[Evidence, ...], int]:
     evidence: list[Evidence] = []
     total = 0
     for entry in archive.infolist():
-        entry_evidence = _get_entry_evidence(archive, entry)
+        entry_evidence = _entry_evidence(archive, entry)
         total += len(entry_evidence)
         remaining = MAX_EVIDENCE - len(evidence)
         evidence.extend(entry_evidence[:remaining])
     return tuple(evidence), total
 
 
-def _get_entry_evidence(archive: ZipFile, entry: ZipInfo) -> tuple[Evidence, ...]:
-    path = _get_scannable_path(entry)
+def _entry_evidence(archive: ZipFile, entry: ZipInfo) -> tuple[Evidence, ...]:
+    path = _scannable_path(entry)
     if path is None:
         return ()
 
-    text = _get_entry_text(archive, entry)
+    text = _read_text(archive, entry)
     if text is None:
         return ()
 
     evidence: list[Evidence] = []
     for line_number, line in enumerate(text.splitlines(), start=1):
-        evidence.extend(_get_line_evidence(path, line_number, line))
+        evidence.extend(_line_evidence(path, line_number, line))
     return tuple(evidence)
 
 
-def _get_entry_text(archive: ZipFile, entry: ZipInfo) -> str | None:
+def _read_text(archive: ZipFile, entry: ZipInfo) -> str | None:
     try:
         content = archive.read(entry)
     except (BadZipFile, NotImplementedError, OSError, RuntimeError) as error:
         raise ArchiveError(
             "Could not read a file in the repository archive."
         ) from error
-    if _has_binary_content(content):
+    if _is_binary(content):
         return None
     try:
         return content.decode("utf-8")
@@ -128,21 +128,21 @@ def _get_entry_text(archive: ZipFile, entry: ZipInfo) -> str | None:
         return None
 
 
-def _has_binary_content(content: bytes) -> bool:
+def _is_binary(content: bytes) -> bool:
     return any(byte < 9 or 13 < byte < 32 for byte in content)
 
 
-def _get_line_evidence(
+def _line_evidence(
     path: PurePosixPath,
     line_number: int,
     line: str,
 ) -> tuple[Evidence, ...]:
     return tuple(
-        Evidence(str(path), line_number, marker) for marker in _get_line_markers(line)
+        Evidence(str(path), line_number, marker) for marker in _markers_in(line)
     )
 
 
-def _get_scannable_path(entry: ZipInfo) -> PurePosixPath | None:
+def _scannable_path(entry: ZipInfo) -> PurePosixPath | None:
     if entry.is_dir() or entry.file_size > MAX_FILE_BYTES:
         return None
 
@@ -157,7 +157,7 @@ def _get_scannable_path(entry: ZipInfo) -> PurePosixPath | None:
     return repository_path
 
 
-def _get_line_markers(line: str) -> tuple[str, ...]:
+def _markers_in(line: str) -> tuple[str, ...]:
     markers: list[str] = []
     for match in KEY_MARKER.finditer(line):
         group = match.lastgroup
@@ -176,6 +176,6 @@ RULE = RuleDefinition(
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.MEDIUM,
     documentation_url="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github",
-    get_evaluation=get_evaluation,
+    check=check,
     requires_archive=True,
 )

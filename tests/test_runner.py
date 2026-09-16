@@ -13,15 +13,15 @@ from repo_compliance.domain import (
     RuleEvaluation,
 )
 from repo_compliance.errors import ArchiveError, GitHubError
-from repo_compliance.runner import get_compliance_results
+from repo_compliance.runner import run_checks
 
 from .fakes import FakeGitHub
 
 
-def compose_rule(
+def make_rule(
     rule_id: str,
     category: RuleCategory,
-    get_evaluation: RuleCheck,
+    check: RuleCheck,
     *,
     requires_archive: bool = False,
 ) -> RuleDefinition:
@@ -32,12 +32,12 @@ def compose_rule(
         category=category,
         confidence=Confidence.HIGH,
         documentation_url="https://example.com/rule",
-        get_evaluation=get_evaluation,
+        check=check,
         requires_archive=requires_archive,
     )
 
 
-def get_passing_evaluation(_context: RuleContext) -> RuleEvaluation:
+def passing_check(_context: RuleContext) -> RuleEvaluation:
     return RuleEvaluation(True, "passed")
 
 
@@ -47,19 +47,19 @@ def get_archive_evaluation(context: RuleContext) -> RuleEvaluation:
     return RuleEvaluation(True, "archive inspected")
 
 
-def get_file_evaluation(context: RuleContext) -> RuleEvaluation:
-    passed = context.github.has_file(context.repository, "required.txt")
+def file_check(context: RuleContext) -> RuleEvaluation:
+    passed = context.github.file_exists(context.repository, "required.txt")
     return RuleEvaluation(passed, "file checked")
 
 
-def compose_config(*repositories: RepositoryConfig) -> ComplianceConfig:
+def config_for(*repositories: RepositoryConfig) -> ComplianceConfig:
     return ComplianceConfig(repositories=repositories)
 
 
 def test_fully_exempt_repository_skips_all_github_work() -> None:
     rules = (
-        compose_rule("first", RuleCategory.DETERMINISTIC, get_passing_evaluation),
-        compose_rule(
+        make_rule("first", RuleCategory.DETERMINISTIC, passing_check),
+        make_rule(
             "second",
             RuleCategory.DETERMINISTIC,
             get_archive_evaluation,
@@ -75,7 +75,7 @@ def test_fully_exempt_repository_skips_all_github_work() -> None:
     )
     github = FakeGitHub()
 
-    results = get_compliance_results(compose_config(repository), github, rules)
+    results = run_checks(config_for(repository), github, rules)
 
     assert [result.status for result in results] == [
         ResultStatus.EXEMPT,
@@ -87,8 +87,8 @@ def test_fully_exempt_repository_skips_all_github_work() -> None:
 
 def test_exemption_skips_only_its_check() -> None:
     rules = (
-        compose_rule("exempt-file", RuleCategory.DETERMINISTIC, get_file_evaluation),
-        compose_rule("active-file", RuleCategory.DETERMINISTIC, get_file_evaluation),
+        make_rule("exempt-file", RuleCategory.DETERMINISTIC, file_check),
+        make_rule("active-file", RuleCategory.DETERMINISTIC, file_check),
     )
     repository = RepositoryConfig(
         repository="example/service",
@@ -96,7 +96,7 @@ def test_exemption_skips_only_its_check() -> None:
     )
     github = FakeGitHub(files={"required.txt"})
 
-    results = get_compliance_results(compose_config(repository), github, rules)
+    results = run_checks(config_for(repository), github, rules)
 
     assert [result.status for result in results] == [
         ResultStatus.EXEMPT,
@@ -107,8 +107,8 @@ def test_exemption_skips_only_its_check() -> None:
 
 def test_preflight_failure_errors_active_rules_only() -> None:
     rules = (
-        compose_rule("exempt", RuleCategory.DETERMINISTIC, get_passing_evaluation),
-        compose_rule(
+        make_rule("exempt", RuleCategory.DETERMINISTIC, passing_check),
+        make_rule(
             "active",
             RuleCategory.DETERMINISTIC,
             get_archive_evaluation,
@@ -121,7 +121,7 @@ def test_preflight_failure_errors_active_rules_only() -> None:
     )
     github = FakeGitHub(preflight_error_repositories={"example/service"})
 
-    results = get_compliance_results(compose_config(repository), github, rules)
+    results = run_checks(config_for(repository), github, rules)
 
     assert [result.status for result in results] == [
         ResultStatus.EXEMPT,
@@ -133,13 +133,13 @@ def test_preflight_failure_errors_active_rules_only() -> None:
 
 def test_downloads_one_archive_for_multiple_archive_rules() -> None:
     rules = (
-        compose_rule(
+        make_rule(
             "archive-one",
             RuleCategory.DETERMINISTIC,
             get_archive_evaluation,
             requires_archive=True,
         ),
-        compose_rule(
+        make_rule(
             "archive-two",
             RuleCategory.DETERMINISTIC,
             get_archive_evaluation,
@@ -148,8 +148,8 @@ def test_downloads_one_archive_for_multiple_archive_rules() -> None:
     )
     github = FakeGitHub()
 
-    results = get_compliance_results(
-        compose_config(RepositoryConfig(repository="example/service")),
+    results = run_checks(
+        config_for(RepositoryConfig(repository="example/service")),
         github,
         rules,
     )
@@ -163,10 +163,8 @@ def test_downloads_one_archive_for_multiple_archive_rules() -> None:
 
 def test_archive_failure_only_errors_archive_rules() -> None:
     rules = (
-        compose_rule(
-            "deterministic", RuleCategory.DETERMINISTIC, get_passing_evaluation
-        ),
-        compose_rule(
+        make_rule("deterministic", RuleCategory.DETERMINISTIC, passing_check),
+        make_rule(
             "archive",
             RuleCategory.DETERMINISTIC,
             get_archive_evaluation,
@@ -175,8 +173,8 @@ def test_archive_failure_only_errors_archive_rules() -> None:
     )
     github = FakeGitHub(archive_error_repositories={"example/service"})
 
-    results = get_compliance_results(
-        compose_config(RepositoryConfig(repository="example/service")),
+    results = run_checks(
+        config_for(RepositoryConfig(repository="example/service")),
         github,
         rules,
     )
@@ -189,27 +187,25 @@ def test_archive_failure_only_errors_archive_rules() -> None:
 
 
 def test_expected_rule_error_does_not_stop_rules_or_repositories() -> None:
-    def get_conditional_evaluation(context: RuleContext) -> RuleEvaluation:
+    def sometimes_errors(context: RuleContext) -> RuleEvaluation:
         if context.repository == "example/first":
             raise GitHubError("API unavailable")
         return RuleEvaluation(True, "passed")
 
     rules = (
-        compose_rule(
+        make_rule(
             "sometimes-errors",
             RuleCategory.DETERMINISTIC,
-            get_conditional_evaluation,
+            sometimes_errors,
         ),
-        compose_rule(
-            "always-passes", RuleCategory.DETERMINISTIC, get_passing_evaluation
-        ),
+        make_rule("always-passes", RuleCategory.DETERMINISTIC, passing_check),
     )
-    config = compose_config(
+    config = config_for(
         RepositoryConfig(repository="example/first"),
         RepositoryConfig(repository="example/second"),
     )
 
-    results = get_compliance_results(config, FakeGitHub(), rules)
+    results = run_checks(config, FakeGitHub(), rules)
 
     assert [result.status for result in results] == [
         ResultStatus.ERROR,
@@ -226,18 +222,18 @@ def test_expected_rule_error_does_not_stop_rules_or_repositories() -> None:
 
 
 def test_archive_rule_error_becomes_result_data() -> None:
-    def get_failing_archive_evaluation(_context: RuleContext) -> RuleEvaluation:
+    def archive_error(_context: RuleContext) -> RuleEvaluation:
         raise ArchiveError("bad zip")
 
-    rule = compose_rule(
+    rule = make_rule(
         "archive",
         RuleCategory.DETERMINISTIC,
-        get_failing_archive_evaluation,
+        archive_error,
         requires_archive=True,
     )
 
-    results = get_compliance_results(
-        compose_config(RepositoryConfig(repository="example/service")),
+    results = run_checks(
+        config_for(RepositoryConfig(repository="example/service")),
         FakeGitHub(),
         (rule,),
     )
@@ -247,14 +243,14 @@ def test_archive_rule_error_becomes_result_data() -> None:
 
 
 def test_unexpected_rule_bug_remains_fatal() -> None:
-    def get_broken_evaluation(_context: RuleContext) -> RuleEvaluation:
+    def broken_check(_context: RuleContext) -> RuleEvaluation:
         raise RuntimeError("bug")
 
-    rule = compose_rule("broken", RuleCategory.DETERMINISTIC, get_broken_evaluation)
+    rule = make_rule("broken", RuleCategory.DETERMINISTIC, broken_check)
 
     with pytest.raises(RuntimeError, match="bug"):
-        get_compliance_results(
-            compose_config(RepositoryConfig(repository="example/service")),
+        run_checks(
+            config_for(RepositoryConfig(repository="example/service")),
             FakeGitHub(),
             (rule,),
         )
@@ -263,20 +259,20 @@ def test_unexpected_rule_bug_remains_fatal() -> None:
 def test_archive_path_is_temporary() -> None:
     observed_paths: list[Path] = []
 
-    def get_observed_archive_evaluation(context: RuleContext) -> RuleEvaluation:
+    def remember_archive(context: RuleContext) -> RuleEvaluation:
         assert context.archive_path is not None
         observed_paths.append(context.archive_path)
         return RuleEvaluation(True, "seen")
 
-    rule = compose_rule(
+    rule = make_rule(
         "archive",
         RuleCategory.DETERMINISTIC,
-        get_observed_archive_evaluation,
+        remember_archive,
         requires_archive=True,
     )
 
-    get_compliance_results(
-        compose_config(RepositoryConfig(repository="example/service")),
+    run_checks(
+        config_for(RepositoryConfig(repository="example/service")),
         FakeGitHub(),
         (rule,),
     )

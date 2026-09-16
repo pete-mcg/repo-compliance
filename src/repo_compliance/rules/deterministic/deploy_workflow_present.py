@@ -12,9 +12,9 @@ RULE_ID = "deploy-workflow-present"
 REQUIRED_PATH = ".github/workflows/deploy.yml"
 
 
-def get_evaluation(context: RuleContext) -> RuleEvaluation:
+def check(context: RuleContext) -> RuleEvaluation:
     """Pass when the exact deployment workflow path exists on main."""
-    if context.github.has_file(context.repository, REQUIRED_PATH):
+    if context.github.file_exists(context.repository, REQUIRED_PATH):
         return RuleEvaluation(True, f"{REQUIRED_PATH} exists on main.")
     return RuleEvaluation(False, f"{REQUIRED_PATH} is missing from main.")
 
@@ -26,5 +26,5 @@ RULE = RuleDefinition(
     category=RuleCategory.DETERMINISTIC,
     confidence=Confidence.HIGH,
     documentation_url="https://docs.github.com/en/actions/writing-workflows",
-    get_evaluation=get_evaluation,
+    check=check,
 )

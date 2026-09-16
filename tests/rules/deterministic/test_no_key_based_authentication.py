@@ -8,22 +8,22 @@ from repo_compliance.errors import ArchiveError
 from repo_compliance.rules.deterministic.no_key_based_authentication import (
     MAX_EVIDENCE,
     MAX_FILE_BYTES,
-    get_evaluation,
+    check,
 )
 from tests.fakes import FakeGitHub
 
 REPOSITORY = "example/service"
 
 
-def set_archive(path: Path, entries: dict[str, bytes]) -> Path:
+def write_archive(path: Path, entries: dict[str, bytes]) -> Path:
     with ZipFile(path, "w", compression=ZIP_DEFLATED) as archive:
         for name, content in entries.items():
             archive.writestr(name, content)
     return path
 
 
-def get_rule_evaluation(archive_path: Path) -> RuleEvaluation:
-    return get_evaluation(RuleContext(REPOSITORY, FakeGitHub(), archive_path))
+def run_check(archive_path: Path) -> RuleEvaluation:
+    return check(RuleContext(REPOSITORY, FakeGitHub(), archive_path))
 
 
 def test_detects_all_markers_case_separators_and_camel_case(tmp_path: Path) -> None:
@@ -45,12 +45,12 @@ def test_detects_all_markers_case_separators_and_camel_case(tmp_path: Path) -> N
         "shared_access_key_name=value",
         "sharedAccessKeyName=value",
     )
-    archive_path = set_archive(
+    archive_path = write_archive(
         tmp_path / "repository.zip",
         {"service-root/src/settings.py": "\n".join(lines).encode()},
     )
 
-    result = get_rule_evaluation(archive_path)
+    result = run_check(archive_path)
 
     assert not result.passed
     assert len(result.evidence) == len(lines)
@@ -64,7 +64,7 @@ def test_skips_dependency_build_binary_non_utf8_and_oversized_files(
     tmp_path: Path,
 ) -> None:
     marker = b"apiKey=never-report-this"
-    archive_path = set_archive(
+    archive_path = write_archive(
         tmp_path / "repository.zip",
         {
             "root/src/clean.py": b"print('clean')",
@@ -77,7 +77,7 @@ def test_skips_dependency_build_binary_non_utf8_and_oversized_files(
         },
     )
 
-    result = get_rule_evaluation(archive_path)
+    result = run_check(archive_path)
 
     assert result.passed
     assert result.evidence == ()
@@ -85,12 +85,12 @@ def test_skips_dependency_build_binary_non_utf8_and_oversized_files(
 
 def test_scans_file_at_exact_size_limit(tmp_path: Path) -> None:
     content = b"apiKey=value" + b"x" * (MAX_FILE_BYTES - len(b"apiKey=value"))
-    archive_path = set_archive(
+    archive_path = write_archive(
         tmp_path / "repository.zip",
         {"root/settings.txt": content},
     )
 
-    result = get_rule_evaluation(archive_path)
+    result = run_check(archive_path)
 
     assert not result.passed
     assert len(result.evidence) == 1
@@ -101,12 +101,12 @@ def test_caps_evidence_and_reports_omitted_count_without_secret_content(
 ) -> None:
     secret = "DO_NOT_INCLUDE_THIS_SECRET"
     source = "\n".join(f'apiKey="{secret}-{index}"' for index in range(25))
-    archive_path = set_archive(
+    archive_path = write_archive(
         tmp_path / "repository.zip",
         {"root/src/config.py": source.encode()},
     )
 
-    result = get_rule_evaluation(archive_path)
+    result = run_check(archive_path)
 
     assert len(result.evidence) == MAX_EVIDENCE
     assert result.omitted_evidence_count == 5
@@ -115,23 +115,23 @@ def test_caps_evidence_and_reports_omitted_count_without_secret_content(
 
 
 def test_reports_each_distinct_marker_once_per_line(tmp_path: Path) -> None:
-    archive_path = set_archive(
+    archive_path = write_archive(
         tmp_path / "repository.zip",
         {"root/config.txt": b"apiKey=x; api_key=y; secretKey=z"},
     )
 
-    result = get_rule_evaluation(archive_path)
+    result = run_check(archive_path)
 
     assert [item.marker for item in result.evidence] == ["api-key", "secret-key"]
 
 
 def test_clean_archive_passes(tmp_path: Path) -> None:
-    archive_path = set_archive(
+    archive_path = write_archive(
         tmp_path / "repository.zip",
         {"root/src/app.py": b"token = credential_provider.get_token()"},
     )
 
-    result = get_rule_evaluation(archive_path)
+    result = run_check(archive_path)
 
     assert result.passed
     assert "No key-based" in result.message
@@ -139,7 +139,7 @@ def test_clean_archive_passes(tmp_path: Path) -> None:
 
 def test_missing_archive_context_is_programming_error() -> None:
     with pytest.raises(RuntimeError, match="requires a repository archive"):
-        get_evaluation(RuleContext(REPOSITORY, FakeGitHub()))
+        check(RuleContext(REPOSITORY, FakeGitHub()))
 
 
 def test_invalid_zip_is_an_archive_error(tmp_path: Path) -> None:
@@ -147,4 +147,4 @@ def test_invalid_zip_is_an_archive_error(tmp_path: Path) -> None:
     archive_path.write_bytes(b"not a zip")
 
     with pytest.raises(ArchiveError, match="Could not inspect"):
-        get_rule_evaluation(archive_path)
+        run_check(archive_path)

@@ -2,27 +2,27 @@ from pathlib import Path
 
 import pytest
 
-from repo_compliance.config import get_config
+from repo_compliance.config import load_config
 from repo_compliance.errors import ConfigError
 
 RULE_IDS = frozenset({"codeowners-present", "deploy-workflow-present"})
 
 
-def set_config(path: Path, source: str) -> Path:
+def write_config(path: Path, source: str) -> Path:
     path.write_text(source, encoding="utf-8")
     return path
 
 
 def test_loads_empty_configuration(tmp_path: Path) -> None:
-    path = set_config(tmp_path / "repositories.yml", "repositories: []\n")
+    path = write_config(tmp_path / "repositories.yml", "repositories: []\n")
 
-    config = get_config(path, RULE_IDS)
+    config = load_config(path, RULE_IDS)
 
     assert config.repositories == ()
 
 
 def test_loads_populated_configuration_and_strips_reasons(tmp_path: Path) -> None:
-    path = set_config(
+    path = write_config(
         tmp_path / "repositories.yml",
         """
 repositories:
@@ -33,7 +33,7 @@ repositories:
 """,
     )
 
-    config = get_config(path, RULE_IDS)
+    config = load_config(path, RULE_IDS)
 
     assert config.repositories[0].repository == "example/service-api"
     assert config.repositories[0].exemptions[0].reason == "No deployment."
@@ -54,29 +54,29 @@ def test_rejects_malformed_repository_names(
     tmp_path: Path,
     repository: str,
 ) -> None:
-    path = set_config(
+    path = write_config(
         tmp_path / "repositories.yml",
         f"repositories:\n  - repository: {repository}\n",
     )
 
     with pytest.raises(ConfigError, match="invalid"):
-        get_config(path, RULE_IDS)
+        load_config(path, RULE_IDS)
 
 
 def test_rejects_malformed_yaml(tmp_path: Path) -> None:
-    path = set_config(tmp_path / "repositories.yml", "repositories: [\n")
+    path = write_config(tmp_path / "repositories.yml", "repositories: [\n")
 
     with pytest.raises(ConfigError, match="not valid YAML"):
-        get_config(path, RULE_IDS)
+        load_config(path, RULE_IDS)
 
 
 def test_rejects_missing_configuration_file(tmp_path: Path) -> None:
     with pytest.raises(ConfigError, match="Could not read"):
-        get_config(tmp_path / "missing.yml", RULE_IDS)
+        load_config(tmp_path / "missing.yml", RULE_IDS)
 
 
 def test_rejects_duplicate_repositories_case_insensitively(tmp_path: Path) -> None:
-    path = set_config(
+    path = write_config(
         tmp_path / "repositories.yml",
         """
 repositories:
@@ -86,11 +86,11 @@ repositories:
     )
 
     with pytest.raises(ConfigError, match="duplicate repositories"):
-        get_config(path, RULE_IDS)
+        load_config(path, RULE_IDS)
 
 
 def test_rejects_duplicate_exemptions(tmp_path: Path) -> None:
-    path = set_config(
+    path = write_config(
         tmp_path / "repositories.yml",
         """
 repositories:
@@ -104,11 +104,11 @@ repositories:
     )
 
     with pytest.raises(ConfigError, match="duplicate exemptions"):
-        get_config(path, RULE_IDS)
+        load_config(path, RULE_IDS)
 
 
 def test_rejects_unknown_rule_id(tmp_path: Path) -> None:
-    path = set_config(
+    path = write_config(
         tmp_path / "repositories.yml",
         """
 repositories:
@@ -120,11 +120,11 @@ repositories:
     )
 
     with pytest.raises(ConfigError, match="unknown rule ID 'unknown-rule'"):
-        get_config(path, RULE_IDS)
+        load_config(path, RULE_IDS)
 
 
 def test_rejects_blank_exemption_reason(tmp_path: Path) -> None:
-    path = set_config(
+    path = write_config(
         tmp_path / "repositories.yml",
         """
 repositories:
@@ -136,14 +136,14 @@ repositories:
     )
 
     with pytest.raises(ConfigError, match="invalid"):
-        get_config(path, RULE_IDS)
+        load_config(path, RULE_IDS)
 
 
 def test_rejects_unknown_configuration_fields(tmp_path: Path) -> None:
-    path = set_config(
+    path = write_config(
         tmp_path / "repositories.yml",
         "repositories: []\nunexpected: true\n",
     )
 
     with pytest.raises(ConfigError, match="invalid"):
-        get_config(path, RULE_IDS)
+        load_config(path, RULE_IDS)
