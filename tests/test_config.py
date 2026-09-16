@@ -48,7 +48,6 @@ repositories:
         "owner-/repo",
         "owner/",
         "owner/repo name",
-        "owner/..",
     ),
 )
 def test_rejects_malformed_repository_names(

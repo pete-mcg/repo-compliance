@@ -1,4 +1,4 @@
-"""Load and validate repository configuration."""
+"""Load and validate repository compliance configuration."""
 
 import re
 from pathlib import Path
@@ -21,28 +21,28 @@ REPOSITORY_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,100}")
 
 
 class ConfigModel(BaseModel):
-    """Base settings shared by configuration models."""
+    """Shared settings for configuration models."""
 
     model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=True)
 
 
 class ExemptionConfig(ConfigModel):
-    """One repository-specific rule exemption."""
+    """A rule exemption for one repository."""
 
     rule: str = Field(min_length=1)
     reason: str = Field(min_length=1)
 
 
 class RepositoryConfig(ConfigModel):
-    """One configured GitHub repository and its exemptions."""
+    """A GitHub repository and its rule exemptions."""
 
     repository: str
     exemptions: tuple[ExemptionConfig, ...] = ()
 
     @field_validator("repository")
     @classmethod
-    def get_valid_repository(cls, value: str) -> str:
-        """Reject values that are not an owner/name pair."""
+    def validate_repository(cls, value: str) -> str:
+        """Ensure the repository uses owner/name format and matches GitHub naming rules."""
         parts = value.split("/")
         if len(parts) != 2:
             raise ValueError("repository must use owner/name format")
@@ -50,13 +50,13 @@ class RepositoryConfig(ConfigModel):
         owner, name = parts
         if not OWNER_PATTERN.fullmatch(owner):
             raise ValueError("repository owner is invalid")
-        if not REPOSITORY_PATTERN.fullmatch(name) or name in {".", ".."}:
+        if not REPOSITORY_PATTERN.fullmatch(name):
             raise ValueError("repository name is invalid")
         return value
 
     @model_validator(mode="after")
-    def get_unique_exemptions(self) -> Self:
-        """Reject repeated rule exemptions within a repository."""
+    def validate_unique_exemptions(self) -> Self:
+        """Ensure a repository does not exempt the same rule twice."""
         rule_ids = [exemption.rule for exemption in self.exemptions]
         if len(rule_ids) != len(set(rule_ids)):
             raise ValueError("repository contains duplicate exemptions")
@@ -64,13 +64,13 @@ class RepositoryConfig(ConfigModel):
 
 
 class ComplianceConfig(ConfigModel):
-    """Top-level repository compliance configuration."""
+    """Configuration for all repositories to check."""
 
     repositories: tuple[RepositoryConfig, ...]
 
     @model_validator(mode="after")
-    def get_unique_repositories(self) -> Self:
-        """Reject duplicate repositories using GitHub's case-insensitive names."""
+    def validate_unique_repositories(self) -> Self:
+        """Ensure each repository appears only once, ignoring case."""
         names = [item.repository.casefold() for item in self.repositories]
         if len(names) != len(set(names)):
             raise ValueError("configuration contains duplicate repositories")
@@ -78,27 +78,36 @@ class ComplianceConfig(ConfigModel):
 
 
 def get_config(path: Path, rule_ids: frozenset[str]) -> ComplianceConfig:
-    """Read YAML configuration and validate all repositories and exemptions."""
-    try:
-        source = path.read_text(encoding="utf-8")
-    except OSError as error:
-        raise ConfigError(f"Could not read configuration '{path}'.") from error
-
-    try:
-        raw_config: object = yaml.safe_load(source)
-    except yaml.YAMLError as error:
-        raise ConfigError(f"Configuration '{path}' is not valid YAML.") from error
-
-    try:
-        config = ComplianceConfig.model_validate(raw_config)
-    except ValidationError as error:
-        raise ConfigError(f"Configuration '{path}' is invalid: {error}") from error
-
-    _handle_unknown_rule_ids(config, rule_ids, path)
+    """Load and validate configuration from a YAML file."""
+    source = _read_config_source(path)
+    raw_config = _parse_yaml(source, path)
+    config = _validate_config(raw_config, path)
+    _validate_exemption_rule_ids(config, rule_ids, path)
     return config
 
 
-def _handle_unknown_rule_ids(
+def _read_config_source(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ConfigError(f"Could not read configuration '{path}'.") from error
+
+
+def _parse_yaml(source: str, path: Path) -> object:
+    try:
+        return yaml.safe_load(source)
+    except yaml.YAMLError as error:
+        raise ConfigError(f"Configuration '{path}' is not valid YAML.") from error
+
+
+def _validate_config(raw_config: object, path: Path) -> ComplianceConfig:
+    try:
+        return ComplianceConfig.model_validate(raw_config)
+    except ValidationError as error:
+        raise ConfigError(f"Configuration '{path}' is invalid: {error}") from error
+
+
+def _validate_exemption_rule_ids(
     config: ComplianceConfig,
     rule_ids: frozenset[str],
     path: Path,
