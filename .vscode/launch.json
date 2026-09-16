@@ -6,9 +6,22 @@
             "type": "debugpy",
             "request": "launch",
             "module": "repo_compliance",
+            "python": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "stopOnEntry": true,
+            "env": {
+                "GITHUB_TOKEN": "${input:githubToken}"
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "githubToken",
+            "type": "promptString",
+            "description": "GitHub token",
+            "password": true
         }
     ]
 }
