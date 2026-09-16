@@ -77,14 +77,13 @@ def _rule_catalogue(rules: Sequence[RuleDefinition]) -> str:
     lines = [
         "## Rules",
         "",
-        "| Rule | Category | Confidence | Standard |",
-        "| --- | --- | --- | --- |",
+        "| Rule | Documentation | Category | Confidence | Standard |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for rule in rules:
-        linked_title = f"[{_table_text(rule.title)}]({rule.documentation_url})"
         lines.append(
-            f"| `{rule.id}` {linked_title} | `{rule.category.value}` | "
-            f"{rule.confidence.value.title()} | "
+            f"| `{rule.id}` | [Click here]({rule.documentation_url}) | "
+            f"`{rule.category.value}` | {rule.confidence.value.title()} | "
             f"{_table_text(rule.description)} |"
         )
     return "\n".join(lines)

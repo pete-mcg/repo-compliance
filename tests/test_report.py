@@ -84,7 +84,10 @@ def test_report_contains_counts_tables_links_details_and_utc_timestamp() -> None
     assert "- Exempt: 1" in report
     assert "- Error: 1" in report
     assert "[example/first](https://github.com/example/first)" in report
-    assert "`agentic` | `agentic` | Medium" in report
+    assert (
+        "`agentic` | [Click here](https://example.com/agentic) | `agentic` | Medium"
+        in report
+    )
     assert "bad \\| marker found \\[link\\] \\*bold\\* \\<tag\\>" in report
     assert "``src/config`file.py:7`` — `api-key`" in report
     assert "3 additional location(s) omitted" in report
