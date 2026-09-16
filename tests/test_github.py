@@ -24,27 +24,6 @@ def test_sends_authentication_version_and_timeout_headers() -> None:
         client.ensure_repository(REPOSITORY)
 
 
-def test_reads_rule_and_classic_protection_responses() -> None:
-    def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.path.endswith("/rules/branches/main"):
-            assert request.url.params["per_page"] == "100"
-            return httpx.Response(200, json=[{"type": "deletion"}, {"type": "update"}])
-        return httpx.Response(200, json={"allow_deletions": {"enabled": False}})
-
-    with GitHubClient("token", transport=httpx.MockTransport(handler)) as client:
-        assert client.active_main_rule_types(REPOSITORY) == frozenset(
-            {"deletion", "update"}
-        )
-        assert client.classic_allow_deletions(REPOSITORY) is False
-
-
-def test_classic_protection_404_means_unprotected() -> None:
-    transport = httpx.MockTransport(lambda _request: httpx.Response(404))
-
-    with GitHubClient("token", transport=transport) as client:
-        assert client.classic_allow_deletions(REPOSITORY) is None
-
-
 def test_content_404_means_missing_file() -> None:
     transport = httpx.MockTransport(lambda _request: httpx.Response(404))
 
@@ -72,19 +51,32 @@ def test_content_requires_exact_file_response_and_main_ref() -> None:
     ]
 
 
-@pytest.mark.parametrize(
-    ("payload", "expected"),
-    (([], False), ([{"number": 42}], True)),
-)
-def test_dependabot_critical_alert_filter(payload: object, expected: bool) -> None:
+def test_get_json_sends_parameters_and_decodes_response() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.params["state"] == "open"
-        assert request.url.params["severity"] == "critical"
-        assert request.url.params["per_page"] == "1"
-        return httpx.Response(200, json=payload)
+        return httpx.Response(200, json={"answer": 42})
 
     with GitHubClient("token", transport=httpx.MockTransport(handler)) as client:
-        assert client.has_critical_dependabot_alerts(REPOSITORY) is expected
+        assert client.get_json("/example", params={"state": "open"}) == {"answer": 42}
+
+
+def test_get_json_wraps_invalid_json() -> None:
+    transport = httpx.MockTransport(
+        lambda _request: httpx.Response(200, content=b"not-json")
+    )
+
+    with (
+        GitHubClient("token", transport=transport) as client,
+        pytest.raises(GitHubError, match="invalid JSON"),
+    ):
+        client.get_json("/example")
+
+
+def test_get_json_can_accept_a_missing_resource() -> None:
+    transport = httpx.MockTransport(lambda _request: httpx.Response(404))
+
+    with GitHubClient("token", transport=transport) as client:
+        assert client.get_json("/example", missing_ok=True) is None
 
 
 def test_archive_download_follows_redirect_and_streams_file(tmp_path: Path) -> None:
@@ -136,10 +128,7 @@ def test_http_error_is_wrapped_without_response_body() -> None:
     ("method", "payload"),
     (
         ("repository", {}),
-        ("rules", [{}]),
-        ("protection", {"allow_deletions": {}}),
         ("content", {"path": ".github/CODEOWNERS"}),
-        ("alerts", [{}]),
     ),
 )
 def test_invalid_api_responses_are_wrapped(method: str, payload: object) -> None:
@@ -178,11 +167,5 @@ def test_archive_output_failure_is_wrapped(tmp_path: Path) -> None:
 def call_client_method(client: GitHubClient, method: str) -> None:
     if method == "repository":
         client.ensure_repository(REPOSITORY)
-    elif method == "rules":
-        client.active_main_rule_types(REPOSITORY)
-    elif method == "protection":
-        client.classic_allow_deletions(REPOSITORY)
-    elif method == "content":
-        client.file_exists(REPOSITORY, ".github/CODEOWNERS")
     else:
-        client.has_critical_dependabot_alerts(REPOSITORY)
+        client.file_exists(REPOSITORY, ".github/CODEOWNERS")

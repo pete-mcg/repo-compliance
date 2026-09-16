@@ -10,21 +10,15 @@ from pydantic import TypeAdapter, ValidationError
 
 from repo_compliance.errors import GitHubError
 from repo_compliance.github_models import (
-    GitHubBranchProtection,
     GitHubContent,
-    GitHubDependabotAlert,
     GitHubRepository,
-    GitHubRule,
 )
 
 API_VERSION = "2026-03-10"
 DEFAULT_TIMEOUT_SECONDS = 30.0
 
 REPOSITORY_ADAPTER = TypeAdapter(GitHubRepository)
-RULES_ADAPTER = TypeAdapter(tuple[GitHubRule, ...])
-PROTECTION_ADAPTER = TypeAdapter(GitHubBranchProtection)
 CONTENT_ADAPTER = TypeAdapter(GitHubContent)
-ALERTS_ADAPTER = TypeAdapter(tuple[GitHubDependabotAlert, ...])
 
 
 class GitHubClient:
@@ -71,23 +65,6 @@ class GitHubClient:
         response = self._get(resource)
         _validate(response, REPOSITORY_ADAPTER, resource)
 
-    def active_main_rule_types(self, repository: str) -> frozenset[str]:
-        """Return active ruleset rule types applying to main."""
-        resource = f"/repos/{repository}/rules/branches/main"
-        response = self._get(resource, params={"per_page": 100})
-        rules = _validate(response, RULES_ADAPTER, resource)
-        return frozenset(rule.type for rule in rules)
-
-    def classic_allow_deletions(self, repository: str) -> bool | None:
-        """Return classic deletion setting, or None when main is unprotected."""
-        resource = f"/repos/{repository}/branches/main/protection"
-        response = self._get(resource, missing_ok=True)
-        if response is None:
-            return None
-
-        protection = _validate(response, PROTECTION_ADAPTER, resource)
-        return protection.allow_deletions.enabled
-
     def file_exists(self, repository: str, path: str) -> bool:
         """Return whether an exact file exists on main."""
         resource = f"/repos/{repository}/contents/{path}"
@@ -98,15 +75,23 @@ class GitHubClient:
         content = _validate(response, CONTENT_ADAPTER, resource)
         return content.path == path and content.type == "file"
 
-    def has_critical_dependabot_alerts(self, repository: str) -> bool:
-        """Return whether any open Critical Dependabot alert exists."""
-        resource = f"/repos/{repository}/dependabot/alerts"
-        response = self._get(
-            resource,
-            params={"state": "open", "severity": "critical", "per_page": 1},
-        )
-        alerts = _validate(response, ALERTS_ADAPTER, resource)
-        return bool(alerts)
+    def get_json(
+        self,
+        resource: str,
+        *,
+        params: dict[str, str | int] | None = None,
+        missing_ok: bool = False,
+    ) -> object | None:
+        """Return decoded JSON, optionally returning None when it is missing."""
+        response = self._get(resource, params=params, missing_ok=missing_ok)
+        if response is None:
+            return None
+        try:
+            return response.json()
+        except ValueError as error:
+            raise GitHubError(
+                f"GitHub returned invalid JSON for '{resource}'."
+            ) from error
 
     def download_main_archive(self, repository: str, destination: Path) -> Path:
         """Stream a main branch ZIP archive to destination and return its path."""

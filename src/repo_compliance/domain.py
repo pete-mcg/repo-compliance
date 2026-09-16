@@ -37,17 +37,17 @@ class GitHubApi(Protocol):
     def ensure_repository(self, repository: str) -> None:
         """Ensure the repository is accessible and has valid API data."""
 
-    def active_main_rule_types(self, repository: str) -> frozenset[str]:
-        """Return active ruleset rule types for the main branch."""
-
-    def classic_allow_deletions(self, repository: str) -> bool | None:
-        """Return classic branch deletion setting, or None if unprotected."""
-
     def file_exists(self, repository: str, path: str) -> bool:
         """Return whether an exact file exists on the main branch."""
 
-    def has_critical_dependabot_alerts(self, repository: str) -> bool:
-        """Return whether a repository has any open Critical alert."""
+    def get_json(
+        self,
+        resource: str,
+        *,
+        params: dict[str, str | int] | None = None,
+        missing_ok: bool = False,
+    ) -> object | None:
+        """Return decoded JSON, optionally returning None when it is missing."""
 
     def download_main_archive(self, repository: str, destination: Path) -> Path:
         """Stream the main branch ZIP archive to a file and return its path."""

@@ -6,36 +6,36 @@ from repo_compliance.errors import GitHubError
 
 @dataclass
 class FakeGitHub:
-    rule_types: frozenset[str] = frozenset()
-    allow_deletions: bool | None = None
     files: set[str] = field(default_factory=set)
-    critical_alerts: bool = False
+    json_responses: dict[str, object | None] = field(default_factory=dict)
     archive_bytes: bytes = b"archive"
     preflight_error_repositories: set[str] = field(default_factory=set)
     archive_error_repositories: set[str] = field(default_factory=set)
     preflight_calls: list[str] = field(default_factory=list)
     archive_calls: list[str] = field(default_factory=list)
     file_calls: list[tuple[str, str]] = field(default_factory=list)
-    classic_calls: int = 0
+    json_calls: list[tuple[str, dict[str, str | int] | None, bool]] = field(
+        default_factory=list
+    )
 
     def ensure_repository(self, repository: str) -> None:
         self.preflight_calls.append(repository)
         if repository in self.preflight_error_repositories:
             raise GitHubError("repository is unavailable")
 
-    def active_main_rule_types(self, repository: str) -> frozenset[str]:
-        return self.rule_types
-
-    def classic_allow_deletions(self, repository: str) -> bool | None:
-        self.classic_calls += 1
-        return self.allow_deletions
-
     def file_exists(self, repository: str, path: str) -> bool:
         self.file_calls.append((repository, path))
         return path in self.files
 
-    def has_critical_dependabot_alerts(self, repository: str) -> bool:
-        return self.critical_alerts
+    def get_json(
+        self,
+        resource: str,
+        *,
+        params: dict[str, str | int] | None = None,
+        missing_ok: bool = False,
+    ) -> object | None:
+        self.json_calls.append((resource, params, missing_ok))
+        return self.json_responses.get(resource)
 
     def download_main_archive(self, repository: str, destination: Path) -> Path:
         self.archive_calls.append(repository)
