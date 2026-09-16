@@ -18,11 +18,10 @@ class FakeGitHub:
     file_calls: list[tuple[str, str]] = field(default_factory=list)
     classic_calls: int = 0
 
-    def ensure_main_branch(self, repository: str) -> str:
+    def ensure_repository(self, repository: str) -> None:
         self.preflight_calls.append(repository)
         if repository in self.preflight_error_repositories:
-            raise GitHubError("main is unavailable")
-        return "main"
+            raise GitHubError("repository is unavailable")
 
     def active_main_rule_types(self, repository: str) -> frozenset[str]:
         return self.rule_types

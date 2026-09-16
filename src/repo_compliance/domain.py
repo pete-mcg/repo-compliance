@@ -34,8 +34,8 @@ class ResultStatus(StrEnum):
 class GitHubApi(Protocol):
     """GitHub operations available to rules and the runner."""
 
-    def ensure_main_branch(self, repository: str) -> str:
-        """Return the accessible main branch name."""
+    def ensure_repository(self, repository: str) -> None:
+        """Ensure the repository is accessible and has valid API data."""
 
     def active_main_rule_types(self, repository: str) -> frozenset[str]:
         """Return active ruleset rule types for the main branch."""

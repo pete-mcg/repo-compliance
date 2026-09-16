@@ -18,10 +18,10 @@ def test_sends_authentication_version_and_timeout_headers() -> None:
         timeout = request.extensions["timeout"]
         assert isinstance(timeout, dict)
         assert timeout["read"] == DEFAULT_TIMEOUT_SECONDS
-        return httpx.Response(200, json={"name": "main"})
+        return httpx.Response(200, json={"id": 42})
 
     with GitHubClient("test-token", transport=httpx.MockTransport(handler)) as client:
-        client.ensure_main_branch(REPOSITORY)
+        client.ensure_repository(REPOSITORY)
 
 
 def test_reads_rule_and_classic_protection_responses() -> None:
@@ -115,7 +115,7 @@ def test_timeout_is_wrapped_as_github_error() -> None:
         GitHubClient("token", transport=httpx.MockTransport(handler)) as client,
         pytest.raises(GitHubError, match="ReadTimeout"),
     ):
-        client.ensure_main_branch(REPOSITORY)
+        client.ensure_repository(REPOSITORY)
 
 
 def test_http_error_is_wrapped_without_response_body() -> None:
@@ -127,7 +127,7 @@ def test_http_error_is_wrapped_without_response_body() -> None:
         GitHubClient("token", transport=transport) as client,
         pytest.raises(GitHubError, match="HTTP 500") as captured,
     ):
-        client.ensure_main_branch(REPOSITORY)
+        client.ensure_repository(REPOSITORY)
 
     assert "sensitive response" not in str(captured.value)
 
@@ -135,7 +135,7 @@ def test_http_error_is_wrapped_without_response_body() -> None:
 @pytest.mark.parametrize(
     ("method", "payload"),
     (
-        ("branch", {}),
+        ("repository", {}),
         ("rules", [{}]),
         ("protection", {"allow_deletions": {}}),
         ("content", {"path": ".github/CODEOWNERS"}),
@@ -152,16 +152,15 @@ def test_invalid_api_responses_are_wrapped(method: str, payload: object) -> None
         call_client_method(client, method)
 
 
-def test_wrong_preflight_branch_is_an_error() -> None:
+def test_preflight_accepts_a_repository_regardless_of_default_branch() -> None:
     transport = httpx.MockTransport(
-        lambda _request: httpx.Response(200, json={"name": "develop"})
+        lambda _request: httpx.Response(
+            200, json={"id": 42, "default_branch": "develop"}
+        )
     )
 
-    with (
-        GitHubClient("token", transport=transport) as client,
-        pytest.raises(GitHubError, match="wrong branch"),
-    ):
-        client.ensure_main_branch(REPOSITORY)
+    with GitHubClient("token", transport=transport) as client:
+        client.ensure_repository(REPOSITORY)
 
 
 def test_archive_output_failure_is_wrapped(tmp_path: Path) -> None:
@@ -177,8 +176,8 @@ def test_archive_output_failure_is_wrapped(tmp_path: Path) -> None:
 
 
 def call_client_method(client: GitHubClient, method: str) -> None:
-    if method == "branch":
-        client.ensure_main_branch(REPOSITORY)
+    if method == "repository":
+        client.ensure_repository(REPOSITORY)
     elif method == "rules":
         client.active_main_rule_types(REPOSITORY)
     elif method == "protection":

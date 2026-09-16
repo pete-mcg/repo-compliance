@@ -10,17 +10,17 @@ from pydantic import TypeAdapter, ValidationError
 
 from repo_compliance.errors import GitHubError
 from repo_compliance.github_models import (
-    GitHubBranch,
     GitHubBranchProtection,
     GitHubContent,
     GitHubDependabotAlert,
+    GitHubRepository,
     GitHubRule,
 )
 
 API_VERSION = "2026-03-10"
 DEFAULT_TIMEOUT_SECONDS = 30.0
 
-BRANCH_ADAPTER = TypeAdapter(GitHubBranch)
+REPOSITORY_ADAPTER = TypeAdapter(GitHubRepository)
 RULES_ADAPTER = TypeAdapter(tuple[GitHubRule, ...])
 PROTECTION_ADAPTER = TypeAdapter(GitHubBranchProtection)
 CONTENT_ADAPTER = TypeAdapter(GitHubContent)
@@ -65,14 +65,11 @@ class GitHubClient:
         """Close network resources when leaving a context manager."""
         self._client.close()
 
-    def ensure_main_branch(self, repository: str) -> str:
-        """Return the accessible main branch name."""
-        resource = f"/repos/{repository}/branches/main"
+    def ensure_repository(self, repository: str) -> None:
+        """Ensure the repository is accessible and has valid API data."""
+        resource = f"/repos/{repository}"
         response = self._get(resource)
-        branch = _validate(response, BRANCH_ADAPTER, resource)
-        if branch.name != "main":
-            raise GitHubError(f"GitHub returned the wrong branch for '{repository}'.")
-        return branch.name
+        _validate(response, REPOSITORY_ADAPTER, resource)
 
     def active_main_rule_types(self, repository: str) -> frozenset[str]:
         """Return active ruleset rule types applying to main."""

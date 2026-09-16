@@ -50,7 +50,7 @@ def _run_repository(
 
 def _preflight(repository: str, github: GitHubApi) -> str | None:
     try:
-        github.ensure_main_branch(repository)
+        github.ensure_repository(repository)
     except GitHubError as error:
         return str(error)
     return None

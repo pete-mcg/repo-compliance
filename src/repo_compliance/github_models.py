@@ -9,10 +9,10 @@ class GitHubModel(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True)
 
 
-class GitHubBranch(GitHubModel):
-    """GitHub branch response fields used during preflight."""
+class GitHubRepository(GitHubModel):
+    """GitHub repository response fields used during preflight."""
 
-    name: str
+    id: int
 
 
 class GitHubRule(GitHubModel):
