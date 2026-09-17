@@ -131,17 +131,14 @@ def _build_details_section(results: Sequence[RuleResult]) -> str:
 
     for result in results:
         lines.extend(
-            (
+            [
                 "",
                 f"### {_format_plain_markdown_text(result.repository)} / `{result.rule.id}`",
                 "",
                 f"- Status: **{result.status.value.upper()}**",
                 f"- Details: {_format_plain_markdown_text(result.message)}",
-                (
-                    f"- Guidance: [{_format_plain_markdown_text(result.rule.title)}]"
-                    f"({result.rule.documentation_url})"
-                ),
-            )
+                f"- Guidance: [{_format_plain_markdown_text(result.rule.title)}]({result.rule.documentation_url})",
+            ]
         )
         if result.evidence:
             lines.append("- Evidence:")
