@@ -23,11 +23,11 @@ def run_compliance_checks(
     """Run all enabled rules in configuration and registry order."""
     results: list[RuleResult] = []
     for repository in config.repositories:
-        results.extend(_run_repository(repository, github, rules))
+        results.extend(_run_checks_for_repository(repository, github, rules))
     return tuple(results)
 
 
-def _run_repository(
+def _run_checks_for_repository(
     repository: RepositoryConfig,
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
