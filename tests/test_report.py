@@ -138,5 +138,6 @@ def test_empty_configuration_still_produces_complete_report() -> None:
     )
 
     assert "_No repositories configured_" in report
+    assert "_No rules configured_" in report
     assert "_No checks run_" in report
     assert "_No results._" in report

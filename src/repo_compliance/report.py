@@ -16,21 +16,23 @@ def generate_report(
     *,
     generated_at: datetime | None = None,
 ) -> str:
-    """Build a complete Markdown compliance report."""
+    """Build a compliance report in Markdown."""
     timestamp = generated_at or datetime.now(UTC)
     sections = [
         "# Repository Compliance Report",
-        f"Generated at `{_utc_timestamp(timestamp)}`.",
-        _totals(config, results),
-        _repository_summary(config, results),
-        _rule_catalogue(rules),
-        _result_table(results),
-        _details(results),
+        f"Generated at `{_format_timestamp_as_utc(timestamp)}`",
+        _build_totals_section(config, results),
+        _build_repository_summary_section(config, results),
+        _build_rules_section(rules),
+        _build_results_table_section(results),
+        _build_details_section(results),
     ]
     return "\n\n".join(sections) + "\n"
 
 
-def _totals(config: ComplianceConfig, results: Sequence[RuleResult]) -> str:
+def _build_totals_section(
+    config: ComplianceConfig, results: Sequence[RuleResult]
+) -> str:
     counts = Counter(result.status for result in results)
     return "\n".join(
         (
@@ -46,7 +48,7 @@ def _totals(config: ComplianceConfig, results: Sequence[RuleResult]) -> str:
     )
 
 
-def _repository_summary(
+def _build_repository_summary_section(
     config: ComplianceConfig,
     results: Sequence[RuleResult],
 ) -> str:
@@ -65,31 +67,40 @@ def _repository_summary(
             result for result in results if result.repository == repository.repository
         ]
         counts = Counter(result.status for result in repository_results)
-        link = _repository_link(repository.repository)
+        link = _build_repository_hyperlink(repository.repository)
         lines.append(
-            f"| {link} | {counts[ResultStatus.PASS]} | {counts[ResultStatus.FAIL]} "
-            f"| {counts[ResultStatus.EXEMPT]} | {counts[ResultStatus.ERROR]} |"
+            f"| {link} "
+            f"| {counts[ResultStatus.PASS]} "
+            f"| {counts[ResultStatus.FAIL]} "
+            f"| {counts[ResultStatus.EXEMPT]} "
+            f"| {counts[ResultStatus.ERROR]} |"
         )
     return "\n".join(lines)
 
 
-def _rule_catalogue(rules: Sequence[RuleDefinition]) -> str:
+def _build_rules_section(rules: Sequence[RuleDefinition]) -> str:
     lines = [
         "## Rules",
         "",
         "| Rule | Documentation | Category | Confidence | Standard |",
         "| --- | --- | --- | --- | --- |",
     ]
+    if not rules:
+        lines.append("| _None_ | _None_ | _None_ | _None_ | _No rules configured_ |")
+        return "\n".join(lines)
+
     for rule in rules:
         lines.append(
-            f"| `{rule.id}` | [Click here]({rule.documentation_url}) | "
-            f"`{rule.category.value}` | {rule.confidence.value.title()} | "
-            f"{_table_text(rule.description)} |"
+            f"| `{rule.id}` "
+            f"| [Click here]({rule.documentation_url}) "
+            f"| `{rule.category.value}` "
+            f"| {rule.confidence.value.title()} "
+            f"| {_format_text_for_markdown_table(rule.description)} |"
         )
     return "\n".join(lines)
 
 
-def _result_table(results: Sequence[RuleResult]) -> str:
+def _build_results_table_section(results: Sequence[RuleResult]) -> str:
     lines = [
         "## Results",
         "",
@@ -102,15 +113,17 @@ def _result_table(results: Sequence[RuleResult]) -> str:
 
     for result in results:
         lines.append(
-            f"| {_repository_link(result.repository)} | `{result.rule.id}` | "
-            f"`{result.rule.category.value}` | {result.rule.confidence.value.title()} | "
-            f"**{result.status.value.upper()}** | "
-            f"{_table_text(result.message)} |"
+            f"| {_build_repository_hyperlink(result.repository)} "
+            f"| `{result.rule.id}` "
+            f"| `{result.rule.category.value}` "
+            f"| {result.rule.confidence.value.title()} "
+            f"| **{result.status.value.upper()}** "
+            f"| {_format_text_for_markdown_table(result.message)} |"
         )
     return "\n".join(lines)
 
 
-def _details(results: Sequence[RuleResult]) -> str:
+def _build_details_section(results: Sequence[RuleResult]) -> str:
     lines = ["## Details"]
     if not results:
         lines.extend(("", "_No results._"))
@@ -120,19 +133,19 @@ def _details(results: Sequence[RuleResult]) -> str:
         lines.extend(
             (
                 "",
-                f"### {_plain_text(result.repository)} / `{result.rule.id}`",
+                f"### {_format_plain_markdown_text(result.repository)} / `{result.rule.id}`",
                 "",
                 f"- Status: **{result.status.value.upper()}**",
-                f"- Details: {_plain_text(result.message)}",
+                f"- Details: {_format_plain_markdown_text(result.message)}",
                 (
-                    f"- Guidance: [{_plain_text(result.rule.title)}]"
+                    f"- Guidance: [{_format_plain_markdown_text(result.rule.title)}]"
                     f"({result.rule.documentation_url})"
                 ),
             )
         )
         if result.evidence:
             lines.append("- Evidence:")
-            lines.extend(_evidence_lines(result))
+            lines.extend(_build_evidence_list(result))
         if result.omitted_evidence_count:
             lines.append(
                 f"- {result.omitted_evidence_count} additional location(s) omitted."
@@ -140,27 +153,27 @@ def _details(results: Sequence[RuleResult]) -> str:
     return "\n".join(lines)
 
 
-def _evidence_lines(result: RuleResult) -> list[str]:
+def _build_evidence_list(result: RuleResult) -> list[str]:
     return [
-        f"  - {_code_span(f'{item.path}:{item.line}')} — {_code_span(item.marker)}"
+        f"  - {_format_markdown_code_span(f'{item.path}:{item.line}')} — {_format_markdown_code_span(item.marker)}"
         for item in result.evidence
     ]
 
 
-def _repository_link(repository: str) -> str:
+def _build_repository_hyperlink(repository: str) -> str:
     return f"[{repository}](https://github.com/{repository})"
 
 
-def _table_text(value: str) -> str:
-    return _plain_text(value).replace("|", "\\|")
+def _format_text_for_markdown_table(value: str) -> str:
+    return _format_plain_markdown_text(value).replace("|", "\\|")
 
 
-def _plain_text(value: str) -> str:
+def _format_plain_markdown_text(value: str) -> str:
     single_line = value.replace("\r", " ").replace("\n", " ")
     return re.sub(r"([\\`*_\[\]<>~])", r"\\\1", single_line)
 
 
-def _code_span(value: str) -> str:
+def _format_markdown_code_span(value: str) -> str:
     single_line = value.replace("\r", " ").replace("\n", " ")
     backtick_runs = re.findall(r"`+", single_line)
     fence = "`" * (max(map(len, backtick_runs), default=0) + 1)
@@ -168,5 +181,5 @@ def _code_span(value: str) -> str:
     return f"{fence}{padding}{single_line}{padding}{fence}"
 
 
-def _utc_timestamp(value: datetime) -> str:
+def _format_timestamp_as_utc(value: datetime) -> str:
     return value.astimezone(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
