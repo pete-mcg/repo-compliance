@@ -162,15 +162,18 @@ def _build_repository_hyperlink(repository: str) -> str:
 
 
 def _format_text_for_markdown_table(value: str) -> str:
+    # Escapes | for Markdown tables
     return _format_plain_markdown_text(value).replace("|", "\\|")
 
 
 def _format_plain_markdown_text(value: str) -> str:
     single_line = value.replace("\r", " ").replace("\n", " ")
+    # Escapes \, `, *, _, [, ], <, >, and ~ for Markdown
     return re.sub(r"([\\`*_\[\]<>~])", r"\\\1", single_line)
 
 
 def _format_markdown_code_span(value: str) -> str:
+    # Escapes ` for Markdown code spans, and wraps the value in backticks
     single_line = value.replace("\r", " ").replace("\n", " ")
     backtick_runs = re.findall(r"`+", single_line)
     fence = "`" * (max(map(len, backtick_runs), default=0) + 1)
