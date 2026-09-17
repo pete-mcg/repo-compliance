@@ -15,7 +15,7 @@ from repo_compliance.domain import (
 from repo_compliance.errors import ArchiveError, GitHubError
 
 
-def run_checks(
+def run_compliance_checks(
     config: ComplianceConfig,
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],

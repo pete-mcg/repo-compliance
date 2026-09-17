@@ -13,7 +13,7 @@ from repo_compliance.domain import (
     RuleEvaluation,
 )
 from repo_compliance.errors import ArchiveError, GitHubError
-from repo_compliance.runner import run_checks
+from repo_compliance.runner import run_compliance_checks
 
 from .fakes import FakeGitHub
 
@@ -75,7 +75,7 @@ def test_fully_exempt_repository_skips_all_github_work() -> None:
     )
     github = FakeGitHub()
 
-    results = run_checks(config_for(repository), github, rules)
+    results = run_compliance_checks(config_for(repository), github, rules)
 
     assert [result.status for result in results] == [
         ResultStatus.EXEMPT,
@@ -96,7 +96,7 @@ def test_exemption_skips_only_its_check() -> None:
     )
     github = FakeGitHub(files={"required.txt"})
 
-    results = run_checks(config_for(repository), github, rules)
+    results = run_compliance_checks(config_for(repository), github, rules)
 
     assert [result.status for result in results] == [
         ResultStatus.EXEMPT,
@@ -121,7 +121,7 @@ def test_preflight_failure_errors_active_rules_only() -> None:
     )
     github = FakeGitHub(preflight_error_repositories={"example/service"})
 
-    results = run_checks(config_for(repository), github, rules)
+    results = run_compliance_checks(config_for(repository), github, rules)
 
     assert [result.status for result in results] == [
         ResultStatus.EXEMPT,
@@ -148,7 +148,7 @@ def test_downloads_one_archive_for_multiple_archive_rules() -> None:
     )
     github = FakeGitHub()
 
-    results = run_checks(
+    results = run_compliance_checks(
         config_for(RepositoryConfig(repository="example/service")),
         github,
         rules,
@@ -173,7 +173,7 @@ def test_archive_failure_only_errors_archive_rules() -> None:
     )
     github = FakeGitHub(archive_error_repositories={"example/service"})
 
-    results = run_checks(
+    results = run_compliance_checks(
         config_for(RepositoryConfig(repository="example/service")),
         github,
         rules,
@@ -205,7 +205,7 @@ def test_expected_rule_error_does_not_stop_rules_or_repositories() -> None:
         RepositoryConfig(repository="example/second"),
     )
 
-    results = run_checks(config, FakeGitHub(), rules)
+    results = run_compliance_checks(config, FakeGitHub(), rules)
 
     assert [result.status for result in results] == [
         ResultStatus.ERROR,
@@ -232,7 +232,7 @@ def test_archive_rule_error_becomes_result_data() -> None:
         requires_archive=True,
     )
 
-    results = run_checks(
+    results = run_compliance_checks(
         config_for(RepositoryConfig(repository="example/service")),
         FakeGitHub(),
         (rule,),
@@ -249,7 +249,7 @@ def test_unexpected_rule_bug_remains_fatal() -> None:
     rule = make_rule("broken", RuleCategory.DETERMINISTIC, broken_check)
 
     with pytest.raises(RuntimeError, match="bug"):
-        run_checks(
+        run_compliance_checks(
             config_for(RepositoryConfig(repository="example/service")),
             FakeGitHub(),
             (rule,),
@@ -271,7 +271,7 @@ def test_archive_path_is_temporary() -> None:
         requires_archive=True,
     )
 
-    run_checks(
+    run_compliance_checks(
         config_for(RepositoryConfig(repository="example/service")),
         FakeGitHub(),
         (rule,),

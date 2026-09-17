@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from repo_compliance import cli
-from repo_compliance.cli import CliOptions, main
+from repo_compliance.cli import main
 
 
 def write_empty_config(path: Path) -> Path:
@@ -83,10 +83,10 @@ def test_unexpected_checker_bug_returns_nonzero(
     config = write_empty_config(tmp_path / "repositories.yml")
     monkeypatch.setenv("GITHUB_TOKEN", "token")
 
-    def broken_run(_options: CliOptions, _token: str) -> None:
+    def broken_run(_config: object, _github: object, _rules: object) -> None:
         raise RuntimeError("unexpected bug")
 
-    monkeypatch.setattr(cli, "_check_repositories_and_create_report", broken_run)
+    monkeypatch.setattr(cli, "run_compliance_checks", broken_run)
 
     exit_code = main(arguments(config, tmp_path / "report.md"))
 
