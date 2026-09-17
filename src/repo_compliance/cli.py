@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict
 from repo_compliance.config import get_config
 from repo_compliance.errors import CliError, ComplianceError
 from repo_compliance.github import GitHubClient
-from repo_compliance.report import generate_report
+from repo_compliance.report import build_report
 from repo_compliance.rules.registry import RULE_IDS, RULES
 from repo_compliance.runner import run_compliance_checks
 
@@ -33,7 +33,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         config = get_config(options.config, RULE_IDS)
         with GitHubClient(token) as github:
             results = run_compliance_checks(config, github, RULES)
-        report = generate_report(config, RULES, results)
+        report = build_report(config, RULES, results)
         options.output.write_text(report, encoding="utf-8")
     except ComplianceError as error:
         print(f"repo-compliance: {error}", file=sys.stderr)

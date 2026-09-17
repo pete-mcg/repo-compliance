@@ -9,7 +9,7 @@ from repo_compliance.config import ComplianceConfig
 from repo_compliance.domain import ResultStatus, RuleDefinition, RuleResult
 
 
-def generate_report(
+def build_report(
     config: ComplianceConfig,
     rules: Sequence[RuleDefinition],
     results: Sequence[RuleResult],

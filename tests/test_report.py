@@ -11,7 +11,7 @@ from repo_compliance.domain import (
     RuleEvaluation,
     RuleResult,
 )
-from repo_compliance.report import generate_report
+from repo_compliance.report import build_report
 
 
 def unused_check(_context: RuleContext) -> RuleEvaluation:
@@ -69,7 +69,7 @@ def test_report_contains_counts_tables_links_details_and_utc_timestamp() -> None
         tzinfo=timezone(timedelta(hours=1)),
     )
 
-    report = generate_report(
+    report = build_report(
         config,
         (deterministic, agentic),
         results,
@@ -110,7 +110,7 @@ def test_report_preserves_registry_and_configuration_order() -> None:
         RuleResult("example/alpha", first_rule, ResultStatus.PASS, "ok"),
     )
 
-    report = generate_report(
+    report = build_report(
         config,
         (second_rule, first_rule),
         results,
@@ -130,7 +130,7 @@ def test_report_preserves_registry_and_configuration_order() -> None:
 
 
 def test_empty_configuration_still_produces_complete_report() -> None:
-    report = generate_report(
+    report = build_report(
         ComplianceConfig(repositories=()),
         (),
         (),
