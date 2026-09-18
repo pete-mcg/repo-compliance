@@ -9,7 +9,7 @@ import httpx
 from pydantic import TypeAdapter, ValidationError
 
 from repo_compliance.errors import GitHubError
-from repo_compliance.github_models import (
+from repo_compliance.infrastructure.github.models import (
     GitHubContent,
     GitHubRepository,
 )

@@ -5,7 +5,6 @@ from tempfile import TemporaryDirectory
 
 from repo_compliance.config import ComplianceConfig, RepositoryConfig
 from repo_compliance.domain import (
-    GitHubApi,
     ResultStatus,
     RuleContext,
     RuleDefinition,
@@ -13,6 +12,7 @@ from repo_compliance.domain import (
     RuleResult,
 )
 from repo_compliance.errors import GitHubError, SourceSnapshotError
+from repo_compliance.ports import GitHubApi
 
 
 def run_all_compliance_checks(

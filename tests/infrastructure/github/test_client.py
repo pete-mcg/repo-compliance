@@ -4,7 +4,11 @@ import httpx
 import pytest
 
 from repo_compliance.errors import GitHubError
-from repo_compliance.github import API_VERSION, DEFAULT_TIMEOUT_SECONDS, GitHubClient
+from repo_compliance.infrastructure.github.client import (
+    API_VERSION,
+    DEFAULT_TIMEOUT_SECONDS,
+    GitHubClient,
+)
 
 REPOSITORY = "example/service"
 

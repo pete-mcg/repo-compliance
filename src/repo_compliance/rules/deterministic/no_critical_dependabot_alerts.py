@@ -10,7 +10,7 @@ from repo_compliance.domain import (
     RuleEvaluation,
 )
 from repo_compliance.errors import GitHubError
-from repo_compliance.github_models import GitHubModel
+from repo_compliance.infrastructure.github.models import GitHubModel
 
 RULE_ID = "no-critical-dependabot-alerts"
 ALERTS_RESOURCE = "/repos/{repository}/dependabot/alerts"

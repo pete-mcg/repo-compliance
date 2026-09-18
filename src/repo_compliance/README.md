@@ -1,8 +1,92 @@
 # Package guide
 
-This package checks configured GitHub repositories and produces one Markdown
-report. Shared modules provide application plumbing; each compliance rule owns
-the behaviour and GitHub data that are unique to that rule.
+## Package layout
+
+```text
+repo_compliance/
+    __init__.py
+    __main__.py
+    cli.py
+    config.py
+    domain.py
+    ports.py
+    errors.py
+    runner.py
+    report.py
+    infrastructure/
+        __init__.py
+        github/
+            __init__.py
+            client.py
+            models.py
+    rules/
+        __init__.py
+        registry.py
+        deterministic/
+        agentic/
+```
+
+## Layers and responsibilities
+
+Layers describe responsibilities and dependency boundaries. A layer can be a
+single module; it does not need its own directory until that helps navigation.
+
+| Responsibility | Location |
+| --- | --- |
+| Shared compliance types | `domain.py` |
+| Contracts for external capabilities | `ports.py` |
+| Application workflow | `runner.py` |
+| Individual compliance checks | `rules/` |
+| External integrations | `infrastructure/` |
+| Configuration input | `config.py` |
+| Markdown presentation | `report.py` |
+| Startup and dependency wiring | `cli.py` |
+| Expected errors shared across boundaries | `errors.py` |
+
+The shared rule types stay together in `domain.py`. Adding more rules should
+normally grow `rules/`, without requiring more shared types or one file per class.
+
+## Dependency directions
+
+An import points from the module using a dependency to the module providing it.
+The main directions are:
+
+```text
+__main__ -> cli
+cli -> config, runner, report, rules.registry, infrastructure.github.client
+rules.registry -> individual rule modules
+runner -> config, domain, ports, errors
+report -> config, domain
+rules -> domain, errors, shared GitHub response models where needed
+domain -> ports
+config -> errors
+infrastructure.github.client -> infrastructure.github.models, errors
+```
+
+- `domain.py` and `ports.py` must not import concrete integrations, the runner,
+  reporting, or individual rules.
+- `ports.py` describes capabilities with Python protocols. `GitHubApi` is the
+  contract used by the runner and `RuleContext`.
+- The runner receives a `GitHubApi`; it does not create a `GitHubClient` or import
+  individual rules. Rules are supplied explicitly by the caller.
+- The CLI creates the concrete GitHub client and passes it to the runner.
+  `GitHubClient` satisfies the protocol by providing its methods; it does not
+  need to inherit from or import `GitHubApi`.
+- Infrastructure must not import individual rules, the registry, the runner,
+  or reporting. It owns communication details, not compliance decisions.
+- Reporting consumes completed results and does not run checks.
+
+At runtime, the runner calls a rule's check function. The rule can call the
+GitHub client through `context.github`, then return a `RuleEvaluation`. The
+runner converts that evaluation to a `RuleResult` for reporting. Calling an
+implementation through a supplied protocol does not require importing it.
+
+This is a pragmatic layered design with self-contained rules. Rules deliberately
+own their endpoint selection and response validation; some import `GitHubModel`
+from `infrastructure/github/models.py`. Configuration loading and its validated
+models also stay together, and the runner and report use those models directly.
+These are intentional boundaries, rather than a strict separation of every
+business decision from every external data shape.
 
 ## Files
 
@@ -61,11 +145,24 @@ Defines types shared across the application.
 
 **Should include:**
 
-- Rule definitions, results, contexts, enums, and shared protocols.
+- Rule definitions, results, contexts, evidence, enums, and the rule callable type.
 
 **Should not include:**
 
 - Rule-specific methods, API response models, or infrastructure implementations.
+
+### `ports.py`
+
+Defines contracts for external capabilities needed by the checker. A port says
+what callers need; an infrastructure implementation supplies that behaviour.
+
+**Should include:**
+
+- Shared protocols such as `GitHubApi`, using ordinary Python types.
+
+**Should not include:**
+
+- HTTP requests, credentials, SDK clients, or concrete integration imports.
 
 ### `errors.py`
 
@@ -79,7 +176,12 @@ Defines expected application errors.
 
 - Error-handling workflows or logging.
 
-### `github.py`
+### Infrastructure package `__init__.py` files
+
+Mark `infrastructure` and `infrastructure/github` as packages. Keep these files
+limited to package documentation; import implementations from their modules.
+
+### `infrastructure/github/client.py`
 
 Provides shared GitHub transport and reusable GitHub operations.
 
@@ -92,7 +194,7 @@ Provides shared GitHub transport and reusable GitHub operations.
 
 - Endpoints, filters, response models, or decisions belonging to one rule.
 
-### `github_models.py`
+### `infrastructure/github/models.py`
 
 Defines GitHub response models shared by multiple consumers.
 

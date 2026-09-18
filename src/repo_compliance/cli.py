@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict
 
 from repo_compliance.config import get_config
 from repo_compliance.errors import CliError, ComplianceError
-from repo_compliance.github import GitHubClient
+from repo_compliance.infrastructure.github.client import GitHubClient
 from repo_compliance.report import build_report
 from repo_compliance.rules.registry import RULE_IDS, RULES
 from repo_compliance.runner import run_all_compliance_checks
