@@ -39,7 +39,6 @@ the Azure CLI, and an approved Azure OpenAI deployment supporting tool calls and
 structured output. Replace these placeholders with the approved resource settings:
 
 ```powershell
-$env:AZURE_CORE_COLLECT_TELEMETRY = "false"
 az login
 $env:AZURE_OPENAI_ENDPOINT = "https://<approved-resource>.openai.azure.com"
 $env:AZURE_OPENAI_DEPLOYMENT = "<deployment-name>"
@@ -80,8 +79,8 @@ and subject `repo:<owner>/<repository>:ref:refs/heads/main` for runs on `main`.
 The subject must match the branch used by scheduled or manual runs. The workflow
 grants `id-token: write` and uses `azure/login@v3`; it then reuses the Azure CLI
 login through `AzureCliCredential`. See [Azure Login's OIDC setup](https://github.com/Azure/login#login-with-openid-connect-oidc-recommended).
-Login and image-pull failures allow the checker to continue and record an agent
-`ERROR` alongside the other rule results.
+If Azure login or the image pull is attempted and fails, the workflow fails before
+the checker runs.
 
 ## Agent rule
 

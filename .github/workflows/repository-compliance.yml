@@ -12,8 +12,6 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
-    env:
-      AZURE_CORE_COLLECT_TELEMETRY: "false"
     steps:
       - name: Check out this repository
         uses: actions/checkout@v6
@@ -23,9 +21,23 @@ jobs:
         with:
           python-version: "3.14"
 
+      - name: Validate configuration
+        run: |
+          test -n "$AZURE_CLIENT_ID" || { echo "AZURE_CLIENT_ID is required."; exit 1; }
+          test -n "$AZURE_TENANT_ID" || { echo "AZURE_TENANT_ID is required."; exit 1; }
+          test -n "$AZURE_SUBSCRIPTION_ID" || { echo "AZURE_SUBSCRIPTION_ID is required."; exit 1; }
+          test -n "$AZURE_OPENAI_ENDPOINT" || { echo "AZURE_OPENAI_ENDPOINT is required."; exit 1; }
+          test -n "$AZURE_OPENAI_DEPLOYMENT" || { echo "AZURE_OPENAI_DEPLOYMENT is required."; exit 1; }
+          test -n "$AZURE_OPENAI_API_VERSION" || { echo "AZURE_OPENAI_API_VERSION is required."; exit 1; }
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_OPENAI_ENDPOINT: ${{ vars.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_DEPLOYMENT: ${{ vars.AZURE_OPENAI_DEPLOYMENT }}
+          AZURE_OPENAI_API_VERSION: ${{ vars.AZURE_OPENAI_API_VERSION }}
+
       - name: Sign in to Azure with federated OIDC
-        if: ${{ vars.AZURE_CLIENT_ID != '' && vars.AZURE_TENANT_ID != '' && vars.AZURE_SUBSCRIPTION_ID != '' }}
-        continue-on-error: true # Authentication failures become per-rule ERROR results.
         uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
@@ -33,8 +45,6 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Pull the pinned local Serena image
-        if: ${{ vars.AZURE_OPENAI_ENDPOINT != '' }}
-        continue-on-error: true # Keep deterministic checks running if Docker is unavailable.
         run: |
           uv run --frozen python - <<'PY'
           import subprocess
