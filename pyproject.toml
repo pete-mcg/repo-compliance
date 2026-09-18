@@ -84,7 +84,3 @@ min-severity = "warn" # Show warnings and errors.
 
 [tool.deptry]
 known_first_party = ["repo_compliance"]
-
-[tool.deptry.package_module_name_map]
-agent-framework-core = "agent_framework"
-agent-framework-openai = "agent_framework_openai"
