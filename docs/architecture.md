@@ -103,7 +103,6 @@ The prompt is loaded with `importlib.resources`, included in the wheel, and does
 - [`src/repo_compliance/infrastructure/github/models.py`](../src/repo_compliance/infrastructure/github/models.py) defines shared GitHub response models; response models used by only one rule stay with that rule.
 - [`src/repo_compliance/rules/`](../src/repo_compliance/rules/) contains the actual standards, grouped by evaluation method. Each rule lives in its own file.
 - [`src/repo_compliance/report.py`](../src/repo_compliance/report.py) converts collected results into `compliance-report.md`.
-- [`src/repo_compliance/domain.py`](../src/repo_compliance/domain.py) defines the shared names and data shapes used by rules, the runner, and the report.
-- [`src/repo_compliance/ports.py`](../src/repo_compliance/ports.py) defines the `GitHubApi` and `AgentEvaluator` protocols used by the runner and rule context; the CLI supplies their concrete integrations.
+- [`src/repo_compliance/domain.py`](../src/repo_compliance/domain.py) defines the shared names, data shapes, and `GitHubApi` and `AgentEvaluator` protocols used by rules, the runner, and the report. The CLI supplies the concrete integrations.
 
 The command can enter through the `repo-compliance` script declared in [`pyproject.toml`](../pyproject.toml), or through [`src/repo_compliance/__main__.py`](../src/repo_compliance/__main__.py) when run as a Python module. Both lead to `cli.py`.

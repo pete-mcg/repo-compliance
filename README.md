@@ -84,7 +84,7 @@ Repositories appear in configuration order, with rules in registry order.
 
 ## Architecture and development
 
-- The checker uses a small layered structure: `domain.py` holds shared compliance types, `ports.py` defines external capability contracts, `runner.py` coordinates checks, and `infrastructure/github/` contains the GitHub client and shared response models. The CLI connects these parts; individual rules own their compliance criteria and rule-specific response parsing.
+- The checker uses a small layered structure: `domain.py` holds shared compliance types and external capability contracts, `runner.py` coordinates checks, and `infrastructure/github/` contains the GitHub client and shared response models. The CLI connects these parts; individual rules own their compliance criteria and rule-specific response parsing.
 
 See the [architecture overview](docs/architecture.md) for the runtime flow and the [package guide](src/repo_compliance/README.md) for module responsibilities and dependency directions.
 

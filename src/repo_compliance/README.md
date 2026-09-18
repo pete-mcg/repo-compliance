@@ -7,8 +7,7 @@ single module; it does not need its own directory until that helps navigation.
 
 | Responsibility | Location |
 | --- | --- |
-| Shared compliance types | `domain.py` |
-| Contracts for external capabilities | `ports.py` |
+| Shared compliance types and external capability contracts | `domain.py` |
 | Application workflow | `runner.py` |
 | Individual compliance checks | `rules/` |
 | External integrations | `infrastructure/` |
@@ -29,19 +28,18 @@ The main directions are:
 __main__ -> cli
 cli -> config, runner, report, rules.registry, infrastructure
 rules.registry -> individual rule modules
-runner -> config, domain, ports, errors
+runner -> config, domain, errors
 report -> config, domain
 rules -> domain, errors, shared GitHub response models where needed
-domain -> ports
 config -> errors
 infrastructure.github.client -> infrastructure.github.models, errors
 infrastructure.agentic -> domain, errors
 ```
 
-- `domain.py` and `ports.py` must not import concrete integrations, the runner,
-  reporting, or individual rules.
-- `ports.py` describes capabilities with Python protocols. `GitHubApi` and
-  `AgentEvaluator` are the contracts used by the runner and `RuleContext`.
+- `domain.py` must not import concrete integrations, the runner, reporting, or
+  individual rules.
+- `domain.py` describes external capabilities with Python protocols. `GitHubApi`
+  and `AgentEvaluator` are the contracts used by the runner and `RuleContext`.
 - The runner receives a `GitHubApi`; it does not create a `GitHubClient` or import
   individual rules. Rules are supplied explicitly by the caller.
 - The CLI creates the concrete GitHub client and agent evaluator and passes them to the runner.

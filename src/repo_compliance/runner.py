@@ -5,6 +5,8 @@ from tempfile import TemporaryDirectory
 
 from repo_compliance.config import ComplianceConfig, RepositoryConfig
 from repo_compliance.domain import (
+    AgentEvaluator,
+    GitHubApi,
     ResultStatus,
     RuleContext,
     RuleDefinition,
@@ -12,7 +14,6 @@ from repo_compliance.domain import (
     RuleResult,
 )
 from repo_compliance.errors import AgentError, GitHubError, SourceSnapshotError
-from repo_compliance.ports import AgentEvaluator, GitHubApi
 
 
 def run_all_compliance_checks(
