@@ -30,32 +30,16 @@ Create a fine-grained personal access token and grant each monitored repository:
 Expose the token only at the command boundary, then run the checker:
 
 ```powershell
-$env:GITHUB_TOKEN = "your-token"
-uv run --frozen repo-compliance
-```
-
-The `ci-workflow-on-pull-requests` rule also needs Docker running Linux containers,
-the Azure CLI, and an approved Azure OpenAI deployment supporting tool calls and
-structured output. Replace these placeholders with the approved resource settings:
-
-```powershell
 az login
+docker pull ghcr.io/oraios/serena:1.7.0@sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730
+$env:GITHUB_TOKEN = "your-token"
 $env:AZURE_OPENAI_ENDPOINT = "https://<approved-resource>.openai.azure.com"
 $env:AZURE_OPENAI_DEPLOYMENT = "<deployment-name>"
 $env:AZURE_OPENAI_API_VERSION = "<YYYY-MM-DD-or-YYYY-MM-DD-preview>"
-docker pull ghcr.io/oraios/serena:1.7.0@sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730
 uv run --frozen repo-compliance
 ```
 
-Grant the signed-in identity **Cognitive Services OpenAI User** on that Azure
-OpenAI resource. The checker uses `AzureCliCredential`, without an API key.
-See [Azure's Entra authentication setup](https://learn.microsoft.com/en-us/azure/foundry-classic/openai/how-to/managed-identity).
-Only HTTPS resource endpoints under `openai.azure.com` are accepted; enter the
-resource root, without a deployment path or query string. The deployment and API
-version must match your existing resource. No deployment is created by this project.
-
-Until these values exist, leave them unset. The agent rule reports `ERROR`, and
-the deterministic checks still run. An exempt agent rule starts no agent resources.
+Grant the signed-in identity **Cognitive Services OpenAI User** on that Azure OpenAI resource.
 
 Optional paths:
 
@@ -65,11 +49,17 @@ uv run --frozen repo-compliance --config config/repositories.yml --output compli
 
 ### Via GitHub Actions
 
-Add the PAT as repository secret `REPO_COMPLIANCE_TOKEN`. [`repository-compliance.yml`](.github/workflows/repository-compliance.yml) runs at `06:00 UTC` on weekdays and supports manual runs. It appends the report to the workflow summary and uploads artifact `repository-compliance-report`.
+Add the following as repository secret
+-  `REPO_COMPLIANCE_TOKEN`. 
 
-For the agent rule, add repository variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`,
-`AZURE_SUBSCRIPTION_ID`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, and
-`AZURE_OPENAI_API_VERSION`. Use the same Azure routing settings as a local run.
+Add the following as repository variables
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`,
+- `AZURE_SUBSCRIPTION_ID`
+- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_DEPLOYMENT`
+- `AZURE_OPENAI_API_VERSION` 
+
 The client ID identifies an Entra application or user-assigned managed identity
 with **Cognitive Services OpenAI User** on the approved resource.
 
@@ -82,14 +72,9 @@ login through `AzureCliCredential`. See [Azure Login's OIDC setup](https://githu
 If Azure login or the image pull is attempted and fails, the workflow fails before
 the checker runs.
 
-## Agent rule
+[`repository-compliance.yml`](.github/workflows/repository-compliance.yml) runs at `06:00 UTC` on weekdays and supports manual runs. It appends the report to the workflow summary and uploads artifact `repository-compliance-report`.
 
-`ci-workflow-on-pull-requests` inspects only GitHub Actions declarations in the
-downloaded `main` snapshot. Builds, tests, lint, type checks, and static analysis
-count as CI. Unrestricted `pull_request` triggers include `main`; push-only or
-wrong-branch triggers do not qualify. Missing or opaque evidence produces `ERROR`.
-The rule does not check live workflow execution or branch settings. Its policy
-lives in a [packaged Markdown prompt](src/repo_compliance/rules/agentic/ci_workflow_on_pull_requests.md).
+## Agentic rules
 
 Serena runs locally over MCP stdio in a pinned Docker image, with a read-only
 filesystem and source mount, networking disabled, and separate temporary state.
