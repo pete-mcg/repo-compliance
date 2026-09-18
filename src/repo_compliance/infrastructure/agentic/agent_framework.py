@@ -33,6 +33,8 @@ SERENA_IMAGE = (
     "ghcr.io/oraios/serena:1.7.0@"
     "sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730"
 )
+# Full Serena Tools catalogue: https://oraios.github.io/serena/01-about/035_tools.html
+# Runtime list: tests/integration/test_agent_integration.py:list_tools()
 SERENA_TOOLS = ("list_dir", "read_file", "find_file", "search_for_pattern")
 
 
@@ -51,7 +53,7 @@ class AzureOpenAISettings(BaseSettings):
     api_version: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}(-preview)?$")
 
 
-class Verdict(StrEnum):
+class AgentVerdict(StrEnum):
     """Judgments accepted from the model."""
 
     PASS = "pass"
@@ -92,12 +94,12 @@ class AgentEvidence(BaseModel):
         return value
 
 
-class AgentJudgment(BaseModel):
+class AgentStructuredResponse(BaseModel):
     """Structured response requested from the Azure deployment."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    verdict: Verdict
+    verdict: AgentVerdict
     explanation: str
     evidence: list[AgentEvidence]
 
@@ -185,7 +187,9 @@ async def _run_agent(
             tools=[serena],
             default_options=options,
         )
-        response = await agent.run(prompt, options={"response_format": AgentJudgment})
+        response = await agent.run(
+            prompt, options={"response_format": AgentStructuredResponse}
+        )
         return response.value
 
 
@@ -320,12 +324,14 @@ def _remove_container(container_name: str) -> None:
 
 
 def _to_evaluation(output: object) -> RuleEvaluation:
-    result = AgentJudgment.model_validate(output)
-    if result.verdict is Verdict.UNCERTAIN:
+    result = AgentStructuredResponse.model_validate(output)
+    if result.verdict is AgentVerdict.UNCERTAIN:
         raise AgentError(f"Agent could not judge: {result.explanation}")
-    if result.verdict is Verdict.PASS and not result.evidence:
+    if result.verdict is AgentVerdict.PASS and not result.evidence:
         raise AgentError("Agent returned a pass without supporting evidence.")
     evidence = tuple(
         Evidence(item.path, item.line, item.marker) for item in result.evidence
     )
-    return RuleEvaluation(result.verdict is Verdict.PASS, result.explanation, evidence)
+    return RuleEvaluation(
+        result.verdict is AgentVerdict.PASS, result.explanation, evidence
+    )

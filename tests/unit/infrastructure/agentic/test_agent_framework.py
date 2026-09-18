@@ -66,7 +66,7 @@ def test_rejects_invalid_structured_output(changes: dict[str, object]) -> None:
 
 
 def test_schema_uses_supported_azure_keywords() -> None:
-    schema = json.dumps(adapter.AgentJudgment.model_json_schema())
+    schema = json.dumps(adapter.AgentStructuredResponse.model_json_schema())
     for keyword in (
         "minLength",
         "maxLength",
@@ -199,7 +199,7 @@ def test_agent_requests_schema_and_closes_resources(
         )
         assert output == judgment()
         run.assert_awaited_once_with(
-            "prompt", options={"response_format": adapter.AgentJudgment}
+            "prompt", options={"response_format": adapter.AgentStructuredResponse}
         )
     assert agent.call_args.kwargs["default_options"] == {
         "allow_multiple_tool_calls": False,

@@ -90,7 +90,7 @@ def test_rejects_empty_multiple_root_and_conflicting_archives(
         pytest.fail("Invalid archive was accepted")
 
 
-@pytest.mark.parametrize("limit", ["MAX_EXTRACTED_BYTES", "MAX_ENTRIES"])
+@pytest.mark.parametrize("limit", ["MAX_EXTRACTED_BYTES", "MAX_EXTRACTED_ITEMS"])
 def test_limits_extraction_size(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, limit: str
 ) -> None:
