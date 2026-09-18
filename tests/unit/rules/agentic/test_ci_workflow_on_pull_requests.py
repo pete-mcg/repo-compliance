@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from tests.fakes import FakeAgentEvaluator, FakeGitHub
+from tests.unit.fakes import FakeAgentEvaluator, FakeGitHub
 
 from repo_compliance.domain import (
     Confidence,

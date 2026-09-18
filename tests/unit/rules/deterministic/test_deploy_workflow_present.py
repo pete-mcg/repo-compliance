@@ -3,7 +3,7 @@ from repo_compliance.rules.deterministic.deploy_workflow_present import (
     REQUIRED_PATH,
     check,
 )
-from tests.fakes import FakeGitHub
+from tests.unit.fakes import FakeGitHub
 
 REPOSITORY = "example/service"
 

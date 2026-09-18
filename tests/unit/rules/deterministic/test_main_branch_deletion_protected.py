@@ -5,7 +5,7 @@ from repo_compliance.errors import GitHubError
 from repo_compliance.rules.deterministic.main_branch_deletion_protected import (
     check,
 )
-from tests.fakes import FakeGitHub
+from tests.unit.fakes import FakeGitHub
 
 REPOSITORY = "example/service"
 RULESET_RESOURCE = "/repos/example/service/rules/branches/main"

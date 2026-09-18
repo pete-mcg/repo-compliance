@@ -10,7 +10,7 @@ from repo_compliance.rules.deterministic.no_key_based_authentication import (
     MAX_FILE_BYTES,
     check,
 )
-from tests.fakes import FakeGitHub
+from tests.unit.fakes import FakeGitHub
 
 REPOSITORY = "example/service"
 

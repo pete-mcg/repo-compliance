@@ -5,7 +5,7 @@ from repo_compliance.errors import GitHubError
 from repo_compliance.rules.deterministic.no_critical_dependabot_alerts import (
     check,
 )
-from tests.fakes import FakeGitHub
+from tests.unit.fakes import FakeGitHub
 
 REPOSITORY = "example/service"
 
