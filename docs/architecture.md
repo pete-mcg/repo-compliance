@@ -1,7 +1,5 @@
 # Architecture
 
-The checker reads a list of repositories, checks each repository against every enabled rule, and writes one Markdown report.
-
 ```text
                        START
                          |
