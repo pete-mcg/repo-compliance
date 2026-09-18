@@ -20,6 +20,8 @@ An exemption must use an enabled rule ID and have a non-empty reason. Duplicate 
 
 ## Run locally
 
+Run these commands from the repository root with uv installed. The project requires Python 3.14 or later.
+
 Create a fine-grained personal access token and grant each monitored repository:
 
 - Metadata: read
@@ -37,7 +39,7 @@ uv run --frozen repo-compliance
 Optional paths:
 
 ```text
-repo-compliance --config config/repositories.yml --output compliance-report.md
+uv run --frozen repo-compliance --config config/repositories.yml --output compliance-report.md
 ```
 
 The application does not depend on how the token was created. A GitHub App token can replace the PAT later without changing rule code.
@@ -58,9 +60,23 @@ Rule code lives under [`src/repo_compliance/rules`](src/repo_compliance/rules), 
 - `deterministic/` for repeatable API and source checks
 - `agentic/` for future reasoning-based checks
 
-Each rule has its own file and exports immutable `RULE` metadata plus a typed `check` function. To add a rule, create the file in the matching folder and add its `RULE` to the ordered tuple in [`registry.py`](src/repo_compliance/rules/registry.py). To remove a rule, remove that registry entry and any configured exemptions using its ID. Registry order controls report order.
+Each rule has its own file and exports immutable `RULE` metadata plus a typed `check` function. To add a rule, create the file and its corresponding test under `tests/rules/`, then add its `RULE` to the ordered tuple in [`registry.py`](src/repo_compliance/rules/registry.py). To remove a rule, remove its source, tests, registry entry, and any configuration or documentation referring to its ID. Repositories appear in configuration order, with rules in registry order.
 
 The initial rules check main-branch deletion protection, exact CODEOWNERS and deployment workflow paths, open Critical Dependabot alerts, and possible key-based authentication markers. Source inspection records only path, line number, and marker name; it never puts matched source lines or values in the report.
+
+## Architecture and development
+
+The checker uses a small layered structure: `domain.py` holds shared compliance types, `ports.py` defines external capability contracts, `runner.py` coordinates checks, and `infrastructure/github/` contains the GitHub client and shared response models. The CLI connects these parts; individual rules own their compliance criteria and rule-specific response parsing.
+
+See the [architecture overview](docs/architecture.md) for the runtime flow and the [package guide](src/repo_compliance/README.md) for module responsibilities and dependency directions.
+
+Tests mirror the source structure, including [`tests/infrastructure/github/test_client.py`](tests/infrastructure/github/test_client.py) for the GitHub client. With Task and uv installed, run the quality gate from the repository root:
+
+```text
+task ci
+```
+
+This checks formatting, linting, types, dependencies, and tests with coverage.
 
 ## GitHub Actions
 
