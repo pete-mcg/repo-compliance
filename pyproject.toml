@@ -46,9 +46,9 @@ show_missing = true
 [tool.pytest.ini_options]
 strict = true
 testpaths = ["tests"]
-addopts = "-m 'not integration'"
+addopts = "-m 'not integration'" # By default, skip tests marked integration.
 markers = [
-    "integration: opt-in checks requiring Docker or Azure",
+    "integration: opt-in checks requiring Serena or Azure",
     "serena: local Docker/MCP smoke check",
     "azure: live prompt checks using the approved Azure deployment",
 ]
