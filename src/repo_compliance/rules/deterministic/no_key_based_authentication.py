@@ -12,7 +12,7 @@ from repo_compliance.domain import (
     RuleDefinition,
     RuleEvaluation,
 )
-from repo_compliance.errors import ArchiveError
+from repo_compliance.errors import SourceSnapshotError
 
 RULE_ID = "no-key-based-authentication"
 MAX_FILE_BYTES = 1024 * 1024
@@ -62,11 +62,11 @@ KEY_MARKER = re.compile(
 
 
 def check(context: RuleContext) -> RuleEvaluation:
-    """Scan safe UTF-8 archive entries for key authentication markers."""
-    if context.archive_path is None:
-        raise RuntimeError("Rule requires a repository archive.")
+    """Scan safe UTF-8 source snapshot entries for key authentication markers."""
+    if context.source_snapshot_path is None:
+        raise RuntimeError("Rule requires a source snapshot.")
 
-    evidence, total = _scan_archive(context.archive_path)
+    evidence, total = _scan_source_snapshot(context.source_snapshot_path)
     if total == 0:
         return RuleEvaluation(True, "No key-based authentication markers found.")
 
@@ -78,32 +78,34 @@ def check(context: RuleContext) -> RuleEvaluation:
     )
 
 
-def _scan_archive(archive_path: Path) -> tuple[tuple[Evidence, ...], int]:
+def _scan_source_snapshot(
+    source_snapshot_path: Path,
+) -> tuple[tuple[Evidence, ...], int]:
     try:
-        archive = ZipFile(archive_path)
+        source_snapshot = ZipFile(source_snapshot_path)
     except (BadZipFile, LargeZipFile, OSError) as error:
-        raise ArchiveError("Could not inspect the repository archive.") from error
-    with archive:
-        return _scan_entries(archive)
+        raise SourceSnapshotError("Could not inspect the source snapshot.") from error
+    with source_snapshot:
+        return _scan_entries(source_snapshot)
 
 
-def _scan_entries(archive: ZipFile) -> tuple[tuple[Evidence, ...], int]:
+def _scan_entries(source_zip: ZipFile) -> tuple[tuple[Evidence, ...], int]:
     evidence: list[Evidence] = []
     total = 0
-    for entry in archive.infolist():
-        entry_evidence = _entry_evidence(archive, entry)
+    for entry in source_zip.infolist():
+        entry_evidence = _entry_evidence(source_zip, entry)
         total += len(entry_evidence)
         remaining = MAX_EVIDENCE - len(evidence)
         evidence.extend(entry_evidence[:remaining])
     return tuple(evidence), total
 
 
-def _entry_evidence(archive: ZipFile, entry: ZipInfo) -> tuple[Evidence, ...]:
+def _entry_evidence(source_zip: ZipFile, entry: ZipInfo) -> tuple[Evidence, ...]:
     path = _scannable_path(entry)
     if path is None:
         return ()
 
-    text = _read_text(archive, entry)
+    text = _read_text(source_zip, entry)
     if text is None:
         return ()
 
@@ -113,12 +115,12 @@ def _entry_evidence(archive: ZipFile, entry: ZipInfo) -> tuple[Evidence, ...]:
     return tuple(evidence)
 
 
-def _read_text(archive: ZipFile, entry: ZipInfo) -> str | None:
+def _read_text(source_zip: ZipFile, entry: ZipInfo) -> str | None:
     try:
-        content = archive.read(entry)
+        content = source_zip.read(entry)
     except (BadZipFile, NotImplementedError, OSError, RuntimeError) as error:
-        raise ArchiveError(
-            "Could not read a file in the repository archive."
+        raise SourceSnapshotError(
+            "Could not read a file in the source snapshot."
         ) from error
     if _is_binary(content):
         return None
@@ -146,11 +148,11 @@ def _scannable_path(entry: ZipInfo) -> PurePosixPath | None:
     if entry.is_dir() or entry.file_size > MAX_FILE_BYTES:
         return None
 
-    archive_path = PurePosixPath(entry.filename)
-    if len(archive_path.parts) < 2:
+    source_path = PurePosixPath(entry.filename)
+    if len(source_path.parts) < 2:
         return None
 
-    repository_path = PurePosixPath(*archive_path.parts[1:])
+    repository_path = PurePosixPath(*source_path.parts[1:])
     directory_names = {part.casefold() for part in repository_path.parts[:-1]}
     if directory_names & EXCLUDED_DIRECTORIES:
         return None
@@ -177,5 +179,5 @@ RULE = RuleDefinition(
     confidence=Confidence.MEDIUM,
     documentation_url="https://confluence.example.com/display/COMPLIANCE/no-key-based-authentication",
     check=check,
-    requires_archive=True,
+    requires_source_snapshot=True,
 )

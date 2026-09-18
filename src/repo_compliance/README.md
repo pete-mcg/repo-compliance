@@ -86,7 +86,7 @@ Provides shared GitHub transport and reusable GitHub operations.
 **Should include:**
 
 - Authentication, HTTP requests, status handling, and JSON decoding.
-- Archive downloads and policy-neutral operations used by multiple rules.
+- Source snapshot downloads and policy-neutral operations used by multiple rules.
 
 **Should not include:**
 
@@ -110,7 +110,7 @@ Coordinates checks for each configured repository.
 
 **Should include:**
 
-- Preflight, exemptions, archive lifecycle, rule execution, and result conversion.
+- Preflight, exemptions, source snapshot lifecycle, rule execution, and result conversion.
 
 **Should not include:**
 
@@ -174,11 +174,11 @@ compliance rules.
 
 - The rule definition, evaluation, and result messages.
 - Endpoints, query parameters, response models, and validation unique to the rule.
-- Archive inspection or evidence handling unique to the rule.
+- Source snapshot inspection or evidence handling unique to the rule.
 
 **Should not include:**
 
-- Generic authentication, HTTP, archive-download, runner, or reporting behaviour.
+- Generic authentication, HTTP, source-snapshot-download, runner, or reporting behaviour.
 - Behaviour belonging to another rule.
 
 ## Rule ownership

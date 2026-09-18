@@ -8,11 +8,11 @@ from repo_compliance.errors import GitHubError
 class FakeGitHub:
     files: set[str] = field(default_factory=set)
     json_responses: dict[str, object | None] = field(default_factory=dict)
-    archive_bytes: bytes = b"archive"
+    source_snapshot_bytes: bytes = b"source snapshot"
     preflight_error_repositories: set[str] = field(default_factory=set)
-    archive_error_repositories: set[str] = field(default_factory=set)
+    source_snapshot_error_repositories: set[str] = field(default_factory=set)
     preflight_calls: list[str] = field(default_factory=list)
-    archive_calls: list[str] = field(default_factory=list)
+    source_snapshot_calls: list[str] = field(default_factory=list)
     file_calls: list[tuple[str, str]] = field(default_factory=list)
     json_calls: list[tuple[str, dict[str, str | int] | None, bool]] = field(
         default_factory=list
@@ -37,9 +37,11 @@ class FakeGitHub:
         self.json_calls.append((resource, params, missing_ok))
         return self.json_responses.get(resource)
 
-    def download_archive_from_main(self, repository: str, destination: Path) -> Path:
-        self.archive_calls.append(repository)
-        if repository in self.archive_error_repositories:
-            raise GitHubError("archive is unavailable")
-        destination.write_bytes(self.archive_bytes)
+    def download_source_snapshot_from_main(
+        self, repository: str, destination: Path
+    ) -> Path:
+        self.source_snapshot_calls.append(repository)
+        if repository in self.source_snapshot_error_repositories:
+            raise GitHubError("source snapshot is unavailable")
+        destination.write_bytes(self.source_snapshot_bytes)
         return destination

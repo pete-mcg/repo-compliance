@@ -71,7 +71,7 @@ The checker reads a list of repositories, checks each repository against every e
 - [`config/repositories.yml`](../config/repositories.yml) is the visible list of repositories and repository-specific rule exemptions.
 - [`src/repo_compliance/config.py`](../src/repo_compliance/config.py) reads and validates that list before any checks run.
 - [`src/repo_compliance/rules/registry.py`](../src/repo_compliance/rules/registry.py) is the ordered list of enabled rules. Its order becomes the report order.
-- [`src/repo_compliance/runner.py`](../src/repo_compliance/runner.py) coordinates checks for each repository, skips exempt rules, confirms the `main` branch is accessible, and downloads one source archive when a rule needs it.
+- [`src/repo_compliance/runner.py`](../src/repo_compliance/runner.py) coordinates checks for each repository, skips exempt rules, confirms the `main` branch is accessible, and downloads one source snapshot when a rule needs it.
 - [`src/repo_compliance/github.py`](../src/repo_compliance/github.py) contains all communication with GitHub. Rules ask it focused questions instead of making their own web requests.
 - [`src/repo_compliance/rules/`](../src/repo_compliance/rules/) contains the actual standards, grouped by evaluation method. Each rule lives in its own file.
 - [`src/repo_compliance/report.py`](../src/repo_compliance/report.py) converts collected results into `compliance-report.md`.

@@ -93,8 +93,10 @@ class GitHubClient:
                 f"GitHub returned invalid JSON for '{resource}'."
             ) from error
 
-    def download_archive_from_main(self, repository: str, destination: Path) -> Path:
-        """Stream a main branch ZIP archive to destination and return its path."""
+    def download_source_snapshot_from_main(
+        self, repository: str, destination: Path
+    ) -> Path:
+        """Stream a main branch source snapshot to destination and return its path."""
         resource = f"/repos/{repository}/zipball/main"
         try:
             with self._client.stream("GET", resource) as response:
@@ -145,9 +147,9 @@ class GitHubClient:
 
 
 def _write_chunks(destination: Path, chunks: Iterator[bytes]) -> None:
-    with destination.open("wb") as archive_file:
+    with destination.open("wb") as source_snapshot_file:
         for chunk in chunks:
-            archive_file.write(chunk)
+            source_snapshot_file.write(chunk)
 
 
 def _validate[T](

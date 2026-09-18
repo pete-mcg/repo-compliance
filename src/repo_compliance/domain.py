@@ -49,8 +49,10 @@ class GitHubApi(Protocol):
     ) -> object | None:
         """Return decoded JSON, optionally returning None when it is missing."""
 
-    def download_archive_from_main(self, repository: str, destination: Path) -> Path:
-        """Stream the main branch ZIP archive to a file and return its path."""
+    def download_source_snapshot_from_main(
+        self, repository: str, destination: Path
+    ) -> Path:
+        """Stream the main branch source snapshot to a file and return its path."""
 
 
 @dataclass(frozen=True)
@@ -78,7 +80,7 @@ class RuleContext:
 
     repository: str
     github: GitHubApi
-    archive_path: Path | None = None
+    source_snapshot_path: Path | None = None
 
 
 RuleCheck = Callable[[RuleContext], RuleEvaluation]
@@ -95,7 +97,7 @@ class RuleDefinition:
     confidence: Confidence
     documentation_url: str
     check: RuleCheck
-    requires_archive: bool = False
+    requires_source_snapshot: bool = False
 
 
 @dataclass(frozen=True)

@@ -13,8 +13,8 @@ class GitHubError(ComplianceError):
     """Raised when GitHub data cannot be fetched or validated."""
 
 
-class ArchiveError(ComplianceError):
-    """Raised when a downloaded repository archive cannot be inspected."""
+class SourceSnapshotError(ComplianceError):
+    """Raised when a downloaded source snapshot cannot be inspected."""
 
 
 class CliError(ComplianceError):

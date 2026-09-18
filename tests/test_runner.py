@@ -12,7 +12,7 @@ from repo_compliance.domain import (
     RuleDefinition,
     RuleEvaluation,
 )
-from repo_compliance.errors import ArchiveError, GitHubError
+from repo_compliance.errors import GitHubError, SourceSnapshotError
 from repo_compliance.runner import run_all_compliance_checks
 
 from .fakes import FakeGitHub
@@ -23,7 +23,7 @@ def make_rule(
     category: RuleCategory,
     check: RuleCheck,
     *,
-    requires_archive: bool = False,
+    requires_source_snapshot: bool = False,
 ) -> RuleDefinition:
     return RuleDefinition(
         id=rule_id,
@@ -33,7 +33,7 @@ def make_rule(
         confidence=Confidence.HIGH,
         documentation_url="https://example.com/rule",
         check=check,
-        requires_archive=requires_archive,
+        requires_source_snapshot=requires_source_snapshot,
     )
 
 
@@ -41,10 +41,10 @@ def passing_check(_context: RuleContext) -> RuleEvaluation:
     return RuleEvaluation(True, "passed")
 
 
-def get_archive_evaluation(context: RuleContext) -> RuleEvaluation:
-    assert context.archive_path is not None
-    assert context.archive_path.exists()
-    return RuleEvaluation(True, "archive inspected")
+def get_source_snapshot_evaluation(context: RuleContext) -> RuleEvaluation:
+    assert context.source_snapshot_path is not None
+    assert context.source_snapshot_path.exists()
+    return RuleEvaluation(True, "source snapshot inspected")
 
 
 def file_check(context: RuleContext) -> RuleEvaluation:
@@ -62,8 +62,8 @@ def test_fully_exempt_repository_skips_all_github_work() -> None:
         make_rule(
             "second",
             RuleCategory.DETERMINISTIC,
-            get_archive_evaluation,
-            requires_archive=True,
+            get_source_snapshot_evaluation,
+            requires_source_snapshot=True,
         ),
     )
     repository = RepositoryConfig(
@@ -82,7 +82,7 @@ def test_fully_exempt_repository_skips_all_github_work() -> None:
         ResultStatus.EXEMPT,
     ]
     assert github.preflight_calls == []
-    assert github.archive_calls == []
+    assert github.source_snapshot_calls == []
 
 
 def test_exemption_skips_only_its_check() -> None:
@@ -111,8 +111,8 @@ def test_preflight_failure_errors_active_rules_only() -> None:
         make_rule(
             "active",
             RuleCategory.DETERMINISTIC,
-            get_archive_evaluation,
-            requires_archive=True,
+            get_source_snapshot_evaluation,
+            requires_source_snapshot=True,
         ),
     )
     repository = RepositoryConfig(
@@ -128,22 +128,22 @@ def test_preflight_failure_errors_active_rules_only() -> None:
         ResultStatus.ERROR,
     ]
     assert "Preflight failed" in results[1].message
-    assert github.archive_calls == []
+    assert github.source_snapshot_calls == []
 
 
-def test_downloads_one_archive_for_multiple_archive_rules() -> None:
+def test_downloads_one_source_snapshot_for_multiple_source_snapshot_rules() -> None:
     rules = (
         make_rule(
-            "archive-one",
+            "source-snapshot-one",
             RuleCategory.DETERMINISTIC,
-            get_archive_evaluation,
-            requires_archive=True,
+            get_source_snapshot_evaluation,
+            requires_source_snapshot=True,
         ),
         make_rule(
-            "archive-two",
+            "source-snapshot-two",
             RuleCategory.DETERMINISTIC,
-            get_archive_evaluation,
-            requires_archive=True,
+            get_source_snapshot_evaluation,
+            requires_source_snapshot=True,
         ),
     )
     github = FakeGitHub()
@@ -158,20 +158,20 @@ def test_downloads_one_archive_for_multiple_archive_rules() -> None:
         ResultStatus.PASS,
         ResultStatus.PASS,
     ]
-    assert github.archive_calls == ["example/service"]
+    assert github.source_snapshot_calls == ["example/service"]
 
 
-def test_archive_failure_only_errors_archive_rules() -> None:
+def test_source_snapshot_failure_only_errors_source_snapshot_rules() -> None:
     rules = (
         make_rule("deterministic", RuleCategory.DETERMINISTIC, passing_check),
         make_rule(
-            "archive",
+            "source-snapshot",
             RuleCategory.DETERMINISTIC,
-            get_archive_evaluation,
-            requires_archive=True,
+            get_source_snapshot_evaluation,
+            requires_source_snapshot=True,
         ),
     )
-    github = FakeGitHub(archive_error_repositories={"example/service"})
+    github = FakeGitHub(source_snapshot_error_repositories={"example/service"})
 
     results = run_all_compliance_checks(
         config_for(RepositoryConfig(repository="example/service")),
@@ -183,7 +183,7 @@ def test_archive_failure_only_errors_archive_rules() -> None:
         ResultStatus.PASS,
         ResultStatus.ERROR,
     ]
-    assert results[1].message == "archive is unavailable"
+    assert results[1].message == "source snapshot is unavailable"
 
 
 def test_expected_rule_error_does_not_stop_rules_or_repositories() -> None:
@@ -221,15 +221,15 @@ def test_expected_rule_error_does_not_stop_rules_or_repositories() -> None:
     ]
 
 
-def test_archive_rule_error_becomes_result_data() -> None:
-    def archive_error(_context: RuleContext) -> RuleEvaluation:
-        raise ArchiveError("bad zip")
+def test_source_snapshot_rule_error_becomes_result_data() -> None:
+    def source_snapshot_error(_context: RuleContext) -> RuleEvaluation:
+        raise SourceSnapshotError("bad zip")
 
     rule = make_rule(
-        "archive",
+        "source-snapshot",
         RuleCategory.DETERMINISTIC,
-        archive_error,
-        requires_archive=True,
+        source_snapshot_error,
+        requires_source_snapshot=True,
     )
 
     results = run_all_compliance_checks(
@@ -256,19 +256,19 @@ def test_unexpected_rule_bug_remains_fatal() -> None:
         )
 
 
-def test_archive_path_is_temporary() -> None:
+def test_source_snapshot_path_is_temporary() -> None:
     observed_paths: list[Path] = []
 
-    def remember_archive(context: RuleContext) -> RuleEvaluation:
-        assert context.archive_path is not None
-        observed_paths.append(context.archive_path)
+    def remember_source_snapshot(context: RuleContext) -> RuleEvaluation:
+        assert context.source_snapshot_path is not None
+        observed_paths.append(context.source_snapshot_path)
         return RuleEvaluation(True, "seen")
 
     rule = make_rule(
-        "archive",
+        "source-snapshot",
         RuleCategory.DETERMINISTIC,
-        remember_archive,
-        requires_archive=True,
+        remember_source_snapshot,
+        requires_source_snapshot=True,
     )
 
     run_all_compliance_checks(

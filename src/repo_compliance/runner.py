@@ -12,7 +12,7 @@ from repo_compliance.domain import (
     RuleEvaluation,
     RuleResult,
 )
-from repo_compliance.errors import ArchiveError, GitHubError
+from repo_compliance.errors import GitHubError, SourceSnapshotError
 
 
 def run_all_compliance_checks(
@@ -43,9 +43,9 @@ def _run_checks_for_repository(
             repository.repository, rules, exemptions, repository_access_error
         )
 
-    if not _requires_archive(active_rules):
+    if not _requires_source_snapshot(active_rules):
         return _build_rule_results(repository.repository, github, rules, exemptions)
-    return _build_rule_results_with_archive(
+    return _build_rule_results_with_source_snapshot(
         repository.repository, github, rules, exemptions
     )
 
@@ -58,34 +58,34 @@ def _verify_repository_access(repository: str, github: GitHubApi) -> str | None:
     return None
 
 
-def _requires_archive(rules: tuple[RuleDefinition, ...]) -> bool:
-    return any(rule.requires_archive for rule in rules)
+def _requires_source_snapshot(rules: tuple[RuleDefinition, ...]) -> bool:
+    return any(rule.requires_source_snapshot for rule in rules)
 
 
-def _build_rule_results_with_archive(
+def _build_rule_results_with_source_snapshot(
     repository: str,
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
     exemptions: dict[str, str],
 ) -> tuple[RuleResult, ...]:
     with TemporaryDirectory(prefix="repo-compliance-") as temporary_directory:
-        archive_path = Path(temporary_directory) / "repository.zip"
+        source_snapshot_path = Path(temporary_directory) / "repository.zip"
         try:
-            github.download_archive_from_main(repository, archive_path)
+            github.download_source_snapshot_from_main(repository, source_snapshot_path)
         except GitHubError as error:
             return _build_rule_results(
                 repository,
                 github,
                 rules,
                 exemptions,
-                archive_error=str(error),
+                source_snapshot_error=str(error),
             )
         return _build_rule_results(
             repository,
             github,
             rules,
             exemptions,
-            archive_path=archive_path,
+            source_snapshot_path=source_snapshot_path,
         )
 
 
@@ -95,8 +95,8 @@ def _build_rule_results(
     rules: tuple[RuleDefinition, ...],
     exemptions: dict[str, str],
     *,
-    archive_path: Path | None = None,
-    archive_error: str | None = None,
+    source_snapshot_path: Path | None = None,
+    source_snapshot_error: str | None = None,
 ) -> tuple[RuleResult, ...]:
     results: list[RuleResult] = []
     for rule in rules:
@@ -106,10 +106,12 @@ def _build_rule_results(
                 _result_when_test_exemption(repository, rule, exemption_reason)
             )
             continue
-        if rule.requires_archive and archive_error is not None:
-            results.append(_result_when_test_error(repository, rule, archive_error))
+        if rule.requires_source_snapshot and source_snapshot_error is not None:
+            results.append(
+                _result_when_test_error(repository, rule, source_snapshot_error)
+            )
             continue
-        results.append(_run_rule_test(repository, github, rule, archive_path))
+        results.append(_run_rule_test(repository, github, rule, source_snapshot_path))
     return tuple(results)
 
 
@@ -117,12 +119,12 @@ def _run_rule_test(
     repository: str,
     github: GitHubApi,
     rule: RuleDefinition,
-    archive_path: Path | None,
+    source_snapshot_path: Path | None,
 ) -> RuleResult:
-    context = RuleContext(repository, github, archive_path)
+    context = RuleContext(repository, github, source_snapshot_path)
     try:
         evaluation = rule.check(context)
-    except (ArchiveError, GitHubError) as error:
+    except (SourceSnapshotError, GitHubError) as error:
         return _result_when_test_error(repository, rule, str(error))
     return _result_when_test_completed(repository, rule, evaluation)
 

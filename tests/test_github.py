@@ -79,23 +79,28 @@ def test_get_json_can_accept_a_missing_resource() -> None:
         assert client.get_json("/example", missing_ok=True) is None
 
 
-def test_archive_download_follows_redirect_and_streams_file(tmp_path: Path) -> None:
+def test_source_snapshot_download_follows_redirect_and_streams_file(
+    tmp_path: Path,
+) -> None:
     requested_paths: list[str] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         requested_paths.append(request.url.path)
         if request.url.path.endswith("/zipball/main"):
-            return httpx.Response(302, headers={"Location": "/archive.zip"})
+            return httpx.Response(302, headers={"Location": "/source.zip"})
         return httpx.Response(200, content=b"zip-content")
 
     destination = tmp_path / "repository.zip"
     with GitHubClient("token", transport=httpx.MockTransport(handler)) as client:
-        assert client.download_archive_from_main(REPOSITORY, destination) == destination
+        assert (
+            client.download_source_snapshot_from_main(REPOSITORY, destination)
+            == destination
+        )
 
     assert destination.read_bytes() == b"zip-content"
     assert requested_paths == [
         "/repos/example/service/zipball/main",
-        "/archive.zip",
+        "/source.zip",
     ]
 
 
@@ -152,16 +157,18 @@ def test_preflight_accepts_a_repository_regardless_of_default_branch() -> None:
         client.ensure_accessible_respository(REPOSITORY)
 
 
-def test_archive_output_failure_is_wrapped(tmp_path: Path) -> None:
+def test_source_snapshot_output_failure_is_wrapped(tmp_path: Path) -> None:
     transport = httpx.MockTransport(
-        lambda _request: httpx.Response(200, content=b"archive")
+        lambda _request: httpx.Response(200, content=b"source snapshot")
     )
 
     with (
         GitHubClient("token", transport=transport) as client,
         pytest.raises(GitHubError, match="FileNotFoundError"),
     ):
-        client.download_archive_from_main(REPOSITORY, tmp_path / "missing" / "file.zip")
+        client.download_source_snapshot_from_main(
+            REPOSITORY, tmp_path / "missing" / "file.zip"
+        )
 
 
 def call_client_method(client: GitHubClient, method: str) -> None:
