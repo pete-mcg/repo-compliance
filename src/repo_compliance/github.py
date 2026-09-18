@@ -59,7 +59,7 @@ class GitHubClient:
         """Close network resources when leaving a context manager."""
         self._client.close()
 
-    def ensure_repository(self, repository: str) -> None:
+    def ensure_accessible_respository(self, repository: str) -> None:
         """Ensure the repository is accessible and has valid API data."""
         resource = f"/repos/{repository}"
         response = self._get(resource)
@@ -93,7 +93,7 @@ class GitHubClient:
                 f"GitHub returned invalid JSON for '{resource}'."
             ) from error
 
-    def download_main_archive(self, repository: str, destination: Path) -> Path:
+    def download_archive_from_main(self, repository: str, destination: Path) -> Path:
         """Stream a main branch ZIP archive to destination and return its path."""
         resource = f"/repos/{repository}/zipball/main"
         try:

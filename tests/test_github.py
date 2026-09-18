@@ -21,7 +21,7 @@ def test_sends_authentication_version_and_timeout_headers() -> None:
         return httpx.Response(200, json={"id": 42})
 
     with GitHubClient("test-token", transport=httpx.MockTransport(handler)) as client:
-        client.ensure_repository(REPOSITORY)
+        client.ensure_accessible_respository(REPOSITORY)
 
 
 def test_content_404_means_missing_file() -> None:
@@ -90,7 +90,7 @@ def test_archive_download_follows_redirect_and_streams_file(tmp_path: Path) -> N
 
     destination = tmp_path / "repository.zip"
     with GitHubClient("token", transport=httpx.MockTransport(handler)) as client:
-        assert client.download_main_archive(REPOSITORY, destination) == destination
+        assert client.download_archive_from_main(REPOSITORY, destination) == destination
 
     assert destination.read_bytes() == b"zip-content"
     assert requested_paths == [
@@ -107,7 +107,7 @@ def test_timeout_is_wrapped_as_github_error() -> None:
         GitHubClient("token", transport=httpx.MockTransport(handler)) as client,
         pytest.raises(GitHubError, match="ReadTimeout"),
     ):
-        client.ensure_repository(REPOSITORY)
+        client.ensure_accessible_respository(REPOSITORY)
 
 
 def test_http_error_is_wrapped_without_response_body() -> None:
@@ -119,7 +119,7 @@ def test_http_error_is_wrapped_without_response_body() -> None:
         GitHubClient("token", transport=transport) as client,
         pytest.raises(GitHubError, match="HTTP 500") as captured,
     ):
-        client.ensure_repository(REPOSITORY)
+        client.ensure_accessible_respository(REPOSITORY)
 
     assert "sensitive response" not in str(captured.value)
 
@@ -149,7 +149,7 @@ def test_preflight_accepts_a_repository_regardless_of_default_branch() -> None:
     )
 
     with GitHubClient("token", transport=transport) as client:
-        client.ensure_repository(REPOSITORY)
+        client.ensure_accessible_respository(REPOSITORY)
 
 
 def test_archive_output_failure_is_wrapped(tmp_path: Path) -> None:
@@ -161,11 +161,11 @@ def test_archive_output_failure_is_wrapped(tmp_path: Path) -> None:
         GitHubClient("token", transport=transport) as client,
         pytest.raises(GitHubError, match="FileNotFoundError"),
     ):
-        client.download_main_archive(REPOSITORY, tmp_path / "missing" / "file.zip")
+        client.download_archive_from_main(REPOSITORY, tmp_path / "missing" / "file.zip")
 
 
 def call_client_method(client: GitHubClient, method: str) -> None:
     if method == "repository":
-        client.ensure_repository(REPOSITORY)
+        client.ensure_accessible_respository(REPOSITORY)
     else:
         client.file_exists(REPOSITORY, ".github/CODEOWNERS")

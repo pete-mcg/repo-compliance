@@ -18,7 +18,7 @@ class FakeGitHub:
         default_factory=list
     )
 
-    def ensure_repository(self, repository: str) -> None:
+    def ensure_accessible_respository(self, repository: str) -> None:
         self.preflight_calls.append(repository)
         if repository in self.preflight_error_repositories:
             raise GitHubError("repository is unavailable")
@@ -37,7 +37,7 @@ class FakeGitHub:
         self.json_calls.append((resource, params, missing_ok))
         return self.json_responses.get(resource)
 
-    def download_main_archive(self, repository: str, destination: Path) -> Path:
+    def download_archive_from_main(self, repository: str, destination: Path) -> Path:
         self.archive_calls.append(repository)
         if repository in self.archive_error_repositories:
             raise GitHubError("archive is unavailable")

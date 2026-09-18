@@ -15,7 +15,7 @@ from repo_compliance.domain import (
 from repo_compliance.errors import ArchiveError, GitHubError
 
 
-def run_compliance_checks(
+def run_all_compliance_checks(
     config: ComplianceConfig,
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
@@ -35,32 +35,34 @@ def _run_checks_for_repository(
     exemptions = {item.rule: item.reason for item in repository.exemptions}
     active_rules = tuple(rule for rule in rules if rule.id not in exemptions)
     if not active_rules:
-        return _evaluate_rules(repository.repository, github, rules, exemptions)
+        return _build_rule_results(repository.repository, github, rules, exemptions)
 
-    preflight_error = _preflight(repository.repository, github)
-    if preflight_error is not None:
-        return _preflight_results(
-            repository.repository, rules, exemptions, preflight_error
+    repository_access_error = _verify_repository_access(repository.repository, github)
+    if repository_access_error is not None:
+        return _result_when_access_error(
+            repository.repository, rules, exemptions, repository_access_error
         )
 
-    if not _needs_archive(active_rules):
-        return _evaluate_rules(repository.repository, github, rules, exemptions)
-    return _evaluate_with_archive(repository.repository, github, rules, exemptions)
+    if not _requires_archive(active_rules):
+        return _build_rule_results(repository.repository, github, rules, exemptions)
+    return _build_rule_results_with_archive(
+        repository.repository, github, rules, exemptions
+    )
 
 
-def _preflight(repository: str, github: GitHubApi) -> str | None:
+def _verify_repository_access(repository: str, github: GitHubApi) -> str | None:
     try:
-        github.ensure_repository(repository)
+        github.ensure_accessible_respository(repository)
     except GitHubError as error:
         return str(error)
     return None
 
 
-def _needs_archive(rules: tuple[RuleDefinition, ...]) -> bool:
+def _requires_archive(rules: tuple[RuleDefinition, ...]) -> bool:
     return any(rule.requires_archive for rule in rules)
 
 
-def _evaluate_with_archive(
+def _build_rule_results_with_archive(
     repository: str,
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
@@ -69,16 +71,16 @@ def _evaluate_with_archive(
     with TemporaryDirectory(prefix="repo-compliance-") as temporary_directory:
         archive_path = Path(temporary_directory) / "repository.zip"
         try:
-            github.download_main_archive(repository, archive_path)
+            github.download_archive_from_main(repository, archive_path)
         except GitHubError as error:
-            return _evaluate_rules(
+            return _build_rule_results(
                 repository,
                 github,
                 rules,
                 exemptions,
                 archive_error=str(error),
             )
-        return _evaluate_rules(
+        return _build_rule_results(
             repository,
             github,
             rules,
@@ -87,7 +89,7 @@ def _evaluate_with_archive(
         )
 
 
-def _evaluate_rules(
+def _build_rule_results(
     repository: str,
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
@@ -100,16 +102,18 @@ def _evaluate_rules(
     for rule in rules:
         exemption_reason = exemptions.get(rule.id)
         if exemption_reason is not None:
-            results.append(_exempt_result(repository, rule, exemption_reason))
+            results.append(
+                _result_when_test_exemption(repository, rule, exemption_reason)
+            )
             continue
         if rule.requires_archive and archive_error is not None:
-            results.append(_error_result(repository, rule, archive_error))
+            results.append(_result_when_test_error(repository, rule, archive_error))
             continue
-        results.append(_evaluate_rule(repository, github, rule, archive_path))
+        results.append(_run_rule_test(repository, github, rule, archive_path))
     return tuple(results)
 
 
-def _evaluate_rule(
+def _run_rule_test(
     repository: str,
     github: GitHubApi,
     rule: RuleDefinition,
@@ -119,11 +123,11 @@ def _evaluate_rule(
     try:
         evaluation = rule.check(context)
     except (ArchiveError, GitHubError) as error:
-        return _error_result(repository, rule, str(error))
-    return _completed_result(repository, rule, evaluation)
+        return _result_when_test_error(repository, rule, str(error))
+    return _result_when_test_completed(repository, rule, evaluation)
 
 
-def _completed_result(
+def _result_when_test_completed(
     repository: str,
     rule: RuleDefinition,
     evaluation: RuleEvaluation,
@@ -139,7 +143,7 @@ def _completed_result(
     )
 
 
-def _exempt_result(
+def _result_when_test_exemption(
     repository: str,
     rule: RuleDefinition,
     reason: str,
@@ -147,7 +151,7 @@ def _exempt_result(
     return RuleResult(repository, rule, ResultStatus.EXEMPT, reason)
 
 
-def _error_result(
+def _result_when_test_error(
     repository: str,
     rule: RuleDefinition,
     message: str,
@@ -155,7 +159,7 @@ def _error_result(
     return RuleResult(repository, rule, ResultStatus.ERROR, message)
 
 
-def _preflight_results(
+def _result_when_access_error(
     repository: str,
     rules: tuple[RuleDefinition, ...],
     exemptions: dict[str, str],
@@ -165,9 +169,9 @@ def _preflight_results(
     for rule in rules:
         reason = exemptions.get(rule.id)
         if reason is not None:
-            results.append(_exempt_result(repository, rule, reason))
+            results.append(_result_when_test_exemption(repository, rule, reason))
         else:
             results.append(
-                _error_result(repository, rule, f"Preflight failed: {error}")
+                _result_when_test_error(repository, rule, f"Preflight failed: {error}")
             )
     return tuple(results)

@@ -86,7 +86,7 @@ def test_unexpected_checker_bug_returns_nonzero(
     def broken_run(_config: object, _github: object, _rules: object) -> None:
         raise RuntimeError("unexpected bug")
 
-    monkeypatch.setattr(cli, "run_compliance_checks", broken_run)
+    monkeypatch.setattr(cli, "run_all_compliance_checks", broken_run)
 
     exit_code = main(arguments(config, tmp_path / "report.md"))
 

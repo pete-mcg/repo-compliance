@@ -34,7 +34,7 @@ class ResultStatus(StrEnum):
 class GitHubApi(Protocol):
     """GitHub operations available to rules and the runner."""
 
-    def ensure_repository(self, repository: str) -> None:
+    def ensure_accessible_respository(self, repository: str) -> None:
         """Ensure the repository is accessible and has valid API data."""
 
     def file_exists(self, repository: str, path: str) -> bool:
@@ -49,7 +49,7 @@ class GitHubApi(Protocol):
     ) -> object | None:
         """Return decoded JSON, optionally returning None when it is missing."""
 
-    def download_main_archive(self, repository: str, destination: Path) -> Path:
+    def download_archive_from_main(self, repository: str, destination: Path) -> Path:
         """Stream the main branch ZIP archive to a file and return its path."""
 
 
