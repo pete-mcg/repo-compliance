@@ -40,3 +40,4 @@ Answer: Structured output, not arbitrary prose.
 	- Keep to one level of abstraction within a function;
 	- Keep functions simple;
 - Adhere to the skill $readable-python
+- `task ci` currently passes.
