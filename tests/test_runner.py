@@ -12,10 +12,11 @@ from repo_compliance.domain import (
     RuleDefinition,
     RuleEvaluation,
 )
-from repo_compliance.errors import GitHubError, SourceSnapshotError
+from repo_compliance.errors import AgentError, GitHubError, SourceSnapshotError
+from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import RULE as CI_RULE
 from repo_compliance.runner import run_all_compliance_checks
 
-from .fakes import FakeGitHub
+from .fakes import FakeAgentEvaluator, FakeGitHub
 
 
 def make_rule(
@@ -186,10 +187,13 @@ def test_source_snapshot_failure_only_errors_source_snapshot_rules() -> None:
     assert results[1].message == "source snapshot is unavailable"
 
 
-def test_expected_rule_error_does_not_stop_rules_or_repositories() -> None:
+@pytest.mark.parametrize("error", [GitHubError, AgentError])
+def test_expected_rule_error_does_not_stop_rules_or_repositories(
+    error: type[GitHubError | AgentError],
+) -> None:
     def sometimes_errors(context: RuleContext) -> RuleEvaluation:
         if context.repository == "example/first":
-            raise GitHubError("API unavailable")
+            raise error("Service unavailable")
         return RuleEvaluation(True, "passed")
 
     rules = (
@@ -279,3 +283,49 @@ def test_source_snapshot_path_is_temporary() -> None:
 
     assert len(observed_paths) == 1
     assert not observed_paths[0].exists()
+
+
+@pytest.mark.parametrize("agent_error", [None, AgentError("Agent unavailable")])
+def test_agent_shares_snapshot_and_does_not_stop_other_checks(
+    agent_error: AgentError | None,
+) -> None:
+    source_rule = make_rule(
+        "other-source",
+        RuleCategory.DETERMINISTIC,
+        get_source_snapshot_evaluation,
+        requires_source_snapshot=True,
+    )
+    github = FakeGitHub()
+    evaluator = FakeAgentEvaluator(error=agent_error)
+    results = run_all_compliance_checks(
+        config_for(RepositoryConfig(repository="example/service")),
+        github,
+        (CI_RULE, source_rule),
+        evaluator,
+    )
+    assert results[0].status is (
+        ResultStatus.ERROR if agent_error else ResultStatus.PASS
+    )
+    assert results[1].status is ResultStatus.PASS
+    assert github.source_snapshot_calls == ["example/service"]
+    assert len(evaluator.calls) == 1
+    assert not evaluator.calls[0][0].exists()
+
+
+def test_exempt_agent_starts_no_evaluation_or_snapshot_download() -> None:
+    repository = RepositoryConfig(
+        repository="example/service",
+        exemptions=(ExemptionConfig(rule=CI_RULE.id, reason="Approved exception"),),
+    )
+    github = FakeGitHub()
+    evaluator = FakeAgentEvaluator()
+    other_rule = make_rule("other", RuleCategory.DETERMINISTIC, passing_check)
+    results = run_all_compliance_checks(
+        config_for(repository), github, (CI_RULE, other_rule), evaluator
+    )
+    assert [result.status for result in results] == [
+        ResultStatus.EXEMPT,
+        ResultStatus.PASS,
+    ]
+    assert evaluator.calls == []
+    assert github.source_snapshot_calls == []

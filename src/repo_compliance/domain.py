@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
-from repo_compliance.ports import GitHubApi
+from repo_compliance.ports import AgentEvaluator, GitHubApi
 
 
 class RuleCategory(StrEnum):
@@ -58,6 +58,7 @@ class RuleContext:
     repository: str
     github: GitHubApi
     source_snapshot_path: Path | None = None
+    agent_evaluator: AgentEvaluator | None = None
 
 
 RuleCheck = Callable[[RuleContext], RuleEvaluation]

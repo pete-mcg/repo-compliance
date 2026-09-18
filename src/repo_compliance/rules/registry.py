@@ -1,5 +1,8 @@
 """Explicit ordered registry of enabled compliance rules."""
 
+from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import (
+    RULE as CI_WORKFLOW_ON_PULL_REQUESTS,
+)
 from repo_compliance.rules.deterministic.codeowners_present import (
     RULE as CODEOWNERS_PRESENT,
 )
@@ -22,5 +25,6 @@ RULES = (
     DEPLOY_WORKFLOW_PRESENT,
     NO_CRITICAL_DEPENDABOT_ALERTS,
     NO_KEY_BASED_AUTHENTICATION,
+    CI_WORKFLOW_ON_PULL_REQUESTS,
 )
 RULE_IDS = frozenset(rule.id for rule in RULES)

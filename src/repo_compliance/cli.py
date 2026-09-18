@@ -10,6 +10,9 @@ from pydantic import BaseModel, ConfigDict
 
 from repo_compliance.config import get_config
 from repo_compliance.errors import CliError, ComplianceError
+from repo_compliance.infrastructure.agentic.agent_framework import (
+    AgentFrameworkEvaluator,
+)
 from repo_compliance.infrastructure.github.client import GitHubClient
 from repo_compliance.report import build_report
 from repo_compliance.rules.registry import RULE_IDS, RULES
@@ -32,7 +35,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         token = _get_github_token()
         config = get_config(options.config, RULE_IDS)
         with GitHubClient(token) as github:
-            results = run_all_compliance_checks(config, github, RULES)
+            results = run_all_compliance_checks(
+                config, github, RULES, AgentFrameworkEvaluator()
+            )
         report = build_report(config, RULES, results)
         options.output.write_text(report, encoding="utf-8")
     except ComplianceError as error:

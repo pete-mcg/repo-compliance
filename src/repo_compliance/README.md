@@ -27,7 +27,7 @@ The main directions are:
 
 ```text
 __main__ -> cli
-cli -> config, runner, report, rules.registry, infrastructure.github.client
+cli -> config, runner, report, rules.registry, infrastructure
 rules.registry -> individual rule modules
 runner -> config, domain, ports, errors
 report -> config, domain
@@ -35,15 +35,16 @@ rules -> domain, errors, shared GitHub response models where needed
 domain -> ports
 config -> errors
 infrastructure.github.client -> infrastructure.github.models, errors
+infrastructure.agentic -> domain, errors
 ```
 
 - `domain.py` and `ports.py` must not import concrete integrations, the runner,
   reporting, or individual rules.
-- `ports.py` describes capabilities with Python protocols. `GitHubApi` is the
-  contract used by the runner and `RuleContext`.
+- `ports.py` describes capabilities with Python protocols. `GitHubApi` and
+  `AgentEvaluator` are the contracts used by the runner and `RuleContext`.
 - The runner receives a `GitHubApi`; it does not create a `GitHubClient` or import
   individual rules. Rules are supplied explicitly by the caller.
-- The CLI creates the concrete GitHub client and passes it to the runner.
+- The CLI creates the concrete GitHub client and agent evaluator and passes them to the runner.
   `GitHubClient` satisfies the protocol by providing its methods; it does not
   need to inherit from or import `GitHubApi`.
 - Infrastructure must not import individual rules, the registry, the runner,
@@ -54,6 +55,14 @@ At runtime, the runner calls a rule's check function. The rule can call the
 GitHub client through `context.github`, then return a `RuleEvaluation`. The
 runner converts that evaluation to a `RuleResult` for reporting. Calling an
 implementation through a supplied protocol does not require importing it.
+
+Agent rules keep their policy in an adjacent packaged Markdown prompt. They call
+`context.agent_evaluator.evaluate(snapshot_path, prompt)` and return its validated
+`RuleEvaluation`. The evaluator is cheap to construct; settings, credentials, and
+Docker start only during evaluation. `infrastructure/agentic/agent_framework.py`
+contains provider settings, response validation, Azure client construction, and
+Serena launch configuration. `source_snapshot.py` safely extracts and removes
+the temporary source directory. Framework-specific imports stay in the adapter.
 
 This is a pragmatic layered design with self-contained rules. Rules deliberately
 own their endpoint selection and response validation; some import `GitHubModel`

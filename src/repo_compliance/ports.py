@@ -1,7 +1,17 @@
 """Contracts for external capabilities needed by the checker."""
 
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from repo_compliance.domain import RuleEvaluation
+
+
+class AgentEvaluator(Protocol):
+    """Reason about a local source ZIP using a supplied rule prompt."""
+
+    def evaluate(self, snapshot_path: Path, prompt: str) -> RuleEvaluation:
+        """Return a validated judgment or raise AgentError when unavailable."""
 
 
 class GitHubApi(Protocol):

@@ -11,19 +11,22 @@ from repo_compliance.domain import (
     RuleEvaluation,
     RuleResult,
 )
-from repo_compliance.errors import GitHubError, SourceSnapshotError
-from repo_compliance.ports import GitHubApi
+from repo_compliance.errors import AgentError, GitHubError, SourceSnapshotError
+from repo_compliance.ports import AgentEvaluator, GitHubApi
 
 
 def run_all_compliance_checks(
     config: ComplianceConfig,
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
+    agent_evaluator: AgentEvaluator | None = None,
 ) -> tuple[RuleResult, ...]:
     """Run all enabled rules in configuration and registry order."""
     results: list[RuleResult] = []
     for repository in config.repositories:
-        results.extend(_run_checks_for_repository(repository, github, rules))
+        results.extend(
+            _run_checks_for_repository(repository, github, rules, agent_evaluator)
+        )
     return tuple(results)
 
 
@@ -31,11 +34,14 @@ def _run_checks_for_repository(
     repository: RepositoryConfig,
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
+    agent_evaluator: AgentEvaluator | None,
 ) -> tuple[RuleResult, ...]:
     exemptions = {item.rule: item.reason for item in repository.exemptions}
     active_rules = tuple(rule for rule in rules if rule.id not in exemptions)
     if not active_rules:
-        return _build_rule_results(repository.repository, github, rules, exemptions)
+        return _build_rule_results(
+            repository.repository, github, rules, exemptions, agent_evaluator
+        )
 
     preflight_error = _preflight_checks(repository.repository, github)
     if preflight_error is not None:
@@ -44,9 +50,11 @@ def _run_checks_for_repository(
         )
 
     if not _requires_source_snapshot(active_rules):
-        return _build_rule_results(repository.repository, github, rules, exemptions)
+        return _build_rule_results(
+            repository.repository, github, rules, exemptions, agent_evaluator
+        )
     return _build_rule_results_with_source_snapshot(
-        repository.repository, github, rules, exemptions
+        repository.repository, github, rules, exemptions, agent_evaluator
     )
 
 
@@ -68,6 +76,7 @@ def _build_rule_results_with_source_snapshot(
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
     exemptions: dict[str, str],
+    agent_evaluator: AgentEvaluator | None,
 ) -> tuple[RuleResult, ...]:
     with TemporaryDirectory(prefix="repo-compliance-") as temporary_directory:
         source_snapshot_path = Path(temporary_directory) / "repository.zip"
@@ -79,6 +88,7 @@ def _build_rule_results_with_source_snapshot(
                 github,
                 rules,
                 exemptions,
+                agent_evaluator,
                 source_snapshot_error=str(error),
             )
         return _build_rule_results(
@@ -86,6 +96,7 @@ def _build_rule_results_with_source_snapshot(
             github,
             rules,
             exemptions,
+            agent_evaluator,
             source_snapshot_path=source_snapshot_path,
         )
 
@@ -95,6 +106,7 @@ def _build_rule_results(
     github: GitHubApi,
     rules: tuple[RuleDefinition, ...],
     exemptions: dict[str, str],
+    agent_evaluator: AgentEvaluator | None,
     *,
     source_snapshot_path: Path | None = None,
     source_snapshot_error: str | None = None,
@@ -112,7 +124,11 @@ def _build_rule_results(
                 _result_when_test_error(repository, rule, source_snapshot_error)
             )
             continue
-        results.append(_run_rule_test(repository, github, rule, source_snapshot_path))
+        results.append(
+            _run_rule_test(
+                repository, github, rule, source_snapshot_path, agent_evaluator
+            )
+        )
     return tuple(results)
 
 
@@ -121,11 +137,12 @@ def _run_rule_test(
     github: GitHubApi,
     rule: RuleDefinition,
     source_snapshot_path: Path | None,
+    agent_evaluator: AgentEvaluator | None,
 ) -> RuleResult:
-    context = RuleContext(repository, github, source_snapshot_path)
+    context = RuleContext(repository, github, source_snapshot_path, agent_evaluator)
     try:
         evaluation = rule.check(context)
-    except (SourceSnapshotError, GitHubError) as error:
+    except (SourceSnapshotError, GitHubError, AgentError) as error:
         return _result_when_test_error(repository, rule, str(error))
     return _result_when_test_completed(repository, rule, evaluation)
 

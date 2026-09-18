@@ -7,10 +7,13 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      AZURE_CORE_COLLECT_TELEMETRY: "false"
     steps:
       - name: Check out this repository
         uses: actions/checkout@v6
@@ -20,10 +23,32 @@ jobs:
         with:
           python-version: "3.14"
 
+      - name: Sign in to Azure with federated OIDC
+        if: ${{ vars.AZURE_CLIENT_ID != '' && vars.AZURE_TENANT_ID != '' && vars.AZURE_SUBSCRIPTION_ID != '' }}
+        continue-on-error: true # Authentication failures become per-rule ERROR results.
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Pull the pinned local Serena image
+        if: ${{ vars.AZURE_OPENAI_ENDPOINT != '' }}
+        continue-on-error: true # Keep deterministic checks running if Docker is unavailable.
+        run: |
+          uv run --frozen python - <<'PY'
+          import subprocess
+          from repo_compliance.infrastructure.agentic.agent_framework import SERENA_IMAGE
+          subprocess.run(["docker", "pull", SERENA_IMAGE], check=True)
+          PY
+
       - name: Run compliance checks
         run: uv run --frozen repo-compliance
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_COMPLIANCE_TOKEN }}
+          AZURE_OPENAI_ENDPOINT: ${{ vars.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_DEPLOYMENT: ${{ vars.AZURE_OPENAI_DEPLOYMENT }}
+          AZURE_OPENAI_API_VERSION: ${{ vars.AZURE_OPENAI_API_VERSION }}
 
       - name: Add report to workflow summary
         run: cat compliance-report.md >> "$GITHUB_STEP_SUMMARY"

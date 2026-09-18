@@ -1,7 +1,24 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from repo_compliance.errors import GitHubError
+from repo_compliance.domain import RuleEvaluation
+from repo_compliance.errors import AgentError, GitHubError
+
+
+@dataclass
+class FakeAgentEvaluator:
+    evaluation: RuleEvaluation = field(
+        default_factory=lambda: RuleEvaluation(True, "CI is declared.")
+    )
+    error: AgentError | None = None
+    calls: list[tuple[Path, str]] = field(default_factory=list)
+
+    def evaluate(self, snapshot_path: Path, prompt: str) -> RuleEvaluation:
+        assert snapshot_path.exists()
+        self.calls.append((snapshot_path, prompt))
+        if self.error is not None:
+            raise self.error
+        return self.evaluation
 
 
 @dataclass

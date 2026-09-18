@@ -1,10 +1,14 @@
 from collections.abc import Sequence
 from pathlib import Path
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
 from repo_compliance import cli
 from repo_compliance.cli import main
+from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import RULE as CI_RULE
+
+from .fakes import FakeAgentEvaluator, FakeGitHub
 
 
 def write_empty_config(path: Path) -> Path:
@@ -83,7 +87,9 @@ def test_unexpected_checker_bug_returns_nonzero(
     config = write_empty_config(tmp_path / "repositories.yml")
     monkeypatch.setenv("GITHUB_TOKEN", "token")
 
-    def broken_run(_config: object, _github: object, _rules: object) -> None:
+    def broken_run(
+        _config: object, _github: object, _rules: object, _evaluator: object
+    ) -> None:
         raise RuntimeError("unexpected bug")
 
     monkeypatch.setattr(cli, "run_all_compliance_checks", broken_run)
@@ -108,3 +114,28 @@ def test_default_paths_work_from_current_directory(
 
     assert exit_code == 0
     assert (tmp_path / "compliance-report.md").is_file()
+
+
+@pytest.mark.parametrize("exempt", [True, False])
+def test_cli_supplies_lazy_evaluator(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, exempt: bool
+) -> None:
+    config = tmp_path / "repositories.yml"
+    content = "repositories:\n  - repository: example/service\n"
+    if exempt:
+        content += (
+            f"    exemptions:\n      - rule: {CI_RULE.id}\n        reason: Approved\n"
+        )
+    config.write_text(content, encoding="utf-8")
+    output = tmp_path / "report.md"
+    github = MagicMock()
+    github.__enter__.return_value = FakeGitHub()
+    evaluator = FakeAgentEvaluator()
+    monkeypatch.setenv("GITHUB_TOKEN", "token")
+    monkeypatch.setattr(cli, "GitHubClient", Mock(return_value=github))
+    monkeypatch.setattr(cli, "AgentFrameworkEvaluator", Mock(return_value=evaluator))
+    monkeypatch.setattr(cli, "RULES", (CI_RULE,))
+
+    assert main(arguments(config, output)) == 0
+    assert len(evaluator.calls) == (0 if exempt else 1)
+    assert ("EXEMPT" if exempt else "PASS") in output.read_text(encoding="utf-8")

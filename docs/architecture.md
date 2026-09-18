@@ -1,5 +1,52 @@
 # Architecture
 
+## Agent evaluation
+
+```mermaid
+flowchart TD
+    CLI[CLI connects GitHub and AgentEvaluator] --> Runner[Existing synchronous runner]
+    Runner --> ZIP[One shared main ZIP per repository]
+    Runner --> Rule[CI rule and packaged Markdown prompt]
+    Rule --> Port[AgentEvaluator protocol]
+    Port --> Adapter[Microsoft Agent Framework adapter]
+    ZIP --> Extract[Validated temporary extraction]
+    Extract --> Serena[Local Serena in Docker]
+    Adapter <-->|MCP over stdio| Serena
+    Adapter --> Azure[Approved Azure OpenAI deployment]
+    Adapter --> Evaluation[Validated RuleEvaluation or AgentError]
+    Evaluation --> Report[Existing Markdown report]
+```
+
+The rule owns the judgment policy. The runner passes its shared source ZIP and
+the supplied evaluator through `RuleContext`; exemptions skip evaluation. The
+adapter owns extraction, asynchronous calls, and resource cleanup. Its Pydantic
+response model accepts `pass`, `fail`, or `uncertain` plus an explanation and
+location evidence. Uncertainty and expected integration failures become
+`AgentError`, which the runner records as `ERROR` before continuing other checks.
+
+Settings are validated when an active rule evaluates. Azure routing and Entra
+authentication are explicit. Serena receives only temporary source and its own
+temporary state; source and container filesystems are read-only, networking is
+disabled, and its tool set is restricted to listing, reading, and searching.
+Checker-owned project state exists before Serena starts, so Serena cannot fall
+back to repository-supplied `.serena` configuration. No language servers start.
+The agent loop times out after 120 seconds; cleanup can take another 10 seconds.
+
+Framework and provider imports stay in
+[`infrastructure/agentic/agent_framework.py`](../src/repo_compliance/infrastructure/agentic/agent_framework.py).
+Replacing the framework changes this adapter while preserving `AgentEvaluator`.
+Azure client construction, Docker launch settings, and Serena configuration each
+have a small function there. Replacing Serena changes launch configuration and
+the tool allow-list. The core runner and rule remain unchanged. Safe ZIP extraction
+lives in [`source_snapshot.py`](../src/repo_compliance/infrastructure/agentic/source_snapshot.py).
+
+The prompt is loaded with `importlib.resources`, included in the wheel, and does
+not depend on the working directory. Normal CI uses fake integrations; separate
+opt-in checks exercise Docker isolation and live prompt judgments. See the
+[setup and verification commands](../README.md).
+
+## Overall checker flow
+
 ```text
                        START
                          |
@@ -77,6 +124,6 @@
 - [`src/repo_compliance/rules/`](../src/repo_compliance/rules/) contains the actual standards, grouped by evaluation method. Each rule lives in its own file.
 - [`src/repo_compliance/report.py`](../src/repo_compliance/report.py) converts collected results into `compliance-report.md`.
 - [`src/repo_compliance/domain.py`](../src/repo_compliance/domain.py) defines the shared names and data shapes used by rules, the runner, and the report.
-- [`src/repo_compliance/ports.py`](../src/repo_compliance/ports.py) defines the `GitHubApi` protocol used by the runner and rule context; the CLI supplies the concrete GitHub client.
+- [`src/repo_compliance/ports.py`](../src/repo_compliance/ports.py) defines the `GitHubApi` and `AgentEvaluator` protocols used by the runner and rule context; the CLI supplies their concrete integrations.
 
 The command can enter through the `repo-compliance` script declared in [`pyproject.toml`](../pyproject.toml), or through [`src/repo_compliance/__main__.py`](../src/repo_compliance/__main__.py) when run as a Python module. Both lead to `cli.py`.
