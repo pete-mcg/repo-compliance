@@ -63,7 +63,7 @@ class GitHubClient:
         """Ensure the repository is accessible and has valid API data."""
         resource = f"/repos/{repository}"
         response = self._get(resource)
-        _validate(response, REPOSITORY_ADAPTER, resource)
+        _validate_api_response(response, REPOSITORY_ADAPTER, resource)
 
     def file_exists_on_main(self, repository: str, path: str) -> bool:
         """Return whether an exact file exists on main."""
@@ -72,7 +72,7 @@ class GitHubClient:
         if response is None:
             return False
 
-        content = _validate(response, CONTENT_ADAPTER, resource)
+        content = _validate_api_response(response, CONTENT_ADAPTER, resource)
         return content.path == path and content.type == "file"
 
     def get_json_response(
@@ -101,7 +101,7 @@ class GitHubClient:
         try:
             with self._client.stream("GET", resource) as response:
                 response.raise_for_status()
-                _write_chunks(destination, response.iter_bytes())
+                _write_chunks_to_file(destination, response.iter_bytes())
         except (httpx.HTTPError, OSError) as error:
             raise _request_error(resource, error) from error
         return destination
@@ -146,13 +146,13 @@ class GitHubClient:
         return response
 
 
-def _write_chunks(destination: Path, chunks: Iterator[bytes]) -> None:
+def _write_chunks_to_file(destination: Path, chunks: Iterator[bytes]) -> None:
     with destination.open("wb") as source_snapshot_file:
         for chunk in chunks:
             source_snapshot_file.write(chunk)
 
 
-def _validate[T](
+def _validate_api_response[T](
     response: httpx.Response,
     adapter: TypeAdapter[T],
     resource: str,
