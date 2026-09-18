@@ -48,7 +48,7 @@ def get_source_snapshot_evaluation(context: RuleContext) -> RuleEvaluation:
 
 
 def file_check(context: RuleContext) -> RuleEvaluation:
-    passed = context.github.file_exists(context.repository, "required.txt")
+    passed = context.github.file_exists_on_main(context.repository, "required.txt")
     return RuleEvaluation(passed, "file checked")
 
 

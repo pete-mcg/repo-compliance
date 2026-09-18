@@ -23,7 +23,7 @@ class FakeGitHub:
         if repository in self.preflight_error_repositories:
             raise GitHubError("repository is unavailable")
 
-    def file_exists(self, repository: str, path: str) -> bool:
+    def file_exists_on_main(self, repository: str, path: str) -> bool:
         self.file_calls.append((repository, path))
         return path in self.files
 

@@ -28,7 +28,7 @@ def test_content_404_means_missing_file() -> None:
     transport = httpx.MockTransport(lambda _request: httpx.Response(404))
 
     with GitHubClient("token", transport=transport) as client:
-        assert not client.file_exists(REPOSITORY, ".github/CODEOWNERS")
+        assert not client.file_exists_on_main(REPOSITORY, ".github/CODEOWNERS")
 
 
 def test_content_requires_exact_file_response_and_main_ref() -> None:
@@ -42,8 +42,8 @@ def test_content_requires_exact_file_response_and_main_ref() -> None:
         return httpx.Response(200, json={"path": response_path, "type": response_type})
 
     with GitHubClient("token", transport=httpx.MockTransport(handler)) as client:
-        assert client.file_exists(REPOSITORY, ".github/CODEOWNERS")
-        assert not client.file_exists(REPOSITORY, ".github/CODEOWNERS")
+        assert client.file_exists_on_main(REPOSITORY, ".github/CODEOWNERS")
+        assert not client.file_exists_on_main(REPOSITORY, ".github/CODEOWNERS")
 
     assert requested_paths == [
         "/repos/example/service/contents/.github/CODEOWNERS",
@@ -175,4 +175,4 @@ def call_client_method(client: GitHubClient, method: str) -> None:
     if method == "repository":
         client.ensure_accessible_repository(REPOSITORY)
     else:
-        client.file_exists(REPOSITORY, ".github/CODEOWNERS")
+        client.file_exists_on_main(REPOSITORY, ".github/CODEOWNERS")

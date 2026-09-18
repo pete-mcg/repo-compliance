@@ -8,7 +8,7 @@ from tests.fakes import FakeGitHub
 REPOSITORY = "example/service"
 
 
-def test_passes_when_exact_file_exists() -> None:
+def test_passes_when_exact_file_exists_on_main() -> None:
     github = FakeGitHub(files={REQUIRED_PATH})
 
     result = check(RuleContext(REPOSITORY, github))

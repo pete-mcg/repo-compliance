@@ -65,7 +65,7 @@ class GitHubClient:
         response = self._get(resource)
         _validate(response, REPOSITORY_ADAPTER, resource)
 
-    def file_exists(self, repository: str, path: str) -> bool:
+    def file_exists_on_main(self, repository: str, path: str) -> bool:
         """Return whether an exact file exists on main."""
         resource = f"/repos/{repository}/contents/{path}"
         response = self._get(resource, params={"ref": "main"}, missing_ok=True)

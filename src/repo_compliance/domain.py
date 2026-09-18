@@ -37,7 +37,7 @@ class GitHubApi(Protocol):
     def ensure_accessible_repository(self, repository: str) -> None:
         """Ensure the repository is accessible and has valid API data."""
 
-    def file_exists(self, repository: str, path: str) -> bool:
+    def file_exists_on_main(self, repository: str, path: str) -> bool:
         """Return whether an exact file exists on the main branch."""
 
     def get_json(

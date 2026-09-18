@@ -14,7 +14,7 @@ REQUIRED_PATH = ".github/CODEOWNERS"
 
 def check(context: RuleContext) -> RuleEvaluation:
     """Pass when the exact CODEOWNERS path exists on main."""
-    if context.github.file_exists(context.repository, REQUIRED_PATH):
+    if context.github.file_exists_on_main(context.repository, REQUIRED_PATH):
         return RuleEvaluation(True, f"{REQUIRED_PATH} exists on main.")
     return RuleEvaluation(False, f"{REQUIRED_PATH} is missing from main.")
 
