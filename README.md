@@ -60,35 +60,17 @@ Add the following as repository variables
 - `AZURE_OPENAI_DEPLOYMENT`
 - `AZURE_OPENAI_API_VERSION` 
 
-The client ID identifies an Entra application or user-assigned managed identity
-with **Cognitive Services OpenAI User** on the approved resource.
+The client ID identifies an Entra application or user-assigned managed identity with **Cognitive Services OpenAI User** on the approved resource.
 
-Add a federated credential to that identity with issuer
-`https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`,
-and subject `repo:<owner>/<repository>:ref:refs/heads/main` for runs on `main`.
-The subject must match the branch used by scheduled or manual runs. The workflow
-grants `id-token: write` and uses `azure/login@v3`; it then reuses the Azure CLI
-login through `AzureCliCredential`. See [Azure Login's OIDC setup](https://github.com/Azure/login#login-with-openid-connect-oidc-recommended).
-If Azure login or the image pull is attempted and fails, the workflow fails before
-the checker runs.
+Add a federated credential to that identity with issuer `https://token.actions.githubusercontent.com`, audience `api://AzureADTokenExchange`, and subject `repo:<owner>/<repository>:ref:refs/heads/main` for runs on `main`. The subject must match the branch used by scheduled or manual runs. The workflow grants `id-token: write` and uses `azure/login@v3`; it then reuses the Azure CLI login through `AzureCliCredential`. See [Azure Login's OIDC setup](https://github.com/Azure/login#login-with-openid-connect-oidc-recommended). If Azure login or the image pull is attempted and fails, the workflow fails before the checker runs.
 
 [`repository-compliance.yml`](.github/workflows/repository-compliance.yml) runs at `06:00 UTC` on weekdays and supports manual runs. It appends the report to the workflow summary and uploads artifact `repository-compliance-report`.
 
 ## Agentic rules
 
-Serena runs locally over MCP stdio in a pinned Docker image, with a read-only
-filesystem and source mount, networking disabled, and separate temporary state.
-Only listing, reading, and searching tools are exposed. Repository `.serena`
-configuration is inactive; no shell, editing, REPL, dashboard, or language servers
-are enabled. ZIP traversal, links, special files, and excessive extraction sizes
-are rejected. The evaluation has a 120-second timeout, followed by bounded Docker
-cleanup, and removes temporary source and state.
+Serena runs locally over MCP stdio in a pinned Docker image, with a read-only filesystem and source mount, networking disabled, and separate temporary state. Only listing, reading, and searching tools are exposed. Repository `.serena` configuration is inactive; no shell, editing, REPL, dashboard, or language servers are enabled. ZIP traversal, links, special files, and excessive extraction sizes are rejected. The evaluation has a 120-second timeout, followed by bounded Docker cleanup, and removes temporary source and state.
 
-Repository content is downloaded from GitHub and sent only to the configured
-approved Azure OpenAI resource for reasoning. Credentials stay outside
-the container. The Azure client does not follow redirects or discover proxy
-settings, and the checker configures no telemetry exporters or remote MCP servers.
-Dependency and image downloads are setup steps; runtime Docker uses the local image.
+Repository content is downloaded from GitHub and sent only to the configured approved Azure OpenAI resource for reasoning. Credentials stay outside the container. The Azure client does not follow redirects or discover proxy settings, and the checker configures no telemetry exporters or remote MCP servers. Dependency and image downloads are setup steps; runtime Docker uses the local image.
 
 ## Manage rules
 
@@ -97,9 +79,7 @@ Rule code lives under [`src/repo_compliance/rules`](src/repo_compliance/rules), 
 - `deterministic/` for repeatable API and source checks
 - `agentic/` for reasoning-based checks with Markdown prompts
 
-Each rule has its own file and exports immutable `RULE` metadata plus a typed `check` function.
-To add a rule, create the file and its corresponding test under `tests/rules/`, then add its `RULE` to the ordered tuple in [`registry.py`](src/repo_compliance/rules/registry.py).
-To remove a rule, remove its source, tests, registry entry, and any configuration or documentation referring to its ID.
+Each rule has its own file and exports immutable `RULE` metadata plus a typed `check` function. To add a rule, create the file and its corresponding test under `tests/rules/`, then add its `RULE` to the ordered tuple in [`registry.py`](src/repo_compliance/rules/registry.py). To remove a rule, remove its source, tests, registry entry, and any configuration or documentation referring to its ID.
 Repositories appear in configuration order, with rules in registry order.
 
 ## Architecture and development
@@ -115,8 +95,7 @@ See the [architecture overview](docs/architecture.md) for the runtime flow and t
 task ci
 ```
 
-`task ci` runs offline tests without Azure credentials or Docker. To check the
-real local MCP server after pulling the pinned image:
+`task ci` runs offline tests without Azure credentials or Docker. To check the real local MCP server after pulling the pinned image:
 
 ```text
 uv run --frozen pytest -m serena tests/integration
@@ -128,7 +107,4 @@ Once an approved deployment and login are available, run the live prompt fixture
 uv run --frozen pytest -m azure tests/integration
 ```
 
-The live fixtures expect qualifying and unrestricted PR CI to pass; push-only,
-wrong-branch, and missing workflows to fail; and missing implementation evidence
-to produce uncertainty. These checks send only the small fixture repositories to
-your configured Azure resource and incur inference usage. They remain opt-in.
+The live fixtures expect qualifying and unrestricted PR CI to pass; push-only, wrong-branch, and missing workflows to fail; and missing implementation evidence to produce uncertainty. These checks send only the small fixture repositories to your configured Azure resource and incur inference usage. They remain opt-in.
