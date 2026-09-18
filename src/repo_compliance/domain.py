@@ -34,7 +34,7 @@ class ResultStatus(StrEnum):
 class GitHubApi(Protocol):
     """GitHub operations available to rules and the runner."""
 
-    def ensure_accessible_respository(self, repository: str) -> None:
+    def ensure_accessible_repository(self, repository: str) -> None:
         """Ensure the repository is accessible and has valid API data."""
 
     def file_exists(self, repository: str, path: str) -> bool:

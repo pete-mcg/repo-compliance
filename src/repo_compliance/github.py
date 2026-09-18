@@ -59,7 +59,7 @@ class GitHubClient:
         """Close network resources when leaving a context manager."""
         self._client.close()
 
-    def ensure_accessible_respository(self, repository: str) -> None:
+    def ensure_accessible_repository(self, repository: str) -> None:
         """Ensure the repository is accessible and has valid API data."""
         resource = f"/repos/{repository}"
         response = self._get(resource)

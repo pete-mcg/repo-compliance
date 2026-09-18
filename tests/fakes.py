@@ -18,7 +18,7 @@ class FakeGitHub:
         default_factory=list
     )
 
-    def ensure_accessible_respository(self, repository: str) -> None:
+    def ensure_accessible_repository(self, repository: str) -> None:
         self.preflight_calls.append(repository)
         if repository in self.preflight_error_repositories:
             raise GitHubError("repository is unavailable")

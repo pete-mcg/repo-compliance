@@ -21,7 +21,7 @@ def test_sends_authentication_version_and_timeout_headers() -> None:
         return httpx.Response(200, json={"id": 42})
 
     with GitHubClient("test-token", transport=httpx.MockTransport(handler)) as client:
-        client.ensure_accessible_respository(REPOSITORY)
+        client.ensure_accessible_repository(REPOSITORY)
 
 
 def test_content_404_means_missing_file() -> None:
@@ -112,7 +112,7 @@ def test_timeout_is_wrapped_as_github_error() -> None:
         GitHubClient("token", transport=httpx.MockTransport(handler)) as client,
         pytest.raises(GitHubError, match="ReadTimeout"),
     ):
-        client.ensure_accessible_respository(REPOSITORY)
+        client.ensure_accessible_repository(REPOSITORY)
 
 
 def test_http_error_is_wrapped_without_response_body() -> None:
@@ -124,7 +124,7 @@ def test_http_error_is_wrapped_without_response_body() -> None:
         GitHubClient("token", transport=transport) as client,
         pytest.raises(GitHubError, match="HTTP 500") as captured,
     ):
-        client.ensure_accessible_respository(REPOSITORY)
+        client.ensure_accessible_repository(REPOSITORY)
 
     assert "sensitive response" not in str(captured.value)
 
@@ -154,7 +154,7 @@ def test_preflight_accepts_a_repository_regardless_of_default_branch() -> None:
     )
 
     with GitHubClient("token", transport=transport) as client:
-        client.ensure_accessible_respository(REPOSITORY)
+        client.ensure_accessible_repository(REPOSITORY)
 
 
 def test_source_snapshot_output_failure_is_wrapped(tmp_path: Path) -> None:
@@ -173,6 +173,6 @@ def test_source_snapshot_output_failure_is_wrapped(tmp_path: Path) -> None:
 
 def call_client_method(client: GitHubClient, method: str) -> None:
     if method == "repository":
-        client.ensure_accessible_respository(REPOSITORY)
+        client.ensure_accessible_repository(REPOSITORY)
     else:
         client.file_exists(REPOSITORY, ".github/CODEOWNERS")

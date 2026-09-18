@@ -53,7 +53,7 @@ def _run_checks_for_repository(
 def _preflight_checks(repository: str, github: GitHubApi) -> str | None:
     # Potentially more checks to be added in future.
     try:
-        github.ensure_accessible_respository(repository)
+        github.ensure_accessible_repository(repository)
     except GitHubError as error:
         return str(error)
     return None
