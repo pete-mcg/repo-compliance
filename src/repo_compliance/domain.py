@@ -40,7 +40,7 @@ class GitHubApi(Protocol):
     def file_exists_on_main(self, repository: str, path: str) -> bool:
         """Return whether an exact file exists on the main branch."""
 
-    def get_json(
+    def get_json_response(
         self,
         resource: str,
         *,

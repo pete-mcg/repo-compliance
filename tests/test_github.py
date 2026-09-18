@@ -51,16 +51,18 @@ def test_content_requires_exact_file_response_and_main_ref() -> None:
     ]
 
 
-def test_get_json_sends_parameters_and_decodes_response() -> None:
+def test_get_json_response_sends_parameters_and_decodes_response() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.params["state"] == "open"
         return httpx.Response(200, json={"answer": 42})
 
     with GitHubClient("token", transport=httpx.MockTransport(handler)) as client:
-        assert client.get_json("/example", params={"state": "open"}) == {"answer": 42}
+        assert client.get_json_response("/example", params={"state": "open"}) == {
+            "answer": 42
+        }
 
 
-def test_get_json_wraps_invalid_json() -> None:
+def test_get_json_response_wraps_invalid_json() -> None:
     transport = httpx.MockTransport(
         lambda _request: httpx.Response(200, content=b"not-json")
     )
@@ -69,14 +71,14 @@ def test_get_json_wraps_invalid_json() -> None:
         GitHubClient("token", transport=transport) as client,
         pytest.raises(GitHubError, match="invalid JSON"),
     ):
-        client.get_json("/example")
+        client.get_json_response("/example")
 
 
-def test_get_json_can_accept_a_missing_resource() -> None:
+def test_get_json_response_can_accept_a_missing_resource() -> None:
     transport = httpx.MockTransport(lambda _request: httpx.Response(404))
 
     with GitHubClient("token", transport=transport) as client:
-        assert client.get_json("/example", missing_ok=True) is None
+        assert client.get_json_response("/example", missing_ok=True) is None
 
 
 def test_source_snapshot_download_follows_redirect_and_streams_file(

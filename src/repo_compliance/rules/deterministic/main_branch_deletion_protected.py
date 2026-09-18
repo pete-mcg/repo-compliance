@@ -62,7 +62,7 @@ def check(context: RuleContext) -> RuleEvaluation:
 
 def _active_main_rule_types(context: RuleContext) -> frozenset[str]:
     resource = RULESET_RESOURCE.format(repository=context.repository)
-    payload = context.github.get_json(resource, params={"per_page": 100})
+    payload = context.github.get_json_response(resource, params={"per_page": 100})
     try:
         rules = RULES_ADAPTER.validate_python(payload)
     except ValidationError as error:
@@ -72,7 +72,7 @@ def _active_main_rule_types(context: RuleContext) -> frozenset[str]:
 
 def _classic_allow_deletions(context: RuleContext) -> bool | None:
     resource = CLASSIC_PROTECTION_RESOURCE.format(repository=context.repository)
-    payload = context.github.get_json(resource, missing_ok=True)
+    payload = context.github.get_json_response(resource, missing_ok=True)
     if payload is None:
         return None
     try:

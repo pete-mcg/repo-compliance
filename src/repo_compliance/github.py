@@ -75,7 +75,7 @@ class GitHubClient:
         content = _validate(response, CONTENT_ADAPTER, resource)
         return content.path == path and content.type == "file"
 
-    def get_json(
+    def get_json_response(
         self,
         resource: str,
         *,

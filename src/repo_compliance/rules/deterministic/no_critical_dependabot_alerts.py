@@ -34,7 +34,7 @@ def check(context: RuleContext) -> RuleEvaluation:
 
 def _has_critical_dependabot_alerts(context: RuleContext) -> bool:
     resource = ALERTS_RESOURCE.format(repository=context.repository)
-    payload = context.github.get_json(
+    payload = context.github.get_json_response(
         resource,
         params={"state": "open", "severity": "critical", "per_page": 1},
     )

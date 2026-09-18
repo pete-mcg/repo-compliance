@@ -27,7 +27,7 @@ class FakeGitHub:
         self.file_calls.append((repository, path))
         return path in self.files
 
-    def get_json(
+    def get_json_response(
         self,
         resource: str,
         *,
