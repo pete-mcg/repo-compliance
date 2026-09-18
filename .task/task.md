@@ -34,8 +34,7 @@ Answer: Structured output, not arbitrary prose.
 - Data is permitted to go to our approved Azure OpenAI resource and that which is necessary for the GitHub REST API, but nowhere else. We must not connect to external MCP servers; local solutions only.
 
 # Code Style
-- Always begin by loading the following skills: $caveman full; $ponytail full; $readable-python
-- Always simple, obvious and readable code over clever tricks; over-engineering and over-productionising are **forbidden**. This is as a lightweight, **beginner** friendly codebase. If new code fails to be simple and beginner friendly, it will not be merged.
+- Remember: always simple, obvious and readable code over clever tricks; over-engineering and over-productionising are **forbidden**. This is as a lightweight, **beginner** friendly codebase. If this new code fails to be simple and beginner friendly, it will not be merged.
 - Function Design:
 	- Do one thing per function;
 	- Keep to one level of abstraction within a function;
