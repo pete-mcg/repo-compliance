@@ -13,7 +13,7 @@ from zipfile import BadZipFile, LargeZipFile, ZipFile, ZipInfo
 from repo_compliance.errors import SourceSnapshotError
 
 MAX_EXTRACTED_BYTES = 512 * 1024 * 1024
-MAX_ENTRIES = 20_000
+MAX_EXTRACTED_ITEMS = 20_000
 
 
 def safe_relative_path(value: str) -> PurePosixPath:
@@ -57,8 +57,8 @@ def _extract_snapshot(snapshot_path: Path, destination: Path) -> None:
 
 
 def _validate_archive(entries: list[ZipInfo]) -> None:
-    if not entries or len(entries) > MAX_ENTRIES:
-        raise ValueError("Source snapshot has an invalid number of entries.")
+    if not entries or len(entries) > MAX_EXTRACTED_ITEMS:
+        raise ValueError("Source snapshot contains too many items.")
     if sum(entry.file_size for entry in entries) > MAX_EXTRACTED_BYTES:
         raise ValueError("Source snapshot is too large to extract.")
 
