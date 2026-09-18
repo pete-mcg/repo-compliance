@@ -37,10 +37,10 @@ def _run_checks_for_repository(
     if not active_rules:
         return _build_rule_results(repository.repository, github, rules, exemptions)
 
-    repository_access_error = _verify_repository_access(repository.repository, github)
-    if repository_access_error is not None:
-        return _result_when_access_error(
-            repository.repository, rules, exemptions, repository_access_error
+    preflight_error = _preflight_checks(repository.repository, github)
+    if preflight_error is not None:
+        return _result_when_preflight_error(
+            repository.repository, rules, exemptions, preflight_error
         )
 
     if not _requires_source_snapshot(active_rules):
@@ -50,7 +50,8 @@ def _run_checks_for_repository(
     )
 
 
-def _verify_repository_access(repository: str, github: GitHubApi) -> str | None:
+def _preflight_checks(repository: str, github: GitHubApi) -> str | None:
+    # Potentially more checks to be added in future.
     try:
         github.ensure_accessible_respository(repository)
     except GitHubError as error:
@@ -161,7 +162,7 @@ def _result_when_test_error(
     return RuleResult(repository, rule, ResultStatus.ERROR, message)
 
 
-def _result_when_access_error(
+def _result_when_preflight_error(
     repository: str,
     rules: tuple[RuleDefinition, ...],
     exemptions: dict[str, str],
