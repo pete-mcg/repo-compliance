@@ -1,8 +1,8 @@
-name: Repository compliance
+name: ✅ Repository compliance
 
 on:
   schedule:
-    - cron: "0 6 * * 1-5"
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -13,15 +13,16 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out this repository
-        uses: actions/checkout@v6
+      - name: 📥 Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v9
+      - name: 🐍 Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
+          enable-cache: true
           python-version: "3.14"
 
-      - name: Validate configuration
+      - name: ⚙️ Validate configuration
         run: |
           test -n "$AZURE_CLIENT_ID" || { echo "AZURE_CLIENT_ID is required."; exit 1; }
           test -n "$AZURE_TENANT_ID" || { echo "AZURE_TENANT_ID is required."; exit 1; }
@@ -37,14 +38,14 @@ jobs:
           AZURE_OPENAI_DEPLOYMENT: ${{ vars.AZURE_OPENAI_DEPLOYMENT }}
           AZURE_OPENAI_API_VERSION: ${{ vars.AZURE_OPENAI_API_VERSION }}
 
-      - name: Sign in to Azure with federated OIDC
-        uses: azure/login@v3
+      - name: 🔐 Sign in to Azure with federated OIDC
+        uses: azure/login@93381592711f247e165c389ebb30b596c84cdc48 # v3.0.0
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Pull the pinned local Serena image
+      - name: 🐳 Pull the pinned local Serena image
         run: |
           uv run --frozen python - <<'PY'
           import subprocess
@@ -52,7 +53,7 @@ jobs:
           subprocess.run(["docker", "pull", SERENA_IMAGE], check=True)
           PY
 
-      - name: Run compliance checks
+      - name: ✅ Run compliance checks
         run: uv run --frozen repo-compliance
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_COMPLIANCE_TOKEN }}
@@ -60,11 +61,11 @@ jobs:
           AZURE_OPENAI_DEPLOYMENT: ${{ vars.AZURE_OPENAI_DEPLOYMENT }}
           AZURE_OPENAI_API_VERSION: ${{ vars.AZURE_OPENAI_API_VERSION }}
 
-      - name: Add report to workflow summary
+      - name: 📝 Add report to workflow summary
         run: cat compliance-report.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload report
-        uses: actions/upload-artifact@v7
+      - name: 📤 Upload report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: repository-compliance-report
           path: compliance-report.md
