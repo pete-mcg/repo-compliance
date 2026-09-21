@@ -1,10 +1,20 @@
 version: "3"
 
 tasks:
+  install:
+    desc: Install dependencies
+    cmds:
+      - uv sync --locked
+
+  deps:update:
+    desc: Update dependencies
+    cmds:
+      - uv sync --upgrade
+
   ci:
     cmds:
-      - uv run --frozen ruff format --check .
-      - uv run --frozen ruff check .
-      - uv run --frozen pyrefly check
-      - uv run --frozen deptry .
-      - uv run --frozen pytest --cov --cov-report=term-missing
+      - uv run --locked ruff check .
+      - uv run --locked ruff format --check .
+      - uv run --locked deptry .
+      - uv run --locked pyrefly check
+      - uv run --locked pytest --cov

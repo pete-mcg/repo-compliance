@@ -1,0 +1,34 @@
+name: ✅ CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend quality checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 🐍 Set up uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - name: 📦 Install deps
+        run: uv sync --locked
+      - name: 🧹 Ruff check
+        run: uv run ruff check .
+      - name: 🎨 Ruff format check
+        run: uv run ruff format --check .
+      - name: 🔎 Deptry dependency analysis
+        run: uv run deptry .
+      - name: 🔤 Pyrefly type check
+        run: uv run pyrefly check
+      - name: 🧪 Pytest coverage
+        run: uv run pytest --cov
