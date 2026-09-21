@@ -81,7 +81,7 @@ class AgentEvidence(BaseModel):
         examples=[5, 12, 24],
     )
     marker: str = Field(
-        description="Short, non-empty evidence label containing 1 to 80 characters.",
+        description="Short, non-empty evidence label.",
         examples=["pull-request-trigger", "test-task", "run-tests"],
     )
 
@@ -115,12 +115,7 @@ class AgentStructuredResponse(BaseModel):
 
     verdict: AgentVerdict = Field(examples=["pass", "fail", "uncertain"])
     explanation: str = Field(
-        description="Explanation must contain 1 to 600 characters.",
-        examples=[
-            "CI tests run on pull requests targeting main.",
-            "The workflow runs only on pushes, not pull requests.",
-            "The referenced test script is missing, so CI cannot be verified.",
-        ],
+        description="Succinct, efficient explanation. No fluff; straight to the point. One paragraph."
     )
     evidence: list[AgentEvidence]
 
