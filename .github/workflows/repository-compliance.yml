@@ -24,6 +24,7 @@ jobs:
 
       - name: ⚙️ Validate configuration
         run: |
+          test -n "$GITHUB_TOKEN" || { echo "REPO_COMPLIANCE_TOKEN is required."; exit 1; }
           test -n "$AZURE_CLIENT_ID" || { echo "AZURE_CLIENT_ID is required."; exit 1; }
           test -n "$AZURE_TENANT_ID" || { echo "AZURE_TENANT_ID is required."; exit 1; }
           test -n "$AZURE_SUBSCRIPTION_ID" || { echo "AZURE_SUBSCRIPTION_ID is required."; exit 1; }
@@ -31,6 +32,7 @@ jobs:
           test -n "$AZURE_OPENAI_DEPLOYMENT" || { echo "AZURE_OPENAI_DEPLOYMENT is required."; exit 1; }
           test -n "$AZURE_OPENAI_API_VERSION" || { echo "AZURE_OPENAI_API_VERSION is required."; exit 1; }
         env:
+          GITHUB_TOKEN: ${{ secrets.REPO_COMPLIANCE_TOKEN }}
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
