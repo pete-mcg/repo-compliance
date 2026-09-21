@@ -70,12 +70,18 @@ class AgentEvidence(BaseModel):
     # minLength, maxLength, or minimum, which Field constraints would generate.
     # Descriptions are included in the JSON schema provided to the model;
     # validators enforce them locally AFTER the response is generated.
-    path: str = Field(description="Evidence path must be relative to the repository.")
+    path: str = Field(
+        description="Evidence path must be relative to the repository.",
+        examples=[".github/workflows/ci.yml", "Taskfile.yml", "scripts/test.sh"],
+    )
     line: int = Field(
-        strict=True, description="Source line number must be one-based (1 or greater)."
+        strict=True,
+        description="Source line number must be one-based (1 or greater).",
+        examples=[5, 12, 24],
     )
     marker: str = Field(
-        description="Short, non-empty evidence label containing 1 to 80 characters."
+        description="Short, non-empty evidence label containing 1 to 80 characters.",
+        examples=["pull-request-trigger", "test-task", "run-tests"],
     )
 
     @field_validator("path")
@@ -106,11 +112,40 @@ class AgentStructuredResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    verdict: AgentVerdict
+    verdict: AgentVerdict = Field(examples=["pass", "fail", "uncertain"])
     explanation: str = Field(
-        description="Explanation must contain 1 to 600 characters."
+        description="Explanation must contain 1 to 600 characters.",
+        examples=[
+            "CI tests run on pull requests targeting main.",
+            "The workflow runs only on pushes, not pull requests.",
+            "The referenced test script is missing, so CI cannot be verified.",
+        ],
     )
-    evidence: list[AgentEvidence]
+    evidence: list[AgentEvidence] = Field(
+        examples=[
+            [
+                {
+                    "path": ".github/workflows/ci.yml",
+                    "line": 5,
+                    "marker": "pull-request-trigger",
+                }
+            ],
+            [
+                {
+                    "path": "Taskfile.yml",
+                    "line": 12,
+                    "marker": "test-task",
+                }
+            ],
+            [
+                {
+                    "path": "scripts/test.sh",
+                    "line": 24,
+                    "marker": "run-tests",
+                }
+            ],
+        ]
+    )
 
     @field_validator("explanation")
     @classmethod
