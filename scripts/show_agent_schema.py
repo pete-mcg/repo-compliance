@@ -1,4 +1,4 @@
-"""Prints the enforced JSON schema that the agent receives. Run with uv run scripts/show_agent_schema.py."""
+"""Prints the enforced JSON schema that the agent receives. Run with `uv run scripts/show_agent_schema.py`."""
 
 import json
 
