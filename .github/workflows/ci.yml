@@ -9,8 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  backend:
-    name: Backend quality checks
+  quality-gate:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Check out repository
