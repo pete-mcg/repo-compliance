@@ -67,9 +67,13 @@ class AgentEvidence(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     # Validators keep unsupported length/range keywords out of Azure's JSON schema.
-    path: str
-    line: int = Field(strict=True)
-    marker: str
+    path: str = Field(description="Evidence path must be relative to the repository.")
+    line: int = Field(
+        strict=True, description="Source line number must be one-based (1 or greater)."
+    )
+    marker: str = Field(
+        description="Short, non-empty evidence label containing 1 to 80 characters."
+    )
 
     @field_validator("path")
     @classmethod
@@ -100,7 +104,9 @@ class AgentStructuredResponse(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     verdict: AgentVerdict
-    explanation: str
+    explanation: str = Field(
+        description="Explanation must contain 1 to 600 characters."
+    )
     evidence: list[AgentEvidence]
 
     @field_validator("explanation")
