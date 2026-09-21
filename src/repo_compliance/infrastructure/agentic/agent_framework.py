@@ -66,7 +66,10 @@ class AgentEvidence(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    # Validators keep unsupported length/range keywords out of Azure's JSON schema.
+    # Azure structured outputs do not support JSON schema limits such as
+    # minLength, maxLength, or minimum, which Field constraints would generate.
+    # Descriptions are included in the JSON schema provided to the model;
+    # validators enforce them locally AFTER the response is generated.
     path: str = Field(description="Evidence path must be relative to the repository.")
     line: int = Field(
         strict=True, description="Source line number must be one-based (1 or greater)."
