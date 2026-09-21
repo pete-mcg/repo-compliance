@@ -23,7 +23,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from repo_compliance.domain import Evidence, RuleEvaluation
 from repo_compliance.errors import AgentError
-from repo_compliance.infrastructure.agentic.source_snapshot import (
+from repo_compliance.infrastructure.source.source_snapshot import (
     extracted_source_snapshot,
     safe_relative_path,
 )

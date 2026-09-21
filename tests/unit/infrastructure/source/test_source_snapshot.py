@@ -5,8 +5,8 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 import pytest
 
 from repo_compliance.errors import SourceSnapshotError
-from repo_compliance.infrastructure.agentic import source_snapshot
-from repo_compliance.infrastructure.agentic.source_snapshot import (
+from repo_compliance.infrastructure.source import source_snapshot
+from repo_compliance.infrastructure.source.source_snapshot import (
     extracted_source_snapshot,
 )
 
