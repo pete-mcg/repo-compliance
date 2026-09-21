@@ -122,31 +122,7 @@ class AgentStructuredResponse(BaseModel):
             "The referenced test script is missing, so CI cannot be verified.",
         ],
     )
-    evidence: list[AgentEvidence] = Field(
-        examples=[
-            [
-                {
-                    "path": ".github/workflows/ci.yml",
-                    "line": 5,
-                    "marker": "pull-request-trigger",
-                }
-            ],
-            [
-                {
-                    "path": "Taskfile.yml",
-                    "line": 12,
-                    "marker": "test-task",
-                }
-            ],
-            [
-                {
-                    "path": "scripts/test.sh",
-                    "line": 24,
-                    "marker": "run-tests",
-                }
-            ],
-        ]
-    )
+    evidence: list[AgentEvidence]
 
     @field_validator("explanation")
     @classmethod
