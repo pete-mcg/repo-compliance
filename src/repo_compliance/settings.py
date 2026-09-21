@@ -23,10 +23,12 @@ class Settings(BaseSettings):
         pattern=r"^https://[a-z0-9][a-z0-9-]*\.openai\.azure\.com/?$",
     )
     deployment: str = Field(
-        alias="AZURE_OPENAI_DEPLOYMENT", pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+        alias="AZURE_OPENAI_DEPLOYMENT",
+        pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
     )
     api_version: str = Field(
-        alias="AZURE_OPENAI_API_VERSION", pattern=r"^\d{4}-\d{2}-\d{2}(-preview)?$"
+        alias="AZURE_OPENAI_API_VERSION",
+        pattern=r"^\d{4}-\d{2}-\d{2}(-preview)?$",
     )
 
 
