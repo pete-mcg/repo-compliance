@@ -11,6 +11,7 @@ Layers describe responsibilities and dependency boundaries. A layer can be a sin
 | Individual compliance checks | `rules/` |
 | External integrations | `infrastructure/` |
 | Configuration input | `config.py` |
+| Environment and `.env` settings | `settings.py` |
 | Markdown presentation | `report.py` |
 | Startup and dependency wiring | `cli.py` |
 | Expected errors shared across boundaries | `errors.py` |
@@ -24,14 +25,15 @@ The main directions are:
 
 ```text
 __main__ -> cli
-cli -> config, runner, report, rules.registry, infrastructure
+cli -> config, settings, runner, report, rules.registry, infrastructure
 rules.registry -> individual rule modules
 runner -> config, domain, errors
 report -> config, domain
 rules -> domain, errors, shared GitHub response models where needed
 config -> errors
+settings -> errors
 infrastructure.github.client -> infrastructure.github.models, errors
-infrastructure.agentic -> domain, errors
+infrastructure.agentic -> domain, errors, settings
 ```
 
 - `domain.py` must not import concrete integrations, the runner, reporting, or individual rules.
@@ -43,7 +45,7 @@ infrastructure.agentic -> domain, errors
 
 At runtime, the runner calls a rule's check function. The rule can call the GitHub client through `context.github`, then return a `RuleEvaluation`. The runner converts that evaluation to a `RuleResult` for reporting. Calling an implementation through a supplied protocol does not require importing it.
 
-Agent rules keep their policy in an adjacent packaged Markdown prompt. They call `context.agent_evaluator.evaluate(snapshot_path, prompt)` and return its validated `RuleEvaluation`. The evaluator is cheap to construct; settings, credentials, and Docker start only during evaluation. `infrastructure/agentic/agent_framework.py` contains provider settings, response validation, Azure client construction, and Serena launch configuration. `source_snapshot.py` safely extracts and removes the temporary source directory. Framework-specific imports stay in the adapter.
+Agent rules keep their policy in an adjacent packaged Markdown prompt. They call `context.agent_evaluator.evaluate(snapshot_path, prompt)` and return its validated `RuleEvaluation`. `settings.py` loads and validates GitHub and Azure settings at startup. The evaluator receives those settings; credentials and Docker start only during evaluation. `infrastructure/agentic/agent_framework.py` contains response validation, Azure client construction, and Serena launch configuration. `source_snapshot.py` safely extracts and removes the temporary source directory. Framework-specific imports stay in the adapter.
 
 This is a pragmatic layered design with self-contained rules. Rules deliberately own their endpoint selection and response validation; some import `GitHubModel` from `infrastructure/github/models.py`. Configuration loading and its validated models also stay together, and the runner and report use those models directly. These are intentional boundaries, rather than a strict separation of every business decision from every external data shape.
 

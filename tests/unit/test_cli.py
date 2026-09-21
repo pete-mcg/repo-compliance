@@ -6,9 +6,18 @@ import pytest
 
 from repo_compliance import cli
 from repo_compliance.cli import main
+from repo_compliance.errors import CliError
 from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import RULE as CI_RULE
 
 from .fakes import FakeAgentEvaluator, FakeGitHub
+
+
+@pytest.fixture(autouse=True)
+def local_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://example.openai.azure.com")
+    monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "example-deployment")
+    monkeypatch.setenv("AZURE_OPENAI_API_VERSION", "2025-04-01-preview")
 
 
 def write_empty_config(path: Path) -> Path:
@@ -36,18 +45,23 @@ def test_successful_completed_run_writes_report(
     )
 
 
-def test_missing_token_returns_nonzero(
+def test_invalid_settings_fail_before_connecting(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     config = write_empty_config(tmp_path / "repositories.yml")
-    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.setattr(
+        cli, "get_settings", Mock(side_effect=CliError("Invalid runtime settings"))
+    )
+    github = Mock()
+    monkeypatch.setattr(cli, "GitHubClient", github)
 
     exit_code = main(arguments(config, tmp_path / "report.md"))
 
     assert exit_code == 1
-    assert "GITHUB_TOKEN is required" in capsys.readouterr().err
+    assert "Invalid runtime settings" in capsys.readouterr().err
+    github.assert_not_called()
 
 
 def test_invalid_config_returns_nonzero(

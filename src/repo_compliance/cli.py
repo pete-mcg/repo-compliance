@@ -1,7 +1,6 @@
 """Command-line interface for repository compliance checks."""
 
 import argparse
-import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -9,7 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 
 from repo_compliance.config import get_config
-from repo_compliance.errors import CliError, ComplianceError
+from repo_compliance.errors import ComplianceError
 from repo_compliance.infrastructure.agentic.agent_framework import (
     AgentFrameworkEvaluator,
 )
@@ -17,6 +16,7 @@ from repo_compliance.infrastructure.github.client import GitHubClient
 from repo_compliance.report import build_report
 from repo_compliance.rules.registry import RULE_IDS, RULES
 from repo_compliance.runner import run_all_compliance_checks
+from repo_compliance.settings import get_settings
 
 
 class CliOptions(BaseModel):
@@ -32,11 +32,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run checks, write the report, and return a process exit code."""
     try:
         options = _get_cli_options(argv)
-        token = _get_github_token()
+        settings = get_settings()
         config = get_config(options.config, RULE_IDS)
-        with GitHubClient(token) as github:
+        with GitHubClient(settings.github_token) as github:
             results = run_all_compliance_checks(
-                config, github, RULES, AgentFrameworkEvaluator()
+                config, github, RULES, AgentFrameworkEvaluator(settings)
             )
         report = build_report(config, RULES, results)
         options.output.write_text(report, encoding="utf-8")
@@ -63,10 +63,3 @@ def _get_cli_options(argv: Sequence[str] | None) -> CliOptions:
     parser.add_argument("--output", type=Path, default=Path("compliance-report.md"))
     arguments = parser.parse_args(argv)
     return CliOptions.model_validate(vars(arguments))
-
-
-def _get_github_token() -> str:
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    if not token:
-        raise CliError("GITHUB_TOKEN is required.")
-    return token

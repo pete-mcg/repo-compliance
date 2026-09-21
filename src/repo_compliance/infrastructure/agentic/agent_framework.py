@@ -20,7 +20,6 @@ from azure.identity.aio import AzureCliCredential, get_bearer_token_provider
 from mcp.shared.exceptions import McpError
 from openai import APIError, AsyncAzureOpenAI, DefaultAsyncHttpxClient
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from repo_compliance.domain import Evidence, RuleEvaluation
 from repo_compliance.errors import AgentError
@@ -28,6 +27,7 @@ from repo_compliance.infrastructure.source.source_snapshot import (
     extracted_source_snapshot,
     safe_relative_path,
 )
+from repo_compliance.settings import Settings
 
 EVALUATION_TIMEOUT_SECONDS = 120
 SERENA_IMAGE = (
@@ -37,21 +37,6 @@ SERENA_IMAGE = (
 # Full Serena Tools catalogue: https://oraios.github.io/serena/01-about/035_tools.html
 # Runtime list: tests/integration/test_agent_integration.py:list_tools()
 SERENA_TOOLS = ("list_dir", "read_file", "find_file", "search_for_pattern")
-
-
-class AzureOpenAISettings(BaseSettings):
-    """Required, explicitly approved Azure routing from environment variables."""
-
-    model_config = SettingsConfigDict(
-        env_prefix="AZURE_OPENAI_",
-        frozen=True,
-        extra="forbid",
-        hide_input_in_errors=True,
-    )
-
-    endpoint: str = Field(pattern=r"^https://[a-z0-9][a-z0-9-]*\.openai\.azure\.com/?$")
-    deployment: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")
-    api_version: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}(-preview)?$")
 
 
 class AgentVerdict(StrEnum):
@@ -129,19 +114,16 @@ class AgentStructuredResponse(BaseModel):
 
 
 class AgentFrameworkEvaluator:
-    """Keep settings, Docker, and Azure startup lazy until a rule evaluates."""
+    """Keep Docker and Azure startup lazy until a rule evaluates."""
+
+    def __init__(self, settings: Settings) -> None:
+        """Use the settings validated at application startup."""
+        self.settings = settings
 
     def evaluate(self, snapshot_path: Path, prompt: str) -> RuleEvaluation:
         """Run one isolated evaluation and translate expected integration failures."""
         try:
-            settings = AzureOpenAISettings()
-        except ValidationError as error:
-            raise AgentError(
-                "Configure valid AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT, "
-                "and AZURE_OPENAI_API_VERSION."
-            ) from error
-        try:
-            return _evaluate_snapshot(snapshot_path, prompt, settings)
+            return _evaluate_snapshot(snapshot_path, prompt, self.settings)
         except TimeoutError as error:
             raise AgentError(
                 f"Agent evaluation exceeded {EVALUATION_TIMEOUT_SECONDS} seconds."
@@ -169,7 +151,7 @@ def load_system_prompt() -> str:
 
 
 def _evaluate_snapshot(
-    snapshot_path: Path, prompt: str, settings: AzureOpenAISettings
+    snapshot_path: Path, prompt: str, settings: Settings
 ) -> RuleEvaluation:
     with (
         extracted_source_snapshot(snapshot_path) as repository,
@@ -191,7 +173,7 @@ async def _run_agent(
     repository: Path,
     state: Path,
     container_name: str,
-    settings: AzureOpenAISettings,
+    settings: Settings,
     prompt: str,
 ) -> object:
     async with (
@@ -221,7 +203,7 @@ async def _run_agent(
 
 
 def create_azure_client(
-    settings: AzureOpenAISettings, credential: AzureCliCredential
+    settings: Settings, credential: AzureCliCredential
 ) -> AsyncAzureOpenAI:
     """Use Entra auth and explicit routing, with no redirects or proxy discovery."""
     return AsyncAzureOpenAI(

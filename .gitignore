@@ -1,6 +1,9 @@
 # Generated reports
 compliance-report.md
 
+# Local credentials and settings
+.env
+
 # Python environments and bytecode
 .venv/
 __pycache__/

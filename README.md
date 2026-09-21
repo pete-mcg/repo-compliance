@@ -27,17 +27,21 @@ Create a fine-grained personal access token and grant each monitored repository:
 - Administration: read
 - Dependabot alerts: read
 
-Expose the token only at the command boundary, then run the checker:
+Copy [`.env.example`](.env.example) to `.env` in the repository root:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Fill in your token and Azure OpenAI settings in `.env`, then run the checker from the repository root:
 
 ```powershell
 az login
 docker pull ghcr.io/oraios/serena:1.7.0@sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730
-$env:GITHUB_TOKEN = "your-token"
-$env:AZURE_OPENAI_ENDPOINT = "https://<approved-resource>.openai.azure.com"
-$env:AZURE_OPENAI_DEPLOYMENT = "<deployment-name>"
-$env:AZURE_OPENAI_API_VERSION = "<YYYY-MM-DD-or-YYYY-MM-DD-preview>"
 uv run --frozen repo-compliance
 ```
+
+The checker loads `.env` from the current directory and validates all four settings before running any checks, including runs with no agentic rules. Missing or malformed values are reported together. Git ignores `.env`; keep credentials out of `.env.example`.
 
 Grant the signed-in identity **Cognitive Services OpenAI User** on that Azure OpenAI resource.
 

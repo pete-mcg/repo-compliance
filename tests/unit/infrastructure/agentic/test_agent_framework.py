@@ -13,9 +13,11 @@ from pydantic import ValidationError
 from repo_compliance.domain import Evidence
 from repo_compliance.errors import AgentError
 from repo_compliance.infrastructure.agentic import agent_framework as adapter
+from repo_compliance.settings import Settings
 
 
 def configure_azure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GITHUB_TOKEN", "test-token")
     monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://approved.openai.azure.com")
     monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "ci-review")
     monkeypatch.setenv("AZURE_OPENAI_API_VERSION", "2024-10-21")
@@ -79,31 +81,6 @@ def test_schema_uses_supported_azure_keywords() -> None:
 
 
 @pytest.mark.parametrize(
-    ("name", "value"),
-    [
-        ("AZURE_OPENAI_ENDPOINT", "http://approved.openai.azure.com"),
-        ("AZURE_OPENAI_ENDPOINT", "https://unapproved.example.com"),
-        (
-            "AZURE_OPENAI_ENDPOINT",
-            "https://approved.openai.azure.com/?redirect=elsewhere",
-        ),
-        ("AZURE_OPENAI_DEPLOYMENT", ""),
-        ("AZURE_OPENAI_API_VERSION", "placeholder"),
-    ],
-)
-def test_invalid_settings_fail_before_starting_resources(
-    monkeypatch: pytest.MonkeyPatch, name: str, value: str
-) -> None:
-    configure_azure(monkeypatch)
-    monkeypatch.setenv(name, value)
-    run = Mock()
-    monkeypatch.setattr(adapter, "_evaluate_snapshot", run)
-    with pytest.raises(AgentError, match="Configure valid AZURE"):
-        adapter.AgentFrameworkEvaluator().evaluate(Path("unused.zip"), "prompt")
-    run.assert_not_called()
-
-
-@pytest.mark.parametrize(
     "error",
     [
         ToolException("private diagnostic"),
@@ -118,7 +95,9 @@ def test_expected_failures_are_safe_rule_errors(
     configure_azure(monkeypatch)
     monkeypatch.setattr(adapter, "_evaluate_snapshot", Mock(side_effect=error))
     with pytest.raises(AgentError) as caught:
-        adapter.AgentFrameworkEvaluator().evaluate(Path("unused.zip"), "prompt")
+        adapter.AgentFrameworkEvaluator(Settings()).evaluate(
+            Path("unused.zip"), "prompt"
+        )
     assert "private diagnostic" not in str(caught.value)
 
 
@@ -138,7 +117,7 @@ def test_evaluation_validates_output_and_cleans_resources(
         repository: Path,
         state: Path,
         _name: str,
-        _settings: adapter.AzureOpenAISettings,
+        _settings: Settings,
         prompt: str,
     ) -> object:
         assert prompt == "rule prompt"
@@ -154,11 +133,15 @@ def test_evaluation_validates_output_and_cleans_resources(
     monkeypatch.setattr(adapter, "_remove_container", remove)
     if output == judgment():
         assert (
-            adapter.AgentFrameworkEvaluator().evaluate(snapshot, "rule prompt").passed
+            adapter.AgentFrameworkEvaluator(Settings())
+            .evaluate(snapshot, "rule prompt")
+            .passed
         )
     else:
         with pytest.raises(AgentError, match=r"ValidationError|ToolException"):
-            adapter.AgentFrameworkEvaluator().evaluate(snapshot, "rule prompt")
+            adapter.AgentFrameworkEvaluator(Settings()).evaluate(
+                snapshot, "rule prompt"
+            )
     assert paths and all(not path.exists() for path in paths)
     remove.assert_called_once()
 
@@ -188,15 +171,11 @@ def test_agent_requests_schema_and_closes_resources(
         run.side_effect = slow_run
         with pytest.raises(TimeoutError):
             asyncio.run(
-                adapter._run_agent(
-                    tmp_path, tmp_path, "test", adapter.AzureOpenAISettings(), "prompt"
-                )
+                adapter._run_agent(tmp_path, tmp_path, "test", Settings(), "prompt")
             )
     else:
         output = asyncio.run(
-            adapter._run_agent(
-                tmp_path, tmp_path, "test", adapter.AzureOpenAISettings(), "prompt"
-            )
+            adapter._run_agent(tmp_path, tmp_path, "test", Settings(), "prompt")
         )
         assert output == judgment()
         run.assert_awaited_once_with(
@@ -225,9 +204,7 @@ def test_azure_routing_ignores_unrelated_environment(
     async def inspect() -> None:
         async with (
             adapter.AzureCliCredential() as credential,
-            adapter.create_azure_client(
-                adapter.AzureOpenAISettings(), credential
-            ) as client,
+            adapter.create_azure_client(Settings(), credential) as client,
         ):
             assert (
                 str(client.base_url)
