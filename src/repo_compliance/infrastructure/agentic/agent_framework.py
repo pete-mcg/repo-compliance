@@ -258,8 +258,7 @@ def create_azure_client(
         azure_deployment=settings.deployment,
         api_version=settings.api_version,
         azure_ad_token_provider=get_bearer_token_provider(
-            # Azure's inherited __aenter__ annotation disagrees with its protocol.
-            credential,  # pyrefly: ignore[bad-argument-type]
+            credential,
             "https://cognitiveservices.azure.com/.default",
         ),
         http_client=DefaultAsyncHttpxClient(follow_redirects=False, trust_env=False),
