@@ -3,6 +3,7 @@
 import asyncio
 import subprocess
 from enum import StrEnum
+from importlib.resources import files
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import uuid4
@@ -187,6 +188,15 @@ class AgentFrameworkEvaluator:
             ) from error
 
 
+def load_system_prompt() -> str:
+    """Load shared agent instructions independently of the current directory."""
+    return (
+        files("repo_compliance.infrastructure.agentic")
+        .joinpath("system_prompt.md")
+        .read_text(encoding="utf-8")
+    )
+
+
 def _evaluate_snapshot(
     snapshot_path: Path, prompt: str, settings: AzureOpenAISettings
 ) -> RuleEvaluation:
@@ -229,6 +239,7 @@ async def _run_agent(
         agent = Agent(
             client=client,
             name="repository-compliance",
+            instructions=load_system_prompt(),
             tools=[serena],
             default_options=options,
         )

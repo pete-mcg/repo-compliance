@@ -32,7 +32,6 @@ def test_rule_loads_prompt_outside_working_directory(
 
     assert check(context) == evaluation
     assert evaluator.calls == [(snapshot, load_prompt())]
-    assert "untrusted evidence" in evaluator.calls[0][1]
     assert RULE in RULES
     assert RULE.category is RuleCategory.AGENTIC
     assert RULE.confidence is Confidence.MEDIUM

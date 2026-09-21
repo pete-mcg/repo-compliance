@@ -89,7 +89,7 @@ Settings are validated when an active rule evaluates. Azure routing and Entra au
 
 Framework and provider imports stay in [`infrastructure/agentic/agent_framework.py`](../src/repo_compliance/infrastructure/agentic/agent_framework.py). Replacing the framework changes this adapter while preserving `AgentEvaluator`. Azure client construction, Docker launch settings, and Serena configuration each have a small function there. Replacing Serena changes launch configuration and the tool allow-list. The core runner and rule remain unchanged. Safe ZIP extraction lives in [`source_snapshot.py`](../src/repo_compliance/infrastructure/source/source_snapshot.py).
 
-The prompt is loaded with `importlib.resources`, included in the wheel, and does not depend on the working directory. Normal CI uses fake integrations; separate opt-in checks exercise Docker isolation and live prompt judgments. See the [setup and verification commands](../README.md).
+The shared system prompt in `infrastructure/agentic/system_prompt.md` supplies trust, scope, and structured response instructions to every agent evaluation. Rule prompts in `rules/agentic/` supply the judgment criteria and rule-specific evidence requirements. Both are loaded with `importlib.resources`, included in the wheel, and do not depend on the working directory. Normal CI uses fake integrations; separate opt-in checks exercise Docker isolation and live prompt judgments. See the [setup and verification commands](../README.md).
 
 ## File responsibilities
 
