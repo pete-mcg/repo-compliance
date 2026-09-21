@@ -15,9 +15,9 @@ from tests.unit.fakes import FakeGitHub
 REPOSITORY = "example/service"
 
 
-def write_source_snapshot(path: Path, entries: dict[str, bytes]) -> Path:
+def write_source_snapshot(path: Path, source_items: dict[str, bytes]) -> Path:
     with ZipFile(path, "w", compression=ZIP_DEFLATED) as source_snapshot:
-        for name, content in entries.items():
+        for name, content in source_items.items():
             source_snapshot.writestr(name, content)
     return path
 

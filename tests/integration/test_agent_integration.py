@@ -122,10 +122,12 @@ def _assert_docker_isolation(container_name: str) -> None:
 def test_live_prompt(scenario: str, expected: str, tmp_path: Path) -> None:
     snapshot = tmp_path / "repository.zip"
     source = FIXTURES / scenario
-    with ZipFile(snapshot, "w") as archive:
+    with ZipFile(snapshot, "w") as source_archive:
         for path in source.rglob("*"):
             if path.is_file():
-                archive.write(path, f"snapshot/{path.relative_to(source).as_posix()}")
+                source_archive.write(
+                    path, f"snapshot/{path.relative_to(source).as_posix()}"
+                )
     evaluator = AgentFrameworkEvaluator()
     if expected == "uncertain":
         with pytest.raises(AgentError, match="Agent could not judge"):

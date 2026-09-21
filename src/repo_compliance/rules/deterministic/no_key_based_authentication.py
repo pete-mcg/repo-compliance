@@ -62,7 +62,7 @@ KEY_MARKER = re.compile(
 
 
 def check(context: RuleContext) -> RuleEvaluation:
-    """Scan safe UTF-8 source snapshot entries for key authentication markers."""
+    """Scan safe UTF-8 source snapshot items for key authentication markers."""
     if context.source_snapshot_path is None:
         raise RuntimeError("Rule requires a source snapshot.")
 
@@ -86,26 +86,28 @@ def _scan_source_snapshot(
     except (BadZipFile, LargeZipFile, OSError) as error:
         raise SourceSnapshotError("Could not inspect the source snapshot.") from error
     with source_snapshot:
-        return _scan_entries(source_snapshot)
+        return _scan_source_items(source_snapshot)
 
 
-def _scan_entries(source_zip: ZipFile) -> tuple[tuple[Evidence, ...], int]:
+def _scan_source_items(source_zip: ZipFile) -> tuple[tuple[Evidence, ...], int]:
     evidence: list[Evidence] = []
     total = 0
-    for entry in source_zip.infolist():
-        entry_evidence = _entry_evidence(source_zip, entry)
-        total += len(entry_evidence)
+    for source_item in source_zip.infolist():
+        source_item_evidence = _source_item_evidence(source_zip, source_item)
+        total += len(source_item_evidence)
         remaining = MAX_EVIDENCE - len(evidence)
-        evidence.extend(entry_evidence[:remaining])
+        evidence.extend(source_item_evidence[:remaining])
     return tuple(evidence), total
 
 
-def _entry_evidence(source_zip: ZipFile, entry: ZipInfo) -> tuple[Evidence, ...]:
-    path = _scannable_path(entry)
+def _source_item_evidence(
+    source_zip: ZipFile, source_item: ZipInfo
+) -> tuple[Evidence, ...]:
+    path = _scannable_path(source_item)
     if path is None:
         return ()
 
-    text = _read_text(source_zip, entry)
+    text = _read_text(source_zip, source_item)
     if text is None:
         return ()
 
@@ -115,9 +117,9 @@ def _entry_evidence(source_zip: ZipFile, entry: ZipInfo) -> tuple[Evidence, ...]
     return tuple(evidence)
 
 
-def _read_text(source_zip: ZipFile, entry: ZipInfo) -> str | None:
+def _read_text(source_zip: ZipFile, source_item: ZipInfo) -> str | None:
     try:
-        content = source_zip.read(entry)
+        content = source_zip.read(source_item)
     except (BadZipFile, NotImplementedError, OSError, RuntimeError) as error:
         raise SourceSnapshotError(
             "Could not read a file in the source snapshot."
@@ -144,11 +146,11 @@ def _line_evidence(
     )
 
 
-def _scannable_path(entry: ZipInfo) -> PurePosixPath | None:
-    if entry.is_dir() or entry.file_size > MAX_FILE_BYTES:
+def _scannable_path(source_item: ZipInfo) -> PurePosixPath | None:
+    if source_item.is_dir() or source_item.file_size > MAX_FILE_BYTES:
         return None
 
-    source_path = PurePosixPath(entry.filename)
+    source_path = PurePosixPath(source_item.filename)
     if len(source_path.parts) < 2:
         return None
 

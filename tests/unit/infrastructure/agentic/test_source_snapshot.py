@@ -11,9 +11,9 @@ from repo_compliance.infrastructure.agentic.source_snapshot import extracted_sna
 
 def test_extracts_wrapper_and_cleans_up_after_consumer_failure(tmp_path: Path) -> None:
     snapshot = tmp_path / "repository.zip"
-    with ZipFile(snapshot, "w") as archive:
-        archive.writestr("owner-repo-sha/", "")
-        archive.writestr(
+    with ZipFile(snapshot, "w") as source_archive:
+        source_archive.writestr("owner-repo-sha/", "")
+        source_archive.writestr(
             "owner-repo-sha/.github/workflows/ci.yml", "on: pull_request\n"
         )
     original = snapshot.read_bytes()
@@ -54,26 +54,28 @@ def test_extracts_wrapper_and_cleans_up_after_consumer_failure(tmp_path: Path) -
 )
 def test_rejects_unsafe_paths(tmp_path: Path, filename: str) -> None:
     snapshot = tmp_path / "repository.zip"
-    with ZipFile(snapshot, "w") as archive:
-        entry = ZipInfo(filename)
-        entry.filename = filename  # Preserve backslashes even when creating on Windows.
-        archive.writestr(entry, "unsafe")
+    with ZipFile(snapshot, "w") as source_archive:
+        source_item = ZipInfo(filename)
+        source_item.filename = (
+            filename  # Preserve backslashes when creating on Windows.
+        )
+        source_archive.writestr(source_item, "unsafe")
     with (
         pytest.raises(SourceSnapshotError, match="safely extract"),
         extracted_snapshot(snapshot),
     ):
-        pytest.fail("Unsafe archive was accepted")
+        pytest.fail("Unsafe source ZIP was accepted")
     assert not (tmp_path / "escape").exists()
 
 
 @pytest.mark.parametrize("file_type", [stat.S_IFLNK, stat.S_IFIFO, stat.S_IFCHR])
 def test_rejects_links_and_special_files(tmp_path: Path, file_type: int) -> None:
     snapshot = tmp_path / "repository.zip"
-    entry = ZipInfo("root/link")
-    entry.create_system = 3
-    entry.external_attr = (file_type | 0o777) << 16
-    with ZipFile(snapshot, "w") as archive:
-        archive.writestr(entry, "/etc/passwd")
+    source_item = ZipInfo("root/link")
+    source_item.create_system = 3
+    source_item.external_attr = (file_type | 0o777) << 16
+    with ZipFile(snapshot, "w") as source_archive:
+        source_archive.writestr(source_item, "/etc/passwd")
     with pytest.raises(SourceSnapshotError), extracted_snapshot(snapshot):
         pytest.fail("Special file was accepted")
 
@@ -83,11 +85,11 @@ def test_rejects_empty_multiple_root_and_conflicting_archives(
     tmp_path: Path, names: list[str]
 ) -> None:
     snapshot = tmp_path / "repository.zip"
-    with ZipFile(snapshot, "w") as archive:
+    with ZipFile(snapshot, "w") as source_archive:
         for name in names:
-            archive.writestr(name, "content")
+            source_archive.writestr(name, "content")
     with pytest.raises(SourceSnapshotError), extracted_snapshot(snapshot):
-        pytest.fail("Invalid archive was accepted")
+        pytest.fail("Invalid source ZIP was accepted")
 
 
 @pytest.mark.parametrize("limit", ["MAX_EXTRACTED_BYTES", "MAX_EXTRACTED_ITEMS"])
@@ -95,8 +97,8 @@ def test_limits_extraction_size(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, limit: str
 ) -> None:
     snapshot = tmp_path / "repository.zip"
-    with ZipFile(snapshot, "w") as archive:
-        archive.writestr("root/file", "content")
+    with ZipFile(snapshot, "w") as source_archive:
+        source_archive.writestr("root/file", "content")
     monkeypatch.setattr(source_snapshot, limit, 0)
     with pytest.raises(SourceSnapshotError), extracted_snapshot(snapshot):
         pytest.fail("Extraction limit was ignored")
@@ -106,14 +108,14 @@ def test_corrupt_zip_is_expected_error(tmp_path: Path) -> None:
     snapshot = tmp_path / "repository.zip"
     snapshot.write_bytes(b"not a zip")
     with pytest.raises(SourceSnapshotError), extracted_snapshot(snapshot):
-        pytest.fail("Corrupt archive was accepted")
+        pytest.fail("Corrupt source ZIP was accepted")
 
 
 def test_corrupt_compressed_content_is_expected_error(tmp_path: Path) -> None:
     snapshot = tmp_path / "repository.zip"
     filename = "root/file"
-    with ZipFile(snapshot, "w", compression=ZIP_DEFLATED) as archive:
-        archive.writestr(filename, "content")
+    with ZipFile(snapshot, "w", compression=ZIP_DEFLATED) as source_archive:
+        source_archive.writestr(filename, "content")
     content = bytearray(snapshot.read_bytes())
     # The file data follows the 30-byte ZIP header and filename.
     content[30 + len(filename)] = 0x07  # Reserved DEFLATE block type.
