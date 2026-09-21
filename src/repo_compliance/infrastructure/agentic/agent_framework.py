@@ -127,7 +127,9 @@ class AgentFrameworkEvaluator:
         try:
             return _evaluate_snapshot(snapshot_path, prompt, settings)
         except TimeoutError as error:
-            raise AgentError("Agent evaluation exceeded 120 seconds.") from error
+            raise AgentError(
+                f"Agent evaluation exceeded {EVALUATION_TIMEOUT_SECONDS} seconds."
+            ) from error
         except (
             AgentFrameworkException,
             ClientAuthenticationError,
@@ -137,8 +139,7 @@ class AgentFrameworkEvaluator:
             ValidationError,
         ) as error:
             raise AgentError(
-                f"Agent evaluation failed ({type(error).__name__}); "
-                "check Azure login, deployment access, and the local Serena image."
+                f"Agent evaluation failed ({type(error).__name__})."
             ) from error
 
 
