@@ -24,7 +24,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from repo_compliance.domain import Evidence, RuleEvaluation
 from repo_compliance.errors import AgentError
 from repo_compliance.infrastructure.agentic.source_snapshot import (
-    extracted_snapshot,
+    extracted_source_snapshot,
     safe_relative_path,
 )
 
@@ -147,7 +147,7 @@ def _evaluate_snapshot(
     snapshot_path: Path, prompt: str, settings: AzureOpenAISettings
 ) -> RuleEvaluation:
     with (
-        extracted_snapshot(snapshot_path) as repository,
+        extracted_source_snapshot(snapshot_path) as repository,
         TemporaryDirectory(prefix="repo-compliance-serena-") as temporary_state,
     ):
         state = Path(temporary_state)

@@ -27,21 +27,21 @@ def safe_relative_path(value: str) -> PurePosixPath:
 
 
 @contextmanager
-def extracted_snapshot(snapshot_path: Path) -> Generator[Path]:
+def extracted_source_snapshot(snapshot_path: Path) -> Generator[Path]:
     """Yield the repository root, removing extracted files even after failure."""
     with TemporaryDirectory(prefix="repo-compliance-source-") as temporary_directory:
         destination = Path(temporary_directory)
-        _extract_snapshot(snapshot_path, destination)
+        _extract_source_snapshot(snapshot_path, destination)
         yield destination
 
 
-def _extract_snapshot(snapshot_path: Path, destination: Path) -> None:
+def _extract_source_snapshot(snapshot_path: Path, destination: Path) -> None:
     try:
-        with ZipFile(snapshot_path) as source_archive:
-            source_items = source_archive.infolist()
+        with ZipFile(snapshot_path) as source_zip:
+            source_items = source_zip.infolist()
             _validate_source_items(source_items)
             for source_item in source_items:
-                _extract_source_item(source_archive, source_item, destination)
+                _extract_source_item(source_zip, source_item, destination)
     except (
         BadZipFile,
         LargeZipFile,
@@ -57,39 +57,59 @@ def _extract_snapshot(snapshot_path: Path, destination: Path) -> None:
 
 
 def _validate_source_items(source_items: list[ZipInfo]) -> None:
-    if not source_items or len(source_items) > MAX_EXTRACTED_ITEMS:
-        raise ValueError("Source snapshot contains too many items.")
-    if sum(source_item.file_size for source_item in source_items) > MAX_EXTRACTED_BYTES:
-        raise ValueError("Source snapshot is too large to extract.")
+    _validate_source_item_count(source_items)
+    _validate_source_size(source_items)
 
     roots: set[str] = set()
     for source_item in source_items:
-        path = _validated_source_item_path(source_item)
+        path = safe_relative_path(source_item.orig_filename.removesuffix("/"))
+        _validate_source_item_type(source_item)
+        _validate_source_item_encryption(source_item)
+        _validate_source_item_wrapper_path(path, source_item.is_dir())
         roots.add(path.parts[0])
+
+    _validate_single_source_root(roots)
+
+
+def _validate_source_item_count(source_items: list[ZipInfo]) -> None:
+    if not source_items or len(source_items) > MAX_EXTRACTED_ITEMS:
+        raise ValueError("Source snapshot contains too many items.")
+
+
+def _validate_source_size(source_items: list[ZipInfo]) -> None:
+    if sum(source_item.file_size for source_item in source_items) > MAX_EXTRACTED_BYTES:
+        raise ValueError("Source snapshot is too large to extract.")
+
+
+def _validate_source_item_type(source_item: ZipInfo) -> None:
+    file_type = stat.S_IFMT(source_item.external_attr >> 16)
+    if file_type not in {0, stat.S_IFREG, stat.S_IFDIR}:
+        raise ValueError("Source snapshot contains a link or special file.")
+
+
+def _validate_source_item_encryption(source_item: ZipInfo) -> None:
+    if source_item.flag_bits & 1:
+        raise ValueError("Source snapshot contains an encrypted item.")
+
+
+def _validate_source_item_wrapper_path(path: PurePosixPath, is_directory: bool) -> None:
+    if len(path.parts) < 2 and not is_directory:
+        raise ValueError("Source snapshot item is outside the wrapper directory.")
+
+
+def _validate_single_source_root(roots: set[str]) -> None:
     if len(roots) != 1:
         raise ValueError("Expected one GitHub snapshot root directory.")
 
 
-def _validated_source_item_path(source_item: ZipInfo) -> PurePosixPath:
-    path = safe_relative_path(source_item.orig_filename.removesuffix("/"))
-    file_type = stat.S_IFMT(source_item.external_attr >> 16)
-    if file_type not in {0, stat.S_IFREG, stat.S_IFDIR}:
-        raise ValueError("Source snapshot contains a link or special file.")
-    if source_item.flag_bits & 1:
-        raise ValueError("Source snapshot contains an encrypted item.")
-    if len(path.parts) < 2 and not source_item.is_dir():
-        raise ValueError("Source snapshot item is outside the wrapper directory.")
-    return path
-
-
 def _extract_source_item(
-    source_archive: ZipFile, source_item: ZipInfo, destination: Path
+    source_zip: ZipFile, source_item: ZipInfo, destination: Path
 ) -> None:
-    path = _validated_source_item_path(source_item)
+    path = PurePosixPath(source_item.orig_filename.removesuffix("/"))
     target = destination.joinpath(*path.parts[1:])
     if source_item.is_dir():
         target.mkdir(parents=True, exist_ok=True)
         return
     target.parent.mkdir(parents=True, exist_ok=True)
-    with source_archive.open(source_item) as source, target.open("xb") as output:
+    with source_zip.open(source_item) as source, target.open("xb") as output:
         shutil.copyfileobj(source, output)

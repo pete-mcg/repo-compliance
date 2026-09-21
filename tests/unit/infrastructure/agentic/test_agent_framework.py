@@ -130,8 +130,8 @@ def test_evaluation_validates_output_and_cleans_resources(
 ) -> None:
     configure_azure(monkeypatch)
     snapshot = tmp_path / "repository.zip"
-    with ZipFile(snapshot, "w") as source_archive:
-        source_archive.writestr("root/.github/workflows/ci.yml", "on: pull_request")
+    with ZipFile(snapshot, "w") as source_zip:
+        source_zip.writestr("root/.github/workflows/ci.yml", "on: pull_request")
     paths: list[Path] = []
 
     async def run(

@@ -122,10 +122,10 @@ def _assert_docker_isolation(container_name: str) -> None:
 def test_live_prompt(scenario: str, expected: str, tmp_path: Path) -> None:
     snapshot = tmp_path / "repository.zip"
     source = FIXTURES / scenario
-    with ZipFile(snapshot, "w") as source_archive:
+    with ZipFile(snapshot, "w") as source_zip:
         for path in source.rglob("*"):
             if path.is_file():
-                source_archive.write(
+                source_zip.write(
                     path, f"snapshot/{path.relative_to(source).as_posix()}"
                 )
     evaluator = AgentFrameworkEvaluator()
