@@ -15,7 +15,8 @@ from repo_compliance.infrastructure.agentic.agent_framework import (
     create_serena_tool,
     write_serena_configuration,
 )
-from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import load_prompt
+from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import PROMPT_FILENAME
+from repo_compliance.rules.agentic.helpers import load_rule_prompt
 
 pytestmark = pytest.mark.integration
 FIXTURES = Path(__file__).parents[1] / "fixtures" / "ci_workflows"
@@ -129,9 +130,10 @@ def test_live_prompt(scenario: str, expected: str, tmp_path: Path) -> None:
                     path, f"snapshot/{path.relative_to(source).as_posix()}"
                 )
     evaluator = AgentFrameworkEvaluator()
+    prompt = load_rule_prompt(PROMPT_FILENAME)
     if expected == "uncertain":
         with pytest.raises(AgentError, match="Agent could not judge"):
-            evaluator.evaluate(snapshot, load_prompt())
+            evaluator.evaluate(snapshot, prompt)
     else:
-        result = evaluator.evaluate(snapshot, load_prompt())
+        result = evaluator.evaluate(snapshot, prompt)
         assert result.passed is (expected == "pass"), result.message

@@ -1,7 +1,5 @@
 """Judge whether GitHub Actions declares CI for pull requests to main."""
 
-from importlib.resources import files
-
 from repo_compliance.domain import (
     Confidence,
     RuleCategory,
@@ -9,29 +7,22 @@ from repo_compliance.domain import (
     RuleDefinition,
     RuleEvaluation,
 )
-from repo_compliance.errors import AgentError
+from repo_compliance.rules.agentic.helpers import (
+    evaluate_agentic_rule,
+    rule_prompt_filename,
+)
 
-
-def load_prompt() -> str:
-    """Load the packaged rule instructions independently of the current directory."""
-    return (
-        files("repo_compliance.rules.agentic")
-        .joinpath("ci_workflow_on_pull_requests.md")
-        .read_text(encoding="utf-8")
-    )
+RULE_ID = "ci-workflow-on-pull-requests"
+PROMPT_FILENAME = rule_prompt_filename(RULE_ID)
 
 
 def check(context: RuleContext) -> RuleEvaluation:
     """Ask the supplied evaluator to inspect the shared main-branch ZIP."""
-    if context.source_snapshot_path is None:
-        raise RuntimeError("Rule requires a source snapshot.")
-    if context.agent_evaluator is None:
-        raise AgentError("No agent evaluator is configured.")
-    return context.agent_evaluator.evaluate(context.source_snapshot_path, load_prompt())
+    return evaluate_agentic_rule(context, PROMPT_FILENAME)
 
 
 RULE = RuleDefinition(
-    id="ci-workflow-on-pull-requests",
+    id=RULE_ID,
     title="CI runs on pull requests to main",
     description="A GitHub Actions CI workflow must run for every pull request to main.",
     category=RuleCategory.AGENTIC,
