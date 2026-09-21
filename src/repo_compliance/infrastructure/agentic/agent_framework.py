@@ -103,8 +103,8 @@ class AgentEvidence(BaseModel):
     @classmethod
     def validate_marker(cls, value: str) -> str:
         """Require a short, non-empty evidence label."""
-        if not value or len(value) > 80:
-            raise ValueError("Evidence marker must contain 1 to 80 characters.")
+        if not value or len(value) > 100:
+            raise ValueError("Evidence marker must contain 1 to 100 characters.")
         return value
 
 
@@ -123,8 +123,8 @@ class AgentStructuredResponse(BaseModel):
     @classmethod
     def validate_explanation(cls, value: str) -> str:
         """Require a short, non-empty explanation."""
-        if not value or len(value) > 600:
-            raise ValueError("Explanation must contain 1 to 600 characters.")
+        if not value or len(value) > 1000:
+            raise ValueError("Explanation must contain 1 to 1,000 characters.")
         return value
 
 

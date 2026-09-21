@@ -51,7 +51,7 @@ def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
     [
         {"verdict": "exempt"},
         {"explanation": " "},
-        {"explanation": "x" * 601},
+        {"explanation": "x" * 1001},
         {"unexpected": "value"},
         {"evidence": [{"path": "../secret", "line": 1, "marker": "trigger"}]},
         {"evidence": [{"path": "ci.yml", "line": 0, "marker": "trigger"}]},
