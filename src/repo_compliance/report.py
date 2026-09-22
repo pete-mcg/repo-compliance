@@ -19,7 +19,7 @@ def build_report(
     """Build a compliance report in Markdown."""
     timestamp = generated_at or datetime.now(UTC)
     sections = [
-        "# Repository Compliance Report",
+        "# 🛡️ Repository Compliance Report",
         f"Generated at `{_format_timestamp_as_utc(timestamp)}`",
         _build_totals_section(config, results),
         _build_repository_summary_section(config, results),
@@ -36,7 +36,7 @@ def _build_totals_section(
     counts = Counter(result.status for result in results)
     return "\n".join(
         (
-            "## Totals",
+            "## 📊 Totals",
             "",
             f"- Repositories: {len(config.repositories)}",
             f"- Checks: {len(results)}",
@@ -53,7 +53,7 @@ def _build_repository_summary_section(
     results: Sequence[RuleResult],
 ) -> str:
     lines = [
-        "## Repository summary",
+        "## 🗂️ Repository summary",
         "",
         "| Repository | Pass | Fail | Exempt | Error |",
         "| --- | ---: | ---: | ---: | ---: |",
@@ -80,7 +80,7 @@ def _build_repository_summary_section(
 
 def _build_rules_section(rules: Sequence[RuleDefinition]) -> str:
     lines = [
-        "## Rules",
+        "## 📜 Rules",
         "",
         "| Rule | Documentation | Category | Confidence | Standard |",
         "| --- | --- | --- | --- | --- |",
@@ -102,7 +102,7 @@ def _build_rules_section(rules: Sequence[RuleDefinition]) -> str:
 
 def _build_results_table_section(results: Sequence[RuleResult]) -> str:
     lines = [
-        "## Results",
+        "## 📋 Results",
         "",
         "| Repository | Rule | Category | Confidence | Status | Details |",
         "| --- | --- | --- | --- | --- | --- |",
@@ -124,7 +124,7 @@ def _build_results_table_section(results: Sequence[RuleResult]) -> str:
 
 
 def _build_details_section(results: Sequence[RuleResult]) -> str:
-    lines = ["## Details"]
+    lines = ["## 🔎 Details"]
     if not results:
         lines.extend(("", "_No results._"))
         return "\n".join(lines)

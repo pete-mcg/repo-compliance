@@ -41,7 +41,7 @@ def test_successful_completed_run_writes_report(
 
     assert exit_code == 0
     assert output.read_text(encoding="utf-8").startswith(
-        "# Repository Compliance Report"
+        "# 🛡️ Repository Compliance Report"
     )
 
 

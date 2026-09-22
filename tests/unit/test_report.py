@@ -117,11 +117,11 @@ def test_report_preserves_registry_and_configuration_order() -> None:
         generated_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 
-    rules_section = report.split("## Rules", maxsplit=1)[1].split(
-        "## Results", maxsplit=1
+    rules_section = report.split("## 📜 Rules", maxsplit=1)[1].split(
+        "## 📋 Results", maxsplit=1
     )[0]
-    summary_section = report.split("## Repository summary", maxsplit=1)[1].split(
-        "## Rules", maxsplit=1
+    summary_section = report.split("## 🗂️ Repository summary", maxsplit=1)[1].split(
+        "## 📜 Rules", maxsplit=1
     )[0]
     assert rules_section.index("second-rule") < rules_section.index("first-rule")
     assert summary_section.index("example/zeta") < summary_section.index(
