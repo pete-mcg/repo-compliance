@@ -11,18 +11,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             // Temporary workaround for debugpy corrupting StrEnum construction while stepping.
-            "showReturnValue": false,
-            "env": {
-                "GITHUB_TOKEN": "${input:githubToken}"
-            }
-        }
-    ],
-    "inputs": [
-        {
-            "id": "githubToken",
-            "type": "promptString",
-            "description": "GitHub token",
-            "password": true
+            "showReturnValue": false
         }
     ]
 }
