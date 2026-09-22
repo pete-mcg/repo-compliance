@@ -16,8 +16,8 @@ from pydantic import (
 
 from repo_compliance.errors import ConfigError
 
-OWNER_PATTERN = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?")
-REPOSITORY_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,100}")
+REPOSITORY_OWNER_PATTERN = re.compile(r"(?!.*--)[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?")
+REPOSITORY_NAME_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,100}")
 
 
 class ConfigModel(BaseModel):
@@ -48,9 +48,9 @@ class RepositoryConfig(ConfigModel):
             raise ValueError("repository must use owner/name format")
 
         owner, name = parts
-        if not OWNER_PATTERN.fullmatch(owner):
+        if not REPOSITORY_OWNER_PATTERN.fullmatch(owner):
             raise ValueError("repository owner is invalid")
-        if not REPOSITORY_PATTERN.fullmatch(name):
+        if not REPOSITORY_NAME_PATTERN.fullmatch(name):
             raise ValueError("repository name is invalid")
         return value
 

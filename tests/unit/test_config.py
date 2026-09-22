@@ -39,6 +39,19 @@ repositories:
     assert config.repositories[0].exemptions[0].reason == "No deployment."
 
 
+@pytest.mark.parametrize("owner", ("a", "A1", "my-org", "my-org-2", "a" * 39))
+def test_accepts_valid_repository_owners(tmp_path: Path, owner: str) -> None:
+    repository = f"{owner}/repo"
+    path = write_config(
+        tmp_path / "repositories.yml",
+        f"repositories:\n  - repository: {repository}\n",
+    )
+
+    config = get_config(path, RULE_IDS)
+
+    assert config.repositories[0].repository == repository
+
+
 @pytest.mark.parametrize(
     "repository",
     (
@@ -46,6 +59,9 @@ repositories:
         "too/many/slashes",
         "-owner/repo",
         "owner-/repo",
+        "my--org/repo",
+        "my---org/repo",
+        f"{'a' * 40}/repo",
         "owner/",
         "owner/repo name",
     ),
