@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/pete-mcg/project-name/actions/workflows/ci.yml">
-    <img alt="CI" src="https://github.com/pete-mcg/project-name/actions/workflows/ci.yml/badge.svg?branch=main">
+  <a href="https://github.com/pete-mcg/repo-compliance/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/pete-mcg/repo-compliance/actions/workflows/ci.yml/badge.svg?branch=main">
   </a>
 </p>
 
