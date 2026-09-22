@@ -14,6 +14,8 @@ from repo_compliance.errors import SourceSnapshotError
 
 MAX_EXTRACTED_BYTES = 512 * 1024 * 1024
 MAX_EXTRACTED_ITEMS = 20_000
+ZIP_UNIX_MODE_SHIFT = 16
+ZIP_ENCRYPTED_FLAG = 1
 
 
 def safe_relative_path(value: str) -> PurePosixPath:
@@ -82,13 +84,13 @@ def _validate_source_size(source_items: list[ZipInfo]) -> None:
 
 
 def _validate_source_item_type(source_item: ZipInfo) -> None:
-    file_type = stat.S_IFMT(source_item.external_attr >> 16)
+    file_type = stat.S_IFMT(source_item.external_attr >> ZIP_UNIX_MODE_SHIFT)
     if file_type not in {0, stat.S_IFREG, stat.S_IFDIR}:
         raise ValueError("Source snapshot contains a link or special file.")
 
 
 def _validate_source_item_encryption(source_item: ZipInfo) -> None:
-    if source_item.flag_bits & 1:
+    if source_item.flag_bits & ZIP_ENCRYPTED_FLAG:
         raise ValueError("Source snapshot contains an encrypted item.")
 
 

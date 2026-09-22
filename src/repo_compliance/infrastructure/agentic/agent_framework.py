@@ -30,6 +30,10 @@ from repo_compliance.infrastructure.source.source_snapshot import (
 from repo_compliance.settings import Settings
 
 EVALUATION_TIMEOUT_SECONDS = 120
+MCP_REQUEST_TIMEOUT_SECONDS = 30
+DOCKER_CLEANUP_TIMEOUT_SECONDS = 10
+MAX_EVIDENCE_MARKER_LENGTH = 100
+MAX_EXPLANATION_LENGTH = 1000
 SERENA_IMAGE = (
     "ghcr.io/oraios/serena:1.7.0@"
     "sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730"
@@ -88,8 +92,10 @@ class AgentEvidence(BaseModel):
     @classmethod
     def validate_marker(cls, value: str) -> str:
         """Require a short, non-empty evidence label."""
-        if not value or len(value) > 100:
-            raise ValueError("Evidence marker must contain 1 to 100 characters.")
+        if not value or len(value) > MAX_EVIDENCE_MARKER_LENGTH:
+            raise ValueError(
+                f"Evidence marker must contain 1 to {MAX_EVIDENCE_MARKER_LENGTH} characters."
+            )
         return value
 
 
@@ -108,8 +114,10 @@ class AgentStructuredResponse(BaseModel):
     @classmethod
     def validate_explanation(cls, value: str) -> str:
         """Require a short, non-empty explanation."""
-        if not value or len(value) > 1000:
-            raise ValueError("Explanation must contain 1 to 1,000 characters.")
+        if not value or len(value) > MAX_EXPLANATION_LENGTH:
+            raise ValueError(
+                f"Explanation must contain 1 to {MAX_EXPLANATION_LENGTH:,} characters."
+            )
         return value
 
 
@@ -256,7 +264,7 @@ def create_serena_tool(
         args=serena_docker_arguments(repository, state, container_name),
         allowed_tools=SERENA_TOOLS,
         load_prompts=False,
-        request_timeout=30,
+        request_timeout=MCP_REQUEST_TIMEOUT_SECONDS,
     )
 
 
@@ -374,7 +382,7 @@ def _force_remove_container(container_name: str) -> subprocess.CompletedProcess[
         ["docker", "rm", "--force", container_name],
         capture_output=True,
         text=True,
-        timeout=10,
+        timeout=DOCKER_CLEANUP_TIMEOUT_SECONDS,
         check=False,
     )
 

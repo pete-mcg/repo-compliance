@@ -133,6 +133,8 @@ def _read_text(source_zip: ZipFile, source_item: ZipInfo) -> str | None:
 
 
 def _is_binary(content: bytes) -> bool:
+    # Treat ASCII control bytes below space (32) as binary, except whitespace:
+    # tab, line feed, vertical tab, form feed, and carriage return (9 through 13).
     return any(byte < 9 or 13 < byte < 32 for byte in content)
 
 
