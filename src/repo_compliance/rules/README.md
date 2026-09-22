@@ -1,0 +1,1 @@
+See [Creating Rules](../../../docs/CREATING-RULES.md).
