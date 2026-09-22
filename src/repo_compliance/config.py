@@ -16,7 +16,9 @@ from pydantic import (
 
 from repo_compliance.errors import ConfigError
 
-REPOSITORY_OWNER_PATTERN = re.compile(r"(?!.*--)[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?")
+REPOSITORY_OWNER_PATTERN = re.compile(
+    r"(?!.*--)[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?"
+)
 REPOSITORY_NAME_PATTERN = re.compile(r"[A-Za-z0-9._-]{1,100}")
 
 
