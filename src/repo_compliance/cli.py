@@ -3,9 +3,8 @@
 import argparse
 import sys
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
-
-from pydantic import BaseModel, ConfigDict
 
 from repo_compliance.config import get_config
 from repo_compliance.errors import ComplianceError
@@ -19,10 +18,9 @@ from repo_compliance.runner import run_all_compliance_checks
 from repo_compliance.settings import get_env_settings
 
 
-class CliOptions(BaseModel):
-    """Validated command-line paths."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
+@dataclass(frozen=True)
+class CliOptions:
+    """Paths supplied to the command-line interface."""
 
     config: Path
     output: Path
@@ -62,4 +60,4 @@ def _get_cli_options(argv: Sequence[str] | None) -> CliOptions:
     parser.add_argument("--config", type=Path, default=Path("config/repositories.yml"))
     parser.add_argument("--output", type=Path, default=Path("compliance-report.md"))
     arguments = parser.parse_args(argv)
-    return CliOptions.model_validate(vars(arguments))
+    return CliOptions(config=arguments.config, output=arguments.output)
