@@ -157,16 +157,29 @@ def _evaluate_snapshot(
         extracted_source_snapshot(snapshot_path) as repository,
         TemporaryDirectory(prefix="repo-compliance-serena-") as temporary_state,
     ):
-        state = Path(temporary_state)
-        write_serena_configuration(state)
-        container_name = f"repo-compliance-{uuid4().hex}"
-        try:
-            output = asyncio.run(
-                _run_agent(repository, state, container_name, settings, prompt)
-            )
-        finally:
-            _remove_container(container_name)
-        return _to_evaluation(output)
+        return _evaluate_repository(repository, Path(temporary_state), settings, prompt)
+
+
+def _evaluate_repository(
+    repository: Path, state: Path, settings: Settings, prompt: str
+) -> RuleEvaluation:
+    """Evaluate an extracted repository with isolated Serena state."""
+    write_serena_configuration(state)
+    output = _run_agent_in_container(repository, state, settings, prompt)
+    return _to_evaluation(output)
+
+
+def _run_agent_in_container(
+    repository: Path, state: Path, settings: Settings, prompt: str
+) -> object:
+    """Run the agent and always remove its Docker container."""
+    container_name = f"repo-compliance-{uuid4().hex}"
+    try:
+        return asyncio.run(
+            _run_agent(repository, state, container_name, settings, prompt)
+        )
+    finally:
+        _remove_container(container_name)
 
 
 async def _run_agent(
@@ -182,24 +195,37 @@ async def _run_agent(
         create_azure_client(settings, credential) as azure_client,
         create_serena_tool(repository, state, container_name) as serena,
     ):
-        client = OpenAIChatCompletionClient(
-            model=settings.deployment, async_client=azure_client
-        )
-        options: OpenAIChatCompletionOptions = {
-            "allow_multiple_tool_calls": False,
-            "store": False,
-        }
-        agent = Agent(
-            client=client,
-            name="repository-compliance",
-            instructions=load_system_prompt(),
-            tools=[serena],
-            default_options=options,
-        )
-        response = await agent.run(
-            prompt, options={"response_format": AgentStructuredResponse}
-        )
-        return response.value
+        agent = _create_agent(settings, azure_client, serena)
+        return await _request_evaluation(agent, prompt)
+
+
+def _create_agent(
+    settings: Settings, azure_client: AsyncAzureOpenAI, serena: MCPStdioTool
+) -> Agent:
+    """Create the agent used for a repository compliance evaluation."""
+    client = OpenAIChatCompletionClient(
+        model=settings.deployment, async_client=azure_client
+    )
+    return Agent(
+        client=client,
+        name="repository-compliance",
+        instructions=load_system_prompt(),
+        tools=[serena],
+        default_options=_agent_options(),
+    )
+
+
+def _agent_options() -> OpenAIChatCompletionOptions:
+    """Return the fixed options for compliance evaluations."""
+    return {"allow_multiple_tool_calls": False, "store": False}
+
+
+async def _request_evaluation(agent: Agent, prompt: str) -> object:
+    """Request one structured evaluation from the agent."""
+    response = await agent.run(
+        prompt, options={"response_format": AgentStructuredResponse}
+    )
+    return response.value
 
 
 def create_azure_client(
@@ -279,64 +305,102 @@ def serena_docker_arguments(
 
 def write_serena_configuration(state: Path) -> None:
     """Precreate separate project state so repository Serena config is never loaded."""
+    project_state = _create_serena_project_state(state)
+    _write_yaml(state / "serena_config.yml", _serena_configuration())
+    _write_yaml(project_state / "project.yml", _project_configuration())
+    _write_yaml(state / "context.yml", _context_configuration())
+
+
+def _create_serena_project_state(state: Path) -> Path:
+    """Create the directory used for Serena project state."""
     project_state = state / "project"
     project_state.mkdir()
-    configurations: dict[Path, dict[str, str | bool | int | list[str] | None]] = {
-        state / "serena_config.yml": {
-            "web_dashboard": False,
-            "web_dashboard_open_on_launch": False,
-            "gui_log_window": False,
-            "log_level": 40,
-            "token_count_estimator": "CHAR_COUNT",
-            "project_serena_folder_location": "/state/project",
-            "trusted_project_path_patterns": [],
-            "projects": [],
-            "base_modes": [],
-            "default_modes": [],
-            "fixed_tools": list(SERENA_TOOLS),
-        },
-        project_state / "project.yml": {
-            "project_name": "repository",
-            "language_servers": [],
-            "read_only": True,
-            "ignore_all_files_in_gitignore": False,
-            "initial_prompt": "",
-            "activation_command": None,
-        },
-        state / "context.yml": {
-            "name": "compliance",
-            "prompt": "",
-            "single_project": True,
-        },
+    return project_state
+
+
+def _serena_configuration() -> dict[str, str | bool | int | list[str]]:
+    """Return Serena's locked-down server configuration."""
+    return {
+        "web_dashboard": False,
+        "web_dashboard_open_on_launch": False,
+        "gui_log_window": False,
+        "log_level": 40,
+        "token_count_estimator": "CHAR_COUNT",
+        "project_serena_folder_location": "/state/project",
+        "trusted_project_path_patterns": [],
+        "projects": [],
+        "base_modes": [],
+        "default_modes": [],
+        "fixed_tools": list(SERENA_TOOLS),
     }
-    for path, configuration in configurations.items():
-        path.write_text(yaml.safe_dump(configuration), encoding="utf-8")
+
+
+def _project_configuration() -> dict[str, str | bool | list[str] | None]:
+    """Return the read-only project configuration for Serena."""
+    return {
+        "project_name": "repository",
+        "language_servers": [],
+        "read_only": True,
+        "ignore_all_files_in_gitignore": False,
+        "initial_prompt": "",
+        "activation_command": None,
+    }
+
+
+def _context_configuration() -> dict[str, str | bool]:
+    """Return the Serena context selected by the MCP server."""
+    return {"name": "compliance", "prompt": "", "single_project": True}
+
+
+def _write_yaml(path: Path, configuration: object) -> None:
+    """Write one YAML configuration file."""
+    path.write_text(yaml.safe_dump(configuration), encoding="utf-8")
 
 
 def _remove_container(container_name: str) -> None:
     try:
-        result = subprocess.run(
-            ["docker", "rm", "--force", container_name],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False,
-        )
+        result = _force_remove_container(container_name)
     except FileNotFoundError:
         # Startup already reports missing Docker; there is no container to remove.
         return
     except subprocess.TimeoutExpired as error:
         raise AgentError("Docker container cleanup timed out.") from error
+    _ensure_container_removed(result)
+
+
+def _force_remove_container(container_name: str) -> subprocess.CompletedProcess[str]:
+    """Ask Docker to force-remove one named container."""
+    return subprocess.run(
+        ["docker", "rm", "--force", container_name],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+
+
+def _ensure_container_removed(result: subprocess.CompletedProcess[str]) -> None:
+    """Raise when Docker could not remove a container that still exists."""
     if result.returncode != 0 and "No such container" not in result.stderr:
         raise AgentError("Could not remove the agent's Docker container.")
 
 
 def _to_evaluation(output: object) -> RuleEvaluation:
     result = AgentStructuredResponse.model_validate(output)
+    _validate_verdict(result)
+    return _build_evaluation(result)
+
+
+def _validate_verdict(result: AgentStructuredResponse) -> None:
+    """Reject verdicts that cannot produce a supported rule evaluation."""
     if result.verdict is AgentVerdict.UNCERTAIN:
         raise AgentError(f"Agent could not judge: {result.explanation}")
     if result.verdict is AgentVerdict.PASS and not result.evidence:
         raise AgentError("Agent returned a pass without supporting evidence.")
+
+
+def _build_evaluation(result: AgentStructuredResponse) -> RuleEvaluation:
+    """Convert a validated agent response into the domain result."""
     evidence = tuple(
         Evidence(item.path, item.line, item.marker) for item in result.evidence
     )
