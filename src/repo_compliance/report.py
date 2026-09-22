@@ -124,9 +124,10 @@ def _build_results_table_section(results: Sequence[RuleResult]) -> str:
 
 
 def _build_details_section(results: Sequence[RuleResult]) -> str:
+    results = _filter_results(results)
     lines = ["## 🔎 Details"]
     if not results:
-        lines.extend(("", "_No results._"))
+        lines.extend(("", "_No failed or errored checks._"))
         return "\n".join(lines)
 
     for result in results:
@@ -148,6 +149,17 @@ def _build_details_section(results: Sequence[RuleResult]) -> str:
                 f"- {result.omitted_evidence_count} additional location(s) omitted."
             )
     return "\n".join(lines)
+
+
+def _filter_results(
+    results: Sequence[RuleResult],
+) -> list[RuleResult]:
+    # We are only interested in failed or errored results for the details section.
+    return [
+        result
+        for result in results
+        if result.status in (ResultStatus.FAIL, ResultStatus.ERROR)
+    ]
 
 
 def _build_evidence_list(result: RuleResult) -> list[str]:

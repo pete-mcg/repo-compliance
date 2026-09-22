@@ -92,6 +92,10 @@ def test_report_contains_counts_tables_links_details_and_utc_timestamp() -> None
     assert "``src/config`file.py:7`` — `api-key`" in report
     assert "3 additional location(s) omitted" in report
     assert "https://example.com/agentic" in report
+    details = report.split("## 🔎 Details", maxsplit=1)[1]
+    assert "- Status: **FAIL**" in details
+    assert "- Status: **ERROR**" in details
+    assert "`deterministic`" not in details
 
 
 def test_report_preserves_registry_and_configuration_order() -> None:
@@ -127,6 +131,7 @@ def test_report_preserves_registry_and_configuration_order() -> None:
     assert summary_section.index("example/zeta") < summary_section.index(
         "example/alpha"
     )
+    assert "_No failed or errored checks._" in report
 
 
 def test_empty_configuration_still_produces_complete_report() -> None:
@@ -140,4 +145,4 @@ def test_empty_configuration_still_produces_complete_report() -> None:
     assert "_No repositories configured_" in report
     assert "_No rules configured_" in report
     assert "_No checks run_" in report
-    assert "_No results._" in report
+    assert "_No failed or errored checks._" in report
