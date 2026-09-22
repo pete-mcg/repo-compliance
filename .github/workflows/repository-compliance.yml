@@ -1,8 +1,9 @@
 name: ✅ Repository compliance
 
 on:
-  schedule:
-    - cron: "0 6 * * 1"
+  # Schedule TBD
+  # schedule:
+  #   - cron: "0 6 * * 1"
   workflow_dispatch:
 
 permissions:
