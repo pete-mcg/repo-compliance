@@ -95,7 +95,7 @@ def _build_rules_section(rules: Sequence[RuleDefinition]) -> str:
             f"| [Click here]({rule.documentation_url}) "
             f"| `{rule.category.value}` "
             f"| {rule.confidence.value.title()} "
-            f"| {_format_text_for_markdown_table(rule.description)} |"
+            f"| {_format_markdown_table_text(rule.description)} |"
         )
     return "\n".join(lines)
 
@@ -118,7 +118,7 @@ def _build_results_table_section(results: Sequence[RuleResult]) -> str:
             f"| `{result.rule.category.value}` "
             f"| {result.rule.confidence.value.title()} "
             f"| **{result.status.value.upper()}** "
-            f"| {_format_text_for_markdown_table(result.message)} |"
+            f"| {_format_markdown_table_text(result.message)} |"
         )
     return "\n".join(lines)
 
@@ -133,11 +133,11 @@ def _build_details_section(results: Sequence[RuleResult]) -> str:
         lines.extend(
             [
                 "",
-                f"### {_format_plain_markdown_text(result.repository)} / `{result.rule.id}`",
+                f"### {_format_markdown_plain_text(result.repository)} / `{result.rule.id}`",
                 "",
                 f"- Status: **{result.status.value.upper()}**",
-                f"- Details: {_format_plain_markdown_text(result.message)}",
-                f"- Guidance: [{_format_plain_markdown_text(result.rule.title)}]({result.rule.documentation_url})",
+                f"- Details: {_format_markdown_plain_text(result.message)}",
+                f"- Guidance: [{_format_markdown_plain_text(result.rule.title)}]({result.rule.documentation_url})",
             ]
         )
         if result.evidence:
@@ -161,12 +161,12 @@ def _build_repository_hyperlink(repository: str) -> str:
     return f"[{repository}](https://github.com/{repository})"
 
 
-def _format_text_for_markdown_table(value: str) -> str:
+def _format_markdown_table_text(value: str) -> str:
     # Escapes | for Markdown tables
-    return _format_plain_markdown_text(value).replace("|", "\\|")
+    return _format_markdown_plain_text(value).replace("|", "\\|")
 
 
-def _format_plain_markdown_text(value: str) -> str:
+def _format_markdown_plain_text(value: str) -> str:
     single_line = value.replace("\r", " ").replace("\n", " ")
     # Escapes \, `, *, _, [, ], <, >, and ~ for Markdown
     return re.sub(r"([\\`*_\[\]<>~])", r"\\\1", single_line)
