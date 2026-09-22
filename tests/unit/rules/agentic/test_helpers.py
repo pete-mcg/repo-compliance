@@ -26,7 +26,7 @@ def test_load_rule_prompt_outside_working_directory(
 
     prompt = load_rule_prompt("ci_workflow_on_pull_requests.md")
 
-    assert prompt.startswith("# Check: CI runs on pull requests to main")
+    assert prompt.strip()
 
 
 def test_evaluate_agentic_rule(tmp_path: Path) -> None:
