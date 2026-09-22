@@ -13,13 +13,14 @@ A layer is a group of responsibilities. It can be one file; it does not need its
 | `settings.py` | Load and validate environment and `.env` settings. |
 | `domain.py` | Define shared rule inputs, evaluations, results, and service interfaces. |
 | `runner.py` | Apply exemptions, check access, share source downloads, and run rules. |
-| `rules/registry.py` | List enabled rules in order. |
-| `rules/deterministic/`, `rules/agentic/` | Decide whether each standard is met. |
+| `report.py` | Turn completed results into Markdown. |
+| `errors.py` | Define expected errors. |
+| `timing.py` | Define log function timings. |
 | `infrastructure/github/` | Make GitHub requests and define shared response models. |
 | `infrastructure/source/` | Safely extract temporary source files and remove them afterwards. |
 | `infrastructure/agentic/` | Connect Azure and Serena, run AI checks, and validate replies. |
-| `report.py` | Turn completed results into Markdown. |
-| `errors.py`, `timing.py` | Define expected errors and log function timings. |
+| `rules/registry.py` | List enabled rules in order. |
+| `rules/deterministic/`, `rules/agentic/` | Decide whether each standard is met. |
 
 ## Dependency direction
 
@@ -37,11 +38,3 @@ config, settings -> errors
 `domain.py` uses only Python's standard library. Its `GitHubApi` and `AgentEvaluator` interfaces describe what a service must provide. The application supplies the real services; tests can supply fakes.
 
 The application passes rules and services to the runner. Rules call those services through `RuleContext`. Infrastructure must not import individual rules, the registry, the runner, or reporting. Reporting only reads finished results.
-
-## Rule slices
-
-A rule slice means the files belonging to one rule: its Python module, test, and optional AI prompt. Keep its decisions, endpoint paths, and response models there.
-
-Share code only when multiple rules need the same general behaviour. For example, rules may use the shared `GitHubModel`, but a response model used by one rule stays with that rule.
-
-Adding a rule normally changes its slice and the registry. It should not require changes to the runner or report. See [Adding and removing rules](rules.md).

@@ -3,7 +3,7 @@
 ## Self-Contained
 
 - Each rule owns one standard.
-- A rule should be a self-contained slice: its constants, GitHub endpoint paths, response models, checks, and helpers belong together.
+- A rule must be a self-contained slice: its constants, GitHub endpoint paths, response models, checks, and helpers belong together.
 - Put behaviour in a shared module (e.g. `helpers.py`) only when it is policy-neutral and genuinely shared.
 - An AI rule also owns its adjacent Markdown prompt.
 - Rules must not import other rule modules.
@@ -19,11 +19,9 @@ Every rule follows this order:
 
 ## Agentic Rules
 
-Agent rules require a prompt markdown file.
+Agent rules require a prompt markdown file. Keep the prompt beside the Python file in `rules/agentic/`.
 
-Keep the prompt beside the Python file in `rules/agentic/`. The `check` function calls `evaluate_agentic_rule(context, PROMPT_FILENAME)`. Set `category=RuleCategory.AGENTIC` and `requires_source_snapshot=True`.
-
-Write clear pass, fail, and uncertain criteria, plus the evidence to cite. Uncertainty becomes `ERROR`. Shared instructions and response formatting already live in the [system prompt](../src/repo_compliance/infrastructure/agentic/system_prompt.md).
+Within the prompt, provide clear pass, fail, and uncertain criteria, plus the evidence to cite. Uncertainty becomes `ERROR`. Shared instructions and response formatting already live in the [system prompt](../src/repo_compliance/infrastructure/agentic/system_prompt.md).
 
 ## Enable and test
 

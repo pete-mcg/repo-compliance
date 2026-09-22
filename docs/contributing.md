@@ -16,10 +16,10 @@
 # Unit tests; integration tests are excluded by default.
 uv run --locked pytest
 
-# Real Serena: requires Docker and the image from the quick start.
+# Real Serena: requires Docker and the Serena image
 uv run --locked pytest -m serena tests/integration
 
-# Live AI checks: also requires all four settings and az login.
+# Live AI checks: also requires all settings configured and az login.
 uv run --locked pytest -m azure tests/integration
 ```
 
