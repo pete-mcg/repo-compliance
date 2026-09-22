@@ -45,11 +45,7 @@ The checker loads `.env` from the current directory and validates all four setti
 
 Grant the signed-in identity **Cognitive Services OpenAI User** on that Azure OpenAI resource.
 
-Optional paths:
-
-```text
-uv run --frozen repo-compliance --config config/repositories.yml --output compliance-report.md
-```
+The checker always reads `config/repositories.yml` and writes `compliance-report.md`, relative to the current directory.
 
 ### Via GitHub Actions
 
@@ -88,7 +84,7 @@ Repositories appear in configuration order, with rules in registry order.
 
 ## Architecture and development
 
-- The checker uses a small layered structure: `domain.py` holds shared compliance types and external capability contracts, `runner.py` coordinates checks, and `infrastructure/github/` contains the GitHub client and shared response models. The CLI connects these parts; individual rules own their compliance criteria and rule-specific response parsing.
+- The checker uses a small layered structure: `domain.py` holds shared compliance types and external capability contracts, `runner.py` coordinates checks, and `infrastructure/github/` contains the GitHub client and shared response models. `app.py` connects these parts; individual rules own their compliance criteria and rule-specific response parsing.
 
 See the [architecture overview](docs/architecture.md) for the runtime flow and the [package guide](src/repo_compliance/README.md) for module responsibilities and dependency directions.
 

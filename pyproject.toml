@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-repo-compliance = "repo_compliance.cli:main"
+repo-compliance = "repo_compliance.app:main"
 
 [build-system]
 requires = ["hatchling"]

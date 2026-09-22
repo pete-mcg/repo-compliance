@@ -13,7 +13,7 @@ Layers describe responsibilities and dependency boundaries. A layer can be a sin
 | Configuration input | `config.py` |
 | Environment and `.env` settings | `settings.py` |
 | Markdown presentation | `report.py` |
-| Startup and dependency wiring | `cli.py` |
+| Startup and dependency wiring | `app.py` |
 | Expected errors shared across boundaries | `errors.py` |
 
 The shared rule types stay together in `domain.py`. Adding more rules should normally grow `rules/`, without requiring more shared types or one file per class.
@@ -24,8 +24,8 @@ An import points from the module using a dependency to the module providing it.
 The main directions are:
 
 ```text
-__main__ -> cli
-cli -> config, settings, runner, report, rules.registry, infrastructure
+__main__ -> app
+app -> config, settings, runner, report, rules.registry, infrastructure
 rules.registry -> individual rule modules
 runner -> config, domain, errors
 report -> config, domain
@@ -39,7 +39,7 @@ infrastructure.agentic -> domain, errors, settings
 - `domain.py` must not import concrete integrations, the runner, reporting, or individual rules.
 - `domain.py` describes external capabilities with Python protocols. `GitHubApi` and `AgentEvaluator` are the contracts used by the runner and `RuleContext`.
 - The runner receives a `GitHubApi`; it does not create a `GitHubClient` or import individual rules. Rules are supplied explicitly by the caller.
-- The CLI creates the concrete GitHub client and agent evaluator and passes them to the runner. `GitHubClient` satisfies the protocol by providing its methods; it does not need to inherit from or import `GitHubApi`.
+- The application creates the concrete GitHub client and agent evaluator and passes them to the runner. `GitHubClient` satisfies the protocol by providing its methods; it does not need to inherit from or import `GitHubApi`.
 - Infrastructure must not import individual rules, the registry, the runner, or reporting. It owns communication details, not compliance decisions.
 - Reporting consumes completed results and does not run checks.
 

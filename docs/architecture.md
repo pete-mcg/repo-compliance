@@ -14,7 +14,7 @@
                          |
                          v
         +---------------------------------------+
-        | cli.py                                |
+        | app.py                                |
         | Runs the whole check from start to end|
         +---------------------------------------+
              |            |             |
@@ -70,7 +70,7 @@
 
 ```mermaid
 flowchart TD
-    CLI[CLI connects GitHub and AgentEvaluator] --> Runner[Existing synchronous runner]
+    App[Application connects GitHub and AgentEvaluator] --> Runner[Existing synchronous runner]
     Runner --> ZIP[One shared main ZIP per repository]
     Runner --> Rule[CI rule and packaged Markdown prompt]
     Rule --> Port[AgentEvaluator protocol]
@@ -94,7 +94,7 @@ The shared system prompt in `infrastructure/agentic/system_prompt.md` supplies t
 ## File responsibilities
 
 - [`.github/workflows/repository-compliance.yml`](../.github/workflows/repository-compliance.yml) schedules the hosted run, supplies the secret token, and publishes the finished report. It does not contain compliance rules.
-- [`src/repo_compliance/cli.py`](../src/repo_compliance/cli.py) is the top-level application coordinator. It loads configuration, creates the GitHub client, starts the runner, generates the report, and writes it to disk.
+- [`src/repo_compliance/app.py`](../src/repo_compliance/app.py) is the top-level application coordinator. It loads `config/repositories.yml`, creates the GitHub client, starts the runner, generates the report, and writes it to `compliance-report.md`.
 - [`config/repositories.yml`](../config/repositories.yml) is the visible list of repositories and repository-specific rule exemptions.
 - [`src/repo_compliance/config.py`](../src/repo_compliance/config.py) reads and validates that list before any checks run.
 - [`src/repo_compliance/settings.py`](../src/repo_compliance/settings.py) loads and validates the GitHub token and Azure OpenAI settings together at startup.
@@ -104,6 +104,6 @@ The shared system prompt in `infrastructure/agentic/system_prompt.md` supplies t
 - [`src/repo_compliance/infrastructure/github/models.py`](../src/repo_compliance/infrastructure/github/models.py) defines shared GitHub response models; response models used by only one rule stay with that rule.
 - [`src/repo_compliance/rules/`](../src/repo_compliance/rules/) contains the actual standards, grouped by evaluation method. Each rule lives in its own file.
 - [`src/repo_compliance/report.py`](../src/repo_compliance/report.py) converts collected results into `compliance-report.md`.
-- [`src/repo_compliance/domain.py`](../src/repo_compliance/domain.py) defines the shared names, data shapes, and `GitHubApi` and `AgentEvaluator` protocols used by rules, the runner, and the report. The CLI supplies the concrete integrations.
+- [`src/repo_compliance/domain.py`](../src/repo_compliance/domain.py) defines the shared names, data shapes, and `GitHubApi` and `AgentEvaluator` protocols used by rules, the runner, and the report. The application supplies the concrete integrations.
 
-The command can enter through the `repo-compliance` script declared in [`pyproject.toml`](../pyproject.toml), or through [`src/repo_compliance/__main__.py`](../src/repo_compliance/__main__.py) when run as a Python module. Both lead to `cli.py`.
+The command can enter through the `repo-compliance` script declared in [`pyproject.toml`](../pyproject.toml), or through [`src/repo_compliance/__main__.py`](../src/repo_compliance/__main__.py) when run as a Python module. Both lead to `app.py`.

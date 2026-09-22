@@ -1,9 +1,6 @@
-"""Command-line interface for repository compliance checks."""
+"""Run repository compliance checks and write the report."""
 
-import argparse
 import logging
-from collections.abc import Sequence
-from dataclasses import dataclass
 from pathlib import Path
 
 from repo_compliance.config import get_config
@@ -20,28 +17,20 @@ from repo_compliance.settings import get_env_settings
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
-class CliOptions:
-    """Paths supplied to the command-line interface."""
-
-    config: Path
-    output: Path
-
-
-def main(argv: Sequence[str] | None = None) -> int:
+def main() -> int:
     """Run checks, write the report, and return a process exit code."""
     try:
-        options = _get_cli_options(argv)
         _configure_logging()
         settings = get_env_settings()
-        config = get_config(options.config, RULE_IDS)
+        config = get_config(Path("config/repositories.yml"), RULE_IDS)
         with GitHubClient(settings.github_token) as github:
             results = run_all_compliance_checks(
                 config, github, RULES, AgentFrameworkEvaluator(settings)
             )
         report = build_report(config, RULES, results)
-        options.output.write_text(report, encoding="utf-8")
-        logger.info("Report written to %s", options.output)
+        output = Path("compliance-report.md")
+        output.write_text(report, encoding="utf-8")
+        logger.info("Report written to %s", output)
     except ComplianceError as error:
         logger.error("%s", error)
         return 1
@@ -63,13 +52,3 @@ def _configure_logging() -> None:
         datefmt="%H:%M:%S",
     )
     logging.getLogger("repo_compliance").setLevel(logging.DEBUG)
-
-
-def _get_cli_options(argv: Sequence[str] | None) -> CliOptions:
-    parser = argparse.ArgumentParser(
-        description="Check configured GitHub repositories for compliance.",
-    )
-    parser.add_argument("--config", type=Path, default=Path("config/repositories.yml"))
-    parser.add_argument("--output", type=Path, default=Path("compliance-report.md"))
-    arguments = parser.parse_args(argv)
-    return CliOptions(config=arguments.config, output=arguments.output)
