@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from repo_compliance.errors import CliError
-from repo_compliance.settings import get_settings
+from repo_compliance.settings import get_env_settings
 
 VALID_SETTINGS = {
     "GITHUB_TOKEN": "private-token",
@@ -26,19 +26,19 @@ def test_loads_dotenv(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    assert get_settings().model_dump(by_alias=True) == VALID_SETTINGS
+    assert get_env_settings().model_dump(by_alias=True) == VALID_SETTINGS
 
 
 def test_loads_environment_without_dotenv(monkeypatch: pytest.MonkeyPatch) -> None:
     for name, value in VALID_SETTINGS.items():
         monkeypatch.setenv(name, value)
 
-    assert get_settings().model_dump(by_alias=True) == VALID_SETTINGS
+    assert get_env_settings().model_dump(by_alias=True) == VALID_SETTINGS
 
 
 def test_reports_all_missing_settings() -> None:
     with pytest.raises(CliError, match="Invalid runtime settings") as caught:
-        get_settings()
+        get_env_settings()
 
     assert all(name in str(caught.value) for name in VALID_SETTINGS)
 
@@ -66,7 +66,7 @@ def test_rejects_invalid_settings_without_exposing_values(
     monkeypatch.setenv(name, value)
 
     with pytest.raises(CliError) as caught:
-        get_settings()
+        get_env_settings()
 
     error = str(caught.value)
     assert name in error

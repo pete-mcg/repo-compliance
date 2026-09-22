@@ -16,7 +16,7 @@ from repo_compliance.infrastructure.github.client import GitHubClient
 from repo_compliance.report import build_report
 from repo_compliance.rules.registry import RULE_IDS, RULES
 from repo_compliance.runner import run_all_compliance_checks
-from repo_compliance.settings import get_settings
+from repo_compliance.settings import get_env_settings
 
 
 class CliOptions(BaseModel):
@@ -32,7 +32,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run checks, write the report, and return a process exit code."""
     try:
         options = _get_cli_options(argv)
-        settings = get_settings()
+        settings = get_env_settings()
         config = get_config(options.config, RULE_IDS)
         with GitHubClient(settings.github_token) as github:
             results = run_all_compliance_checks(

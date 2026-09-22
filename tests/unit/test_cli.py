@@ -52,7 +52,7 @@ def test_invalid_settings_fail_before_connecting(
 ) -> None:
     config = write_empty_config(tmp_path / "repositories.yml")
     monkeypatch.setattr(
-        cli, "get_settings", Mock(side_effect=CliError("Invalid runtime settings"))
+        cli, "get_env_settings", Mock(side_effect=CliError("Invalid runtime settings"))
     )
     github = Mock()
     monkeypatch.setattr(cli, "GitHubClient", github)

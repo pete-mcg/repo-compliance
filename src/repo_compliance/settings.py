@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     )
 
 
-def get_settings() -> Settings:
+def get_env_settings() -> Settings:
     """Read settings and report all validation errors without their input values."""
     try:
         return Settings()
