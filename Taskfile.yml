@@ -12,9 +12,16 @@ tasks:
       - uv sync --upgrade
 
   ci:
+    desc: Run all CI checks excluding integration tests
     cmds:
       - uv run --locked ruff check .
       - uv run --locked ruff format --check .
       - uv run --locked deptry .
       - uv run --locked pyrefly check
       - uv run --locked pytest --cov
+
+  ci:full:
+    desc: Run all CI checks including integration tests
+    cmds:
+      - task: ci
+      - uv run --locked pytest -m integration

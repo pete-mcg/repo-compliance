@@ -25,14 +25,16 @@ uv run --locked pytest -m azure tests/integration
 
 Azure tests send fixture files to the configured deployment and use paid model calls. They are optional and excluded from the quality gate.
 
-## Before opening a pull request
+## Quality Gate
 
-1. Check the quality-gate command passes:
+For faster checks during development, you can skip the integration tests:
 
 ```powershell
 task ci
 ```
 
-This checks code style, formatting, dependencies, types, and unit tests. Test coverage must reach 85%.
+Before opening a pull request, all tests including integration tests must pass. Run:
 
-2. Run the checker and manually inspect its report.
+```powershell
+task ci:full
+```
