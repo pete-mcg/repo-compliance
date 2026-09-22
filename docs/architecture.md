@@ -3,7 +3,7 @@
 Both local and GitHub Actions runs follow the same path:
 
 ```text
-PowerShell command / GitHub Actions (manual)
+Command-line command / GitHub Actions (manual)
                     |
                     v
                  app.py <--- .env / environment
