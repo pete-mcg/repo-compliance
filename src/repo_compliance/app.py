@@ -16,21 +16,23 @@ from repo_compliance.settings import get_env_settings
 
 logger = logging.getLogger(__name__)
 
+CONFIG_PATH = Path("config/repositories.yml")
+REPORT_PATH = Path("compliance-report.md")
+
 
 def main() -> int:
     """Run checks, write the report, and return a process exit code."""
     try:
         _configure_logging()
         settings = get_env_settings()
-        config = get_config(Path("config/repositories.yml"), RULE_IDS)
+        config = get_config(CONFIG_PATH, RULE_IDS)
         with GitHubClient(settings.github_token) as github:
             results = run_all_compliance_checks(
                 config, github, RULES, AgentFrameworkEvaluator(settings)
             )
         report = build_report(config, RULES, results)
-        output = Path("compliance-report.md")
-        output.write_text(report, encoding="utf-8")
-        logger.info("Report written to %s", output)
+        REPORT_PATH.write_text(report, encoding="utf-8")
+        logger.info("Report written to %s", REPORT_PATH)
     except ComplianceError as error:
         logger.error("%s", error)
         return 1
