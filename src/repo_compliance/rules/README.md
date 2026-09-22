@@ -1,1 +1,1 @@
-See [Creating Rules](../../../docs/CREATING-RULES.md).
+See [Adding and removing rules](../../../docs/rules.md).

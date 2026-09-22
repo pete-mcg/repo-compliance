@@ -14,4 +14,4 @@
   </a>
 </p>
 
-See the [documentation](docs/INDEX.md).
+See the [documentation](docs/README.md).

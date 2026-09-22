@@ -1,1 +1,1 @@
-See [Package Guide](../../docs/PACKAGE-GUIDE.md).
+See the [package guide](../../docs/package-layout.md).
