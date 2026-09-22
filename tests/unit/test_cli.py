@@ -48,7 +48,7 @@ def test_successful_completed_run_writes_report(
 def test_invalid_settings_fail_before_connecting(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     config = write_empty_config(tmp_path / "repositories.yml")
     monkeypatch.setattr(
@@ -60,14 +60,14 @@ def test_invalid_settings_fail_before_connecting(
     exit_code = main(arguments(config, tmp_path / "report.md"))
 
     assert exit_code == 1
-    assert "Invalid runtime settings" in capsys.readouterr().err
+    assert "Invalid runtime settings" in caplog.text
     github.assert_not_called()
 
 
 def test_invalid_config_returns_nonzero(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     config = tmp_path / "repositories.yml"
     config.write_text("repositories: [\n", encoding="utf-8")
@@ -76,13 +76,13 @@ def test_invalid_config_returns_nonzero(
     exit_code = main(arguments(config, tmp_path / "report.md"))
 
     assert exit_code == 1
-    assert "not valid YAML" in capsys.readouterr().err
+    assert "not valid YAML" in caplog.text
 
 
 def test_output_failure_returns_nonzero(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     config = write_empty_config(tmp_path / "repositories.yml")
     monkeypatch.setenv("GITHUB_TOKEN", "token")
@@ -90,13 +90,13 @@ def test_output_failure_returns_nonzero(
     exit_code = main(arguments(config, tmp_path))
 
     assert exit_code == 1
-    assert "Could not write report" in capsys.readouterr().err
+    assert "Could not write report" in caplog.text
 
 
 def test_unexpected_checker_bug_returns_nonzero(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     config = write_empty_config(tmp_path / "repositories.yml")
     monkeypatch.setenv("GITHUB_TOKEN", "token")
@@ -111,7 +111,8 @@ def test_unexpected_checker_bug_returns_nonzero(
     exit_code = main(arguments(config, tmp_path / "report.md"))
 
     assert exit_code == 1
-    assert "Unexpected RuntimeError: unexpected bug" in capsys.readouterr().err
+    assert "Unexpected RuntimeError" in caplog.text
+    assert "RuntimeError: unexpected bug" in caplog.text
 
 
 def test_default_paths_work_from_current_directory(

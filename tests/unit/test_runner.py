@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,42 @@ def make_rule(
 
 def passing_check(_context: RuleContext) -> RuleEvaluation:
     return RuleEvaluation(True, "passed")
+
+
+def test_logs_progress_and_distinguishes_failure_from_error(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    def failing_check(_context: RuleContext) -> RuleEvaluation:
+        return RuleEvaluation(False, "Required file missing")
+
+    def unavailable_check(_context: RuleContext) -> RuleEvaluation:
+        raise GitHubError("Service unavailable")
+
+    rules = (
+        make_rule("fails", RuleCategory.DETERMINISTIC, failing_check),
+        make_rule("errors", RuleCategory.DETERMINISTIC, unavailable_check),
+    )
+    with caplog.at_level(logging.INFO, logger="repo_compliance.runner"):
+        run_all_compliance_checks(
+            config_for(RepositoryConfig(repository="example/service")),
+            FakeGitHub(),
+            rules,
+        )
+
+    assert caplog.messages == [
+        "Checking repository example/service",
+        "Running fails for example/service",
+        "example/service fails: fail (Required file missing)",
+        "Running errors for example/service",
+        "example/service errors: error (Service unavailable)",
+    ]
+    result_records = [caplog.records[2], caplog.records[4]]
+    assert [record.levelno for record in result_records] == [
+        logging.INFO,
+        logging.ERROR,
+    ]
+    assert "Required file missing" in result_records[0].getMessage()
+    assert "Service unavailable" in result_records[1].getMessage()
 
 
 def get_source_snapshot_evaluation(context: RuleContext) -> RuleEvaluation:
@@ -106,7 +143,9 @@ def test_exemption_skips_only_its_check() -> None:
     assert github.file_calls == [("example/service", "required.txt")]
 
 
-def test_preflight_failure_errors_active_rules_only() -> None:
+def test_preflight_failure_errors_active_rules_only(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     rules = (
         make_rule("exempt", RuleCategory.DETERMINISTIC, passing_check),
         make_rule(
@@ -122,7 +161,8 @@ def test_preflight_failure_errors_active_rules_only() -> None:
     )
     github = FakeGitHub(preflight_error_repositories={"example/service"})
 
-    results = run_all_compliance_checks(config_for(repository), github, rules)
+    with caplog.at_level(logging.INFO, logger="repo_compliance.runner"):
+        results = run_all_compliance_checks(config_for(repository), github, rules)
 
     assert [result.status for result in results] == [
         ResultStatus.EXEMPT,
@@ -130,6 +170,11 @@ def test_preflight_failure_errors_active_rules_only() -> None:
     ]
     assert "Preflight failed" in results[1].message
     assert github.source_snapshot_calls == []
+    assert caplog.messages == [
+        "Checking repository example/service",
+        "example/service exempt: exempt (Approved)",
+        f"example/service active: error ({results[1].message})",
+    ]
 
 
 def test_downloads_one_source_snapshot_for_multiple_source_snapshot_rules() -> None:
@@ -246,17 +291,26 @@ def test_source_snapshot_rule_error_becomes_result_data() -> None:
     assert results[0].message == "bad zip"
 
 
-def test_unexpected_rule_bug_remains_fatal() -> None:
+def test_unexpected_rule_bug_remains_fatal(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     def broken_check(_context: RuleContext) -> RuleEvaluation:
+        assert "example/service first: pass (passed)" in caplog.messages
         raise RuntimeError("bug")
 
-    rule = make_rule("broken", RuleCategory.DETERMINISTIC, broken_check)
+    rules = (
+        make_rule("first", RuleCategory.DETERMINISTIC, passing_check),
+        make_rule("broken", RuleCategory.DETERMINISTIC, broken_check),
+    )
 
-    with pytest.raises(RuntimeError, match="bug"):
+    with (
+        caplog.at_level(logging.INFO, logger="repo_compliance.runner"),
+        pytest.raises(RuntimeError, match="bug"),
+    ):
         run_all_compliance_checks(
             config_for(RepositoryConfig(repository="example/service")),
             FakeGitHub(),
-            (rule,),
+            rules,
         )
 
 

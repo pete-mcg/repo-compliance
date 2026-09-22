@@ -1,5 +1,6 @@
 """Run the ordered compliance rules for configured repositories."""
 
+import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -14,6 +15,9 @@ from repo_compliance.domain import (
     RuleResult,
 )
 from repo_compliance.errors import AgentError, GitHubError, SourceSnapshotError
+from repo_compliance.timing import timed
+
+logger = logging.getLogger(__name__)
 
 
 def run_all_compliance_checks(
@@ -25,12 +29,14 @@ def run_all_compliance_checks(
     """Run all enabled rules in configuration and registry order."""
     results: list[RuleResult] = []
     for repository in config.repositories:
+        logger.info("Checking repository %s", repository.repository)
         results.extend(
             _run_checks_for_repository(repository, github, rules, agent_evaluator)
         )
     return tuple(results)
 
 
+@timed
 def _run_checks_for_repository(
     repository: RepositoryConfig,
     github: GitHubApi,
@@ -114,25 +120,40 @@ def _build_rule_results(
 ) -> tuple[RuleResult, ...]:
     results: list[RuleResult] = []
     for rule in rules:
-        exemption_reason = exemptions.get(rule.id)
-        if exemption_reason is not None:
-            results.append(
-                _result_when_test_exemption(repository, rule, exemption_reason)
-            )
-            continue
-        if rule.requires_source_snapshot and source_snapshot_error is not None:
-            results.append(
-                _result_when_test_error(repository, rule, source_snapshot_error)
-            )
-            continue
-        results.append(
-            _run_rule_test(
-                repository, github, rule, source_snapshot_path, agent_evaluator
-            )
+        result = _get_rule_result(
+            repository,
+            github,
+            rule,
+            exemptions,
+            agent_evaluator,
+            source_snapshot_path,
+            source_snapshot_error,
         )
+        _log_rule_result(result)
+        results.append(result)
     return tuple(results)
 
 
+def _get_rule_result(
+    repository: str,
+    github: GitHubApi,
+    rule: RuleDefinition,
+    exemptions: dict[str, str],
+    agent_evaluator: AgentEvaluator | None,
+    source_snapshot_path: Path | None,
+    source_snapshot_error: str | None,
+) -> RuleResult:
+    exemption_reason = exemptions.get(rule.id)
+    if exemption_reason is not None:
+        return _result_when_test_exemption(repository, rule, exemption_reason)
+    if rule.requires_source_snapshot and source_snapshot_error is not None:
+        return _result_when_test_error(repository, rule, source_snapshot_error)
+    return _run_rule_test(
+        repository, github, rule, source_snapshot_path, agent_evaluator
+    )
+
+
+@timed
 def _run_rule_test(
     repository: str,
     github: GitHubApi,
@@ -140,6 +161,7 @@ def _run_rule_test(
     source_snapshot_path: Path | None,
     agent_evaluator: AgentEvaluator | None,
 ) -> RuleResult:
+    logger.info("Running %s for %s", rule.id, repository)
     context = RuleContext(repository, github, source_snapshot_path, agent_evaluator)
     try:
         evaluation = rule.check(context)
@@ -190,9 +212,26 @@ def _result_when_preflight_error(
     for rule in rules:
         reason = exemptions.get(rule.id)
         if reason is not None:
-            results.append(_result_when_test_exemption(repository, rule, reason))
+            result = _result_when_test_exemption(repository, rule, reason)
         else:
-            results.append(
-                _result_when_test_error(repository, rule, f"Preflight failed: {error}")
+            result = _result_when_test_error(
+                repository, rule, f"Preflight failed: {error}"
             )
+        _log_rule_result(result)
+        results.append(result)
     return tuple(results)
+
+
+def _log_rule_result(result: RuleResult) -> None:
+    # _run_rule_test() catches expected exceptions and returns an ERROR result.
+    # Log the result's status here because exception-only logging would miss it.
+    # (By design, we keep checking other rules if one encounters an error.)
+    level = logging.ERROR if result.status is ResultStatus.ERROR else logging.INFO
+    logger.log(
+        level,
+        "%s %s: %s (%s)",
+        result.repository,
+        result.rule.id,
+        result.status.value,
+        result.message,
+    )
