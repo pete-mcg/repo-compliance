@@ -3,6 +3,9 @@
 from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import (
     RULE as CI_WORKFLOW_ON_PULL_REQUESTS,
 )
+from repo_compliance.rules.agentic.frontend_build_identifier_visible import (
+    RULE as FRONTEND_BUILD_IDENTIFIER_VISIBLE,
+)
 from repo_compliance.rules.deterministic.codeowners_present import (
     RULE as CODEOWNERS_PRESENT,
 )
@@ -26,5 +29,6 @@ RULES = (
     NO_CRITICAL_DEPENDABOT_ALERTS,
     NO_KEY_BASED_AUTHENTICATION,
     CI_WORKFLOW_ON_PULL_REQUESTS,
+    FRONTEND_BUILD_IDENTIFIER_VISIBLE,
 )
 RULE_IDS = frozenset(rule.id for rule in RULES)
