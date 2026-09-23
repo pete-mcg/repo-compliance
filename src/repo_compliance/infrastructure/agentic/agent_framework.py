@@ -277,7 +277,6 @@ def serena_docker_arguments(
     return [
         # Start the container and manage communication and cleanup.
         "run",
-        "--rm",
         "-i",
         "--init",
         "--pull", "never",
