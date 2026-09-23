@@ -181,7 +181,7 @@ def test_agent_requests_schema_and_closes_resources(
         run.assert_awaited_once_with(
             "prompt", options={"response_format": adapter.AgentStructuredResponse}
         )
-    system_prompt = adapter.load_system_prompt()
+    system_prompt = adapter._load_system_prompt()
     assert agent.call_args.kwargs["instructions"] == system_prompt
     assert agent.call_args.kwargs["default_options"] == {
         "allow_multiple_tool_calls": False,

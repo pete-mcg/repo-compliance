@@ -149,7 +149,7 @@ class AgentFrameworkEvaluator:
             ) from error
 
 
-def load_system_prompt() -> str:
+def _load_system_prompt() -> str:
     """Load shared agent instructions independently of the current directory."""
     return (
         files("repo_compliance.infrastructure.agentic")
@@ -217,7 +217,7 @@ def _create_agent(
     return Agent(
         client=client,
         name="repository-compliance",
-        instructions=load_system_prompt(),
+        instructions=_load_system_prompt(),
         tools=[serena],
         default_options=_agent_options(),
     )
