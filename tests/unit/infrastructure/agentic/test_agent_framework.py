@@ -35,17 +35,19 @@ def _judgment(verdict: str = "pass") -> dict[str, object]:
 
 @pytest.mark.parametrize("verdict", ["pass", "fail"])
 def test_converts_structured_response(verdict: str) -> None:
-    result = adapter._to_evaluation(_judgment(verdict))
+    result = adapter._parse_agent_response(_judgment(verdict))
     assert result.passed is (verdict == "pass")
     assert result.evidence == (Evidence(".github/workflows/ci.yml", 3, "pr-trigger"),)
 
 
 def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
     with pytest.raises(AgentError, match="could not judge"):
-        adapter._to_evaluation(_judgment("uncertain"))
+        adapter._parse_agent_response(_judgment("uncertain"))
     with pytest.raises(AgentError, match="without supporting evidence"):
-        adapter._to_evaluation({**_judgment(), "evidence": []})
-    assert not adapter._to_evaluation({**_judgment("fail"), "evidence": []}).passed
+        adapter._parse_agent_response({**_judgment(), "evidence": []})
+    assert not adapter._parse_agent_response(
+        {**_judgment("fail"), "evidence": []}
+    ).passed
 
 
 @pytest.mark.parametrize(
@@ -64,7 +66,7 @@ def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
 )
 def test_rejects_invalid_structured_output(changes: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
-        adapter._to_evaluation({**_judgment(), **changes})
+        adapter._parse_agent_response({**_judgment(), **changes})
 
 
 def test_schema_uses_supported_azure_keywords() -> None:
@@ -93,7 +95,9 @@ def test_expected_failures_are_safe_rule_errors(
     monkeypatch: pytest.MonkeyPatch, error: Exception
 ) -> None:
     _configure_azure(monkeypatch)
-    monkeypatch.setattr(adapter, "_evaluate_snapshot", Mock(side_effect=error))
+    monkeypatch.setattr(
+        adapter, "_evaluate_source_snapshot_with_agent", Mock(side_effect=error)
+    )
     with pytest.raises(AgentError) as caught:
         adapter.AgentFrameworkEvaluator(Settings()).evaluate(
             Path("unused.zip"), "prompt"
@@ -128,7 +132,7 @@ def test_evaluation_validates_output_and_cleans_resources(
             raise output
         return output
 
-    monkeypatch.setattr(adapter, "_run_agent", run)
+    monkeypatch.setattr(adapter, "_get_agent_response", run)
     remove = Mock()
     monkeypatch.setattr(adapter, "_remove_container", remove)
     if output == _judgment():
@@ -171,11 +175,15 @@ def test_agent_requests_schema_and_closes_resources(
         run.side_effect = slow_run
         with pytest.raises(TimeoutError):
             asyncio.run(
-                adapter._run_agent(tmp_path, tmp_path, "test", Settings(), "prompt")
+                adapter._get_agent_response(
+                    tmp_path, tmp_path, "test", Settings(), "prompt"
+                )
             )
     else:
         output = asyncio.run(
-            adapter._run_agent(tmp_path, tmp_path, "test", Settings(), "prompt")
+            adapter._get_agent_response(
+                tmp_path, tmp_path, "test", Settings(), "prompt"
+            )
         )
         assert output == _judgment()
         run.assert_awaited_once_with(

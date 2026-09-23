@@ -131,7 +131,9 @@ class AgentFrameworkEvaluator:
     def evaluate(self, snapshot_path: Path, prompt: str) -> RuleEvaluation:
         """Run one isolated evaluation and translate expected integration failures."""
         try:
-            return _evaluate_snapshot(snapshot_path, prompt, self.settings)
+            return _evaluate_source_snapshot_with_agent(
+                snapshot_path, prompt, self.settings
+            )
         except TimeoutError as error:
             raise AgentError(
                 f"Agent evaluation exceeded {EVALUATION_TIMEOUT_SECONDS} seconds."
@@ -157,37 +159,26 @@ def _load_system_prompt() -> str:
     )
 
 
-def _evaluate_snapshot(
+def _evaluate_source_snapshot_with_agent(
     snapshot_path: Path, prompt: str, settings: Settings
 ) -> RuleEvaluation:
     with (
         extracted_source_snapshot(snapshot_path) as repository,
         TemporaryDirectory(prefix="repo-compliance-serena-") as temporary_state,
     ):
-        return _evaluate_repository(repository, Path(temporary_state), settings, prompt)
+        state = Path(temporary_state)
+        _write_serena_configurations(state)
+        container_name = f"repo-compliance-{uuid4().hex}"
+        try:
+            output = asyncio.run(
+                _get_agent_response(repository, state, container_name, settings, prompt)
+            )
+        finally:
+            _remove_container(container_name)
+        return _parse_agent_response(output)
 
 
-def _evaluate_repository(
-    repository: Path, state: Path, settings: Settings, prompt: str
-) -> RuleEvaluation:
-    _write_serena_configuration(state)
-    output = _run_agent_in_container(repository, state, settings, prompt)
-    return _to_evaluation(output)
-
-
-def _run_agent_in_container(
-    repository: Path, state: Path, settings: Settings, prompt: str
-) -> object:
-    container_name = f"repo-compliance-{uuid4().hex}"
-    try:
-        return asyncio.run(
-            _run_agent(repository, state, container_name, settings, prompt)
-        )
-    finally:
-        _remove_container(container_name)
-
-
-async def _run_agent(
+async def _get_agent_response(
     repository: Path,
     state: Path,
     container_name: str,
@@ -201,7 +192,10 @@ async def _run_agent(
         _create_serena_tool(repository, state, container_name) as serena,
     ):
         agent = _create_agent(settings, azure_client, serena)
-        return await _request_evaluation(agent, prompt)
+        response = await agent.run(
+            prompt, options={"response_format": AgentStructuredResponse}
+        )
+        return response.value
 
 
 def _create_agent(
@@ -210,24 +204,17 @@ def _create_agent(
     client = OpenAIChatCompletionClient(
         model=settings.deployment, async_client=azure_client
     )
+    options: OpenAIChatCompletionOptions = {
+        "allow_multiple_tool_calls": False,
+        "store": False,
+    }
     return Agent(
         client=client,
         name="repository-compliance",
         instructions=_load_system_prompt(),
         tools=[serena],
-        default_options=_agent_options(),
+        default_options=options,
     )
-
-
-def _agent_options() -> OpenAIChatCompletionOptions:
-    return {"allow_multiple_tool_calls": False, "store": False}
-
-
-async def _request_evaluation(agent: Agent, prompt: str) -> object:
-    response = await agent.run(
-        prompt, options={"response_format": AgentStructuredResponse}
-    )
-    return response.value
 
 
 def _create_azure_client(
@@ -299,7 +286,7 @@ def _serena_docker_arguments(
     # fmt: on
 
 
-def _write_serena_configuration(state: Path) -> None:
+def _write_serena_configurations(state: Path) -> None:
     project_state = _create_serena_project_state(state)
     _write_yaml(state / "serena_config.yml", _serena_global_configuration())
     _write_yaml(project_state / "project.yml", _serena_project_configuration())
@@ -380,13 +367,13 @@ def _ensure_container_removed(result: subprocess.CompletedProcess[str]) -> None:
         raise AgentError("Could not remove the agent's Docker container.")
 
 
-def _to_evaluation(output: object) -> RuleEvaluation:
+def _parse_agent_response(output: object) -> RuleEvaluation:
     result = AgentStructuredResponse.model_validate(output)
-    _validate_agent_verdict(result)
+    _ensure_usable_agent_verdict(result)
     return _convert_agent_verdict_to_rule_evaluation(result)
 
 
-def _validate_agent_verdict(result: AgentStructuredResponse) -> None:
+def _ensure_usable_agent_verdict(result: AgentStructuredResponse) -> None:
     if result.verdict is AgentVerdict.UNCERTAIN:
         raise AgentError(f"Agent could not judge: {result.explanation}")
     if result.verdict is AgentVerdict.PASS and not result.evidence:

@@ -13,7 +13,7 @@ from repo_compliance.infrastructure.agentic.agent_framework import (
     SERENA_TOOLS,
     AgentFrameworkEvaluator,
     _create_serena_tool,
-    _write_serena_configuration,
+    _write_serena_configurations,
 )
 from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import PROMPT_FILENAME
 from repo_compliance.rules.agentic.helpers import load_rule_prompt
@@ -37,7 +37,7 @@ def test_serena_reads_isolated_source(tmp_path: Path) -> None:
     (repository / ".gitignore").write_text(".github/\n", encoding="utf-8")
     state = tmp_path / "state"
     state.mkdir()
-    _write_serena_configuration(state)
+    _write_serena_configurations(state)
     container_name = f"repo-compliance-smoke-{uuid4().hex}"
     try:
         asyncio.run(_inspect_serena(repository, state, container_name))
