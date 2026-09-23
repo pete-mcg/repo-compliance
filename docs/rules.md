@@ -34,4 +34,4 @@ Within the prompt, provide clear pass, fail, and uncertain criteria, plus the ev
 
 To disable a rule everywhere, remove its import and entry from `RULES`. Also remove exemptions using its ID from [repositories.yml](../config/repositories.yml); unknown IDs are rejected.
 
-To remove it completely, also delete its source, prompt, tests, unused fixtures, and documentation references. To skip it for just one repository, [add an exemption](getting-started.md#2-choose-repositories).
+To remove it completely, also delete its source, prompt, tests, unused fixtures, and documentation references. To skip it for just one repository, add an exemption.
