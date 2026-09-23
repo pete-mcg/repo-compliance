@@ -16,14 +16,14 @@ from repo_compliance.infrastructure.agentic import agent_framework as adapter
 from repo_compliance.settings import Settings
 
 
-def configure_azure(monkeypatch: pytest.MonkeyPatch) -> None:
+def _configure_azure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GITHUB_TOKEN", "test-token")
     monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://approved.openai.azure.com")
     monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "ci-review")
     monkeypatch.setenv("AZURE_OPENAI_API_VERSION", "2024-10-21")
 
 
-def judgment(verdict: str = "pass") -> dict[str, object]:
+def _judgment(verdict: str = "pass") -> dict[str, object]:
     return {
         "verdict": verdict,
         "explanation": "CI tests run on pull requests to main.",
@@ -35,17 +35,17 @@ def judgment(verdict: str = "pass") -> dict[str, object]:
 
 @pytest.mark.parametrize("verdict", ["pass", "fail"])
 def test_converts_structured_response(verdict: str) -> None:
-    result = adapter._to_evaluation(judgment(verdict))
+    result = adapter._to_evaluation(_judgment(verdict))
     assert result.passed is (verdict == "pass")
     assert result.evidence == (Evidence(".github/workflows/ci.yml", 3, "pr-trigger"),)
 
 
 def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
     with pytest.raises(AgentError, match="could not judge"):
-        adapter._to_evaluation(judgment("uncertain"))
+        adapter._to_evaluation(_judgment("uncertain"))
     with pytest.raises(AgentError, match="without supporting evidence"):
-        adapter._to_evaluation({**judgment(), "evidence": []})
-    assert not adapter._to_evaluation({**judgment("fail"), "evidence": []}).passed
+        adapter._to_evaluation({**_judgment(), "evidence": []})
+    assert not adapter._to_evaluation({**_judgment("fail"), "evidence": []}).passed
 
 
 @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
 )
 def test_rejects_invalid_structured_output(changes: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
-        adapter._to_evaluation({**judgment(), **changes})
+        adapter._to_evaluation({**_judgment(), **changes})
 
 
 def test_schema_uses_supported_azure_keywords() -> None:
@@ -92,7 +92,7 @@ def test_schema_uses_supported_azure_keywords() -> None:
 def test_expected_failures_are_safe_rule_errors(
     monkeypatch: pytest.MonkeyPatch, error: Exception
 ) -> None:
-    configure_azure(monkeypatch)
+    _configure_azure(monkeypatch)
     monkeypatch.setattr(adapter, "_evaluate_snapshot", Mock(side_effect=error))
     with pytest.raises(AgentError) as caught:
         adapter.AgentFrameworkEvaluator(Settings()).evaluate(
@@ -102,12 +102,12 @@ def test_expected_failures_are_safe_rule_errors(
 
 
 @pytest.mark.parametrize(
-    "output", [judgment(), None, {"verdict": "pass"}, ToolException("MCP unavailable")]
+    "output", [_judgment(), None, {"verdict": "pass"}, ToolException("MCP unavailable")]
 )
 def test_evaluation_validates_output_and_cleans_resources(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, output: object
 ) -> None:
-    configure_azure(monkeypatch)
+    _configure_azure(monkeypatch)
     snapshot = tmp_path / "repository.zip"
     with ZipFile(snapshot, "w") as source_zip:
         source_zip.writestr("root/.github/workflows/ci.yml", "on: pull_request")
@@ -131,7 +131,7 @@ def test_evaluation_validates_output_and_cleans_resources(
     monkeypatch.setattr(adapter, "_run_agent", run)
     remove = Mock()
     monkeypatch.setattr(adapter, "_remove_container", remove)
-    if output == judgment():
+    if output == _judgment():
         assert (
             adapter.AgentFrameworkEvaluator(Settings())
             .evaluate(snapshot, "rule prompt")
@@ -150,16 +150,16 @@ def test_evaluation_validates_output_and_cleans_resources(
 def test_agent_requests_schema_and_closes_resources(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, times_out: bool
 ) -> None:
-    configure_azure(monkeypatch)
+    _configure_azure(monkeypatch)
     credential = AsyncMock()
     monkeypatch.chdir(tmp_path)
     azure = AsyncMock()
     serena = AsyncMock()
-    run = AsyncMock(return_value=SimpleNamespace(value=judgment()))
+    run = AsyncMock(return_value=SimpleNamespace(value=_judgment()))
     agent = Mock(return_value=SimpleNamespace(run=run))
     monkeypatch.setattr(adapter, "AzureCliCredential", Mock(return_value=credential))
-    monkeypatch.setattr(adapter, "create_azure_client", Mock(return_value=azure))
-    monkeypatch.setattr(adapter, "create_serena_tool", Mock(return_value=serena))
+    monkeypatch.setattr(adapter, "_create_azure_client", Mock(return_value=azure))
+    monkeypatch.setattr(adapter, "_create_serena_tool", Mock(return_value=serena))
     monkeypatch.setattr(adapter, "OpenAIChatCompletionClient", Mock())
     monkeypatch.setattr(adapter, "Agent", agent)
     if times_out:
@@ -177,7 +177,7 @@ def test_agent_requests_schema_and_closes_resources(
         output = asyncio.run(
             adapter._run_agent(tmp_path, tmp_path, "test", Settings(), "prompt")
         )
-        assert output == judgment()
+        assert output == _judgment()
         run.assert_awaited_once_with(
             "prompt", options={"response_format": adapter.AgentStructuredResponse}
         )
@@ -194,7 +194,7 @@ def test_agent_requests_schema_and_closes_resources(
 def test_azure_routing_ignores_unrelated_environment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    configure_azure(monkeypatch)
+    _configure_azure(monkeypatch)
     monkeypatch.setenv("AZURE_OPENAI_BASE_URL", "https://unapproved.example.com")
     monkeypatch.setenv("OPENAI_BASE_URL", "https://unapproved.example.com")
     monkeypatch.setenv("AZURE_OPENAI_API_KEY", "unused-key")
@@ -204,7 +204,7 @@ def test_azure_routing_ignores_unrelated_environment(
     async def inspect() -> None:
         async with (
             adapter.AzureCliCredential() as credential,
-            adapter.create_azure_client(Settings(), credential) as client,
+            adapter._create_azure_client(Settings(), credential) as client,
         ):
             assert (
                 str(client.base_url)
@@ -217,7 +217,7 @@ def test_azure_routing_ignores_unrelated_environment(
 
 
 def test_serena_launch_is_local_and_restricted(tmp_path: Path) -> None:
-    tool = adapter.create_serena_tool(tmp_path / "source", tmp_path / "state", "test")
+    tool = adapter._create_serena_tool(tmp_path / "source", tmp_path / "state", "test")
     arguments = tool.args
     assert tool.command == "docker"
     assert tool.allowed_tools == adapter.SERENA_TOOLS

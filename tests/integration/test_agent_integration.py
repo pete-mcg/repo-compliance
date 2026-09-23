@@ -12,8 +12,8 @@ from repo_compliance.errors import AgentError
 from repo_compliance.infrastructure.agentic.agent_framework import (
     SERENA_TOOLS,
     AgentFrameworkEvaluator,
-    create_serena_tool,
-    write_serena_configuration,
+    _create_serena_tool,
+    _write_serena_configuration,
 )
 from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import PROMPT_FILENAME
 from repo_compliance.rules.agentic.helpers import load_rule_prompt
@@ -37,7 +37,7 @@ def test_serena_reads_isolated_source(tmp_path: Path) -> None:
     (repository / ".gitignore").write_text(".github/\n", encoding="utf-8")
     state = tmp_path / "state"
     state.mkdir()
-    write_serena_configuration(state)
+    _write_serena_configuration(state)
     container_name = f"repo-compliance-smoke-{uuid4().hex}"
     try:
         asyncio.run(_inspect_serena(repository, state, container_name))
@@ -57,7 +57,7 @@ def test_serena_reads_isolated_source(tmp_path: Path) -> None:
 async def _inspect_serena(repository: Path, state: Path, container_name: str) -> None:
     async with (
         asyncio.timeout(90),
-        create_serena_tool(repository, state, container_name) as serena,
+        _create_serena_tool(repository, state, container_name) as serena,
     ):
         assert serena.session is not None
         tools = await serena.session.list_tools()

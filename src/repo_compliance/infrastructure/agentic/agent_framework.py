@@ -170,7 +170,7 @@ def _evaluate_snapshot(
 def _evaluate_repository(
     repository: Path, state: Path, settings: Settings, prompt: str
 ) -> RuleEvaluation:
-    write_serena_configuration(state)
+    _write_serena_configuration(state)
     output = _run_agent_in_container(repository, state, settings, prompt)
     return _to_evaluation(output)
 
@@ -197,8 +197,8 @@ async def _run_agent(
     async with (
         asyncio.timeout(EVALUATION_TIMEOUT_SECONDS),
         AzureCliCredential() as credential,
-        create_azure_client(settings, credential) as azure_client,
-        create_serena_tool(repository, state, container_name) as serena,
+        _create_azure_client(settings, credential) as azure_client,
+        _create_serena_tool(repository, state, container_name) as serena,
     ):
         agent = _create_agent(settings, azure_client, serena)
         return await _request_evaluation(agent, prompt)
@@ -230,10 +230,9 @@ async def _request_evaluation(agent: Agent, prompt: str) -> object:
     return response.value
 
 
-def create_azure_client(
+def _create_azure_client(
     settings: Settings, credential: AzureCliCredential
 ) -> AsyncAzureOpenAI:
-    """Use Entra auth and explicit routing, with no redirects or proxy discovery."""
     return AsyncAzureOpenAI(
         azure_endpoint=settings.endpoint,
         azure_deployment=settings.deployment,
@@ -248,24 +247,22 @@ def create_azure_client(
     )
 
 
-def create_serena_tool(
+def _create_serena_tool(
     repository: Path, state: Path, container_name: str
 ) -> MCPStdioTool:
-    """Expose only local file tools through a locked-down Docker stdio process."""
     return MCPStdioTool(
         name="repository-files",
         command="docker",
-        args=serena_docker_arguments(repository, state, container_name),
+        args=_serena_docker_arguments(repository, state, container_name),
         allowed_tools=SERENA_TOOLS,
         load_prompts=False,
         request_timeout=MCP_REQUEST_TIMEOUT_SECONDS,
     )
 
 
-def serena_docker_arguments(
+def _serena_docker_arguments(
     repository: Path, state: Path, container_name: str
 ) -> list[str]:
-    """Keep the replaceable MCP server launch settings in one place."""
     # Keep each option beside its value for readability.
     # fmt: off
     return [
@@ -302,8 +299,7 @@ def serena_docker_arguments(
     # fmt: on
 
 
-def write_serena_configuration(state: Path) -> None:
-    """Precreate separate project state so repository Serena config is never loaded."""
+def _write_serena_configuration(state: Path) -> None:
     project_state = _create_serena_project_state(state)
     _write_yaml(state / "serena_config.yml", _serena_configuration())
     _write_yaml(project_state / "project.yml", _project_configuration())
