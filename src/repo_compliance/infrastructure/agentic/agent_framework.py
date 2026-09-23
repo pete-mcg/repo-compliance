@@ -354,7 +354,11 @@ def _project_configuration() -> dict[str, str | bool | list[str] | None]:
 
 def _context_configuration() -> dict[str, str | bool]:
     """Return the Serena context selected by the MCP server."""
-    return {"name": "compliance", "prompt": "", "single_project": True}
+    return {
+        "name": "compliance",
+        "prompt": "",
+        "single_project": True,
+    }
 
 
 def _write_yaml(path: Path, configuration: object) -> None:
