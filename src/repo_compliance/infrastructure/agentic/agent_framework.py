@@ -272,43 +272,41 @@ def serena_docker_arguments(
     repository: Path, state: Path, container_name: str
 ) -> list[str]:
     """Keep the replaceable MCP server launch settings in one place."""
+    # Keep each option beside its value for readability.
+    # fmt: off
     return [
+        # Start the container and manage communication and cleanup.
         "run",
         "--rm",
         "-i",
         "--init",
-        "--pull",
-        "never",
-        "--name",
-        container_name,
+        "--pull", "never",
+        "--name", container_name,
+
+        # Restrict filesystem changes, network access, and Linux privileges.
         "--read-only",
-        "--network",
-        "none",
-        "--cap-drop",
-        "ALL",
-        "--security-opt",
-        "no-new-privileges",
-        "--mount",
-        f"type=bind,src={repository.resolve()},dst=/repository,readonly",
-        "--mount",
-        f"type=bind,src={state.resolve()},dst=/state",
-        "--tmpfs",
-        "/tmp:rw,noexec,nosuid,size=64m",
-        "--env",
-        "SERENA_HOME=/state",
-        "--env",
-        "PYTHONDONTWRITEBYTECODE=1",
-        "--entrypoint",
-        "/workspaces/serena/.venv/bin/serena",
+        "--network", "none",
+        "--cap-drop", "ALL",
+        "--security-opt", "no-new-privileges",
+
+        # Share repository files and provide writable working storage.
+        "--mount", f"type=bind,src={repository.resolve()},dst=/repository,readonly",
+        "--mount", f"type=bind,src={state.resolve()},dst=/state",
+        "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
+
+        # Set Serena's home folder and disable Python cache files.
+        "--env", "SERENA_HOME=/state",
+        "--env", "PYTHONDONTWRITEBYTECODE=1",
+
+        # Select Serena's executable and image, then configure its tool server.
+        "--entrypoint", "/workspaces/serena/.venv/bin/serena",
         SERENA_IMAGE,
         "start-mcp-server",
-        "--transport",
-        "stdio",
-        "--project",
-        "/repository",
-        "--context",
-        "/state/context.yml",
+        "--transport", "stdio",
+        "--project", "/repository",
+        "--context", "/state/context.yml",
     ]
+    # fmt: on
 
 
 def write_serena_configuration(state: Path) -> None:
