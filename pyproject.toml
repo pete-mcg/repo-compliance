@@ -4,13 +4,13 @@ version = "0.1.0"
 description = "Monitor GitHub repositories for compliance with team standards"
 requires-python = ">=3.14"
 dependencies = [
-    "agent-framework-core>=1.19,<2",
-    "agent-framework-openai>=1.14.4,<2",
-    "azure-core>=1.41,<2",
+    "agent-framework-core>=1.19,<2", # agent-framework-openai currently requires agent-framework-core below 2.0
+    "agent-framework-openai>=1.14.4",
+    "azure-core>=1.41",
     "azure-identity>=1.25",
     "httpx>=0.28.1",
     "mcp>=1.26,<2", # agent-framework currently caps the MCP Python SDK below 2.0
-    "openai>=3.15,<4",
+    "openai>=3.15,<4", # agent-framework-openai currently caps the OpenAI Python SDK below 4.0
     "pydantic>=2.13.4",
     "pydantic-settings>=2.12",
     "pyyaml>=6.0.2",
