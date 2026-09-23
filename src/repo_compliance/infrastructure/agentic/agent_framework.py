@@ -301,9 +301,9 @@ def _serena_docker_arguments(
 
 def _write_serena_configuration(state: Path) -> None:
     project_state = _create_serena_project_state(state)
-    _write_yaml(state / "serena_config.yml", _serena_configuration())
-    _write_yaml(project_state / "project.yml", _project_configuration())
-    _write_yaml(state / "context.yml", _context_configuration())
+    _write_yaml(state / "serena_config.yml", _serena_global_configuration())
+    _write_yaml(project_state / "project.yml", _serena_project_configuration())
+    _write_yaml(state / "context.yml", _serena_context_configuration())
 
 
 def _create_serena_project_state(state: Path) -> Path:
@@ -312,7 +312,8 @@ def _create_serena_project_state(state: Path) -> Path:
     return project_state
 
 
-def _serena_configuration() -> dict[str, str | bool | int | list[str]]:
+def _serena_global_configuration() -> dict[str, str | bool | int | list[str]]:
+    # See: https://github.com/oraios/serena/blob/main/src/serena/resources/serena_config.template.yml
     return {
         "web_dashboard": False,
         "web_dashboard_open_on_launch": False,
@@ -328,7 +329,8 @@ def _serena_configuration() -> dict[str, str | bool | int | list[str]]:
     }
 
 
-def _project_configuration() -> dict[str, str | bool | list[str] | None]:
+def _serena_project_configuration() -> dict[str, str | bool | list[str] | None]:
+    # See: https://github.com/oraios/serena/blob/main/src/serena/resources/project.template.yml
     return {
         "project_name": "repository",
         "language_servers": [],
@@ -339,7 +341,8 @@ def _project_configuration() -> dict[str, str | bool | list[str] | None]:
     }
 
 
-def _context_configuration() -> dict[str, str | bool]:
+def _serena_context_configuration() -> dict[str, str | bool]:
+    # See: https://github.com/oraios/serena/blob/main/src/serena/resources/config/contexts/context.template.yml
     return {
         "name": "compliance",
         "prompt": "",
@@ -379,18 +382,20 @@ def _ensure_container_removed(result: subprocess.CompletedProcess[str]) -> None:
 
 def _to_evaluation(output: object) -> RuleEvaluation:
     result = AgentStructuredResponse.model_validate(output)
-    _validate_verdict(result)
-    return _build_evaluation(result)
+    _validate_agent_verdict(result)
+    return _convert_agent_verdict_to_rule_evaluation(result)
 
 
-def _validate_verdict(result: AgentStructuredResponse) -> None:
+def _validate_agent_verdict(result: AgentStructuredResponse) -> None:
     if result.verdict is AgentVerdict.UNCERTAIN:
         raise AgentError(f"Agent could not judge: {result.explanation}")
     if result.verdict is AgentVerdict.PASS and not result.evidence:
         raise AgentError("Agent returned a pass without supporting evidence.")
 
 
-def _build_evaluation(result: AgentStructuredResponse) -> RuleEvaluation:
+def _convert_agent_verdict_to_rule_evaluation(
+    result: AgentStructuredResponse,
+) -> RuleEvaluation:
     evidence = tuple(
         Evidence(item.path, item.line, item.marker) for item in result.evidence
     )
