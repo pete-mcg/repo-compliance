@@ -150,7 +150,6 @@ class AgentFrameworkEvaluator:
 
 
 def _load_system_prompt() -> str:
-    """Load shared agent instructions independently of the current directory."""
     return (
         files("repo_compliance.infrastructure.agentic")
         .joinpath("system_prompt.md")
@@ -171,7 +170,6 @@ def _evaluate_snapshot(
 def _evaluate_repository(
     repository: Path, state: Path, settings: Settings, prompt: str
 ) -> RuleEvaluation:
-    """Evaluate an extracted repository with isolated Serena state."""
     write_serena_configuration(state)
     output = _run_agent_in_container(repository, state, settings, prompt)
     return _to_evaluation(output)
@@ -180,7 +178,6 @@ def _evaluate_repository(
 def _run_agent_in_container(
     repository: Path, state: Path, settings: Settings, prompt: str
 ) -> object:
-    """Run the agent and always remove its Docker container."""
     container_name = f"repo-compliance-{uuid4().hex}"
     try:
         return asyncio.run(
@@ -210,7 +207,6 @@ async def _run_agent(
 def _create_agent(
     settings: Settings, azure_client: AsyncAzureOpenAI, serena: MCPStdioTool
 ) -> Agent:
-    """Create the agent used for a repository compliance evaluation."""
     client = OpenAIChatCompletionClient(
         model=settings.deployment, async_client=azure_client
     )
@@ -224,12 +220,10 @@ def _create_agent(
 
 
 def _agent_options() -> OpenAIChatCompletionOptions:
-    """Return the fixed options for compliance evaluations."""
     return {"allow_multiple_tool_calls": False, "store": False}
 
 
 async def _request_evaluation(agent: Agent, prompt: str) -> object:
-    """Request one structured evaluation from the agent."""
     response = await agent.run(
         prompt, options={"response_format": AgentStructuredResponse}
     )
@@ -317,14 +311,12 @@ def write_serena_configuration(state: Path) -> None:
 
 
 def _create_serena_project_state(state: Path) -> Path:
-    """Create the directory used for Serena project state."""
     project_state = state / "project"
     project_state.mkdir()
     return project_state
 
 
 def _serena_configuration() -> dict[str, str | bool | int | list[str]]:
-    """Return Serena's locked-down server configuration."""
     return {
         "web_dashboard": False,
         "web_dashboard_open_on_launch": False,
@@ -341,7 +333,6 @@ def _serena_configuration() -> dict[str, str | bool | int | list[str]]:
 
 
 def _project_configuration() -> dict[str, str | bool | list[str] | None]:
-    """Return the read-only project configuration for Serena."""
     return {
         "project_name": "repository",
         "language_servers": [],
@@ -353,7 +344,6 @@ def _project_configuration() -> dict[str, str | bool | list[str] | None]:
 
 
 def _context_configuration() -> dict[str, str | bool]:
-    """Return the Serena context selected by the MCP server."""
     return {
         "name": "compliance",
         "prompt": "",
@@ -362,7 +352,6 @@ def _context_configuration() -> dict[str, str | bool]:
 
 
 def _write_yaml(path: Path, configuration: object) -> None:
-    """Write one YAML configuration file."""
     path.write_text(yaml.safe_dump(configuration), encoding="utf-8")
 
 
@@ -378,7 +367,6 @@ def _remove_container(container_name: str) -> None:
 
 
 def _force_remove_container(container_name: str) -> subprocess.CompletedProcess[str]:
-    """Ask Docker to force-remove one named container."""
     return subprocess.run(
         ["docker", "rm", "--force", container_name],
         capture_output=True,
@@ -389,7 +377,6 @@ def _force_remove_container(container_name: str) -> subprocess.CompletedProcess[
 
 
 def _ensure_container_removed(result: subprocess.CompletedProcess[str]) -> None:
-    """Raise when Docker could not remove a container that still exists."""
     if result.returncode != 0 and "No such container" not in result.stderr:
         raise AgentError("Could not remove the agent's Docker container.")
 
@@ -401,7 +388,6 @@ def _to_evaluation(output: object) -> RuleEvaluation:
 
 
 def _validate_verdict(result: AgentStructuredResponse) -> None:
-    """Reject verdicts that cannot produce a supported rule evaluation."""
     if result.verdict is AgentVerdict.UNCERTAIN:
         raise AgentError(f"Agent could not judge: {result.explanation}")
     if result.verdict is AgentVerdict.PASS and not result.evidence:
@@ -409,7 +395,6 @@ def _validate_verdict(result: AgentStructuredResponse) -> None:
 
 
 def _build_evaluation(result: AgentStructuredResponse) -> RuleEvaluation:
-    """Convert a validated agent response into the domain result."""
     evidence = tuple(
         Evidence(item.path, item.line, item.marker) for item in result.evidence
     )
