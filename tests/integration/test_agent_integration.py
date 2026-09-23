@@ -8,25 +8,22 @@ from zipfile import ZipFile
 import pytest
 from agent_framework import Content
 
-from repo_compliance.errors import AgentError
 from repo_compliance.infrastructure.agentic.agent_framework import (
     SERENA_TOOLS,
     AgentFrameworkEvaluator,
     _create_serena_tool,
     _write_serena_configurations,
 )
-from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import PROMPT_FILENAME
-from repo_compliance.rules.agentic.helpers import load_rule_prompt
 from repo_compliance.settings import get_env_settings
 
 pytestmark = pytest.mark.integration
-FIXTURES = Path(__file__).parents[1] / "fixtures" / "ci_workflows"
+FIXTURE = Path(__file__).parents[1] / "fixtures" / "agent_repository"
 
 
 @pytest.mark.serena
 def test_serena_reads_isolated_source(tmp_path: Path) -> None:
     repository = tmp_path / "repository"
-    shutil.copytree(FIXTURES / "qualifying", repository)
+    shutil.copytree(FIXTURE, repository)
     untrusted_config = repository / ".serena"
     untrusted_config.mkdir()
     (untrusted_config / "project.yml").write_text(
@@ -34,7 +31,7 @@ def test_serena_reads_isolated_source(tmp_path: Path) -> None:
         "language_servers: [python]\nfixed_tools: [execute_shell_command]\n",
         encoding="utf-8",
     )
-    (repository / ".gitignore").write_text(".github/\n", encoding="utf-8")
+    (repository / ".gitignore").write_text("README.md\n", encoding="utf-8")
     state = tmp_path / "state"
     state.mkdir()
     _write_serena_configurations(state)
@@ -49,8 +46,8 @@ def test_serena_reads_isolated_source(tmp_path: Path) -> None:
             timeout=10,
         )
     assert not (state / "repository-config-was-executed").exists()
-    assert (repository / ".github/workflows/ci.yml").read_bytes() == (
-        FIXTURES / "qualifying/.github/workflows/ci.yml"
+    assert (repository / "README.md").read_bytes() == (
+        FIXTURE / "README.md"
     ).read_bytes()
 
 
@@ -62,15 +59,10 @@ async def _inspect_serena(repository: Path, state: Path, container_name: str) ->
         assert serena.session is not None
         tools = await serena.session.list_tools()
         assert {tool.name for tool in tools.tools} == set(SERENA_TOOLS)
-        listing = await serena.call_tool(
-            "list_dir", relative_path=".github", recursive=True
-        )
-        assert "ci.yml" in _tool_text(listing)
-        workflow = await serena.call_tool(
-            "read_file", relative_path=".github/workflows/ci.yml"
-        )
-        assert "pull_request" in _tool_text(workflow)
-        assert "unittest" in _tool_text(workflow)
+        listing = await serena.call_tool("list_dir", relative_path=".", recursive=True)
+        assert "README.md" in _tool_text(listing)
+        readme = await serena.call_tool("read_file", relative_path="README.md")
+        assert "Run tests with `python -m unittest discover`." in _tool_text(readme)
         _assert_docker_isolation(container_name)
 
 
@@ -110,31 +102,20 @@ def _assert_docker_isolation(container_name: str) -> None:
 
 
 @pytest.mark.azure
-@pytest.mark.parametrize(
-    ("scenario", "expected"),
-    [
-        ("qualifying", "pass"),
-        ("unrestricted", "pass"),
-        ("push_only", "fail"),
-        ("wrong_branch", "fail"),
-        ("missing_workflow", "fail"),
-        ("insufficient_evidence", "uncertain"),
-    ],
-)
-def test_live_prompt(scenario: str, expected: str, tmp_path: Path) -> None:
+def test_agent_evaluates_source_snapshot(tmp_path: Path) -> None:
+    # Exercise the infrastructure shared by all agentic rules with one live evaluation.
     snapshot = tmp_path / "repository.zip"
-    source = FIXTURES / scenario
     with ZipFile(snapshot, "w") as source_zip:
-        for path in source.rglob("*"):
-            if path.is_file():
-                source_zip.write(
-                    path, f"snapshot/{path.relative_to(source).as_posix()}"
-                )
+        source_zip.write(FIXTURE / "README.md", "snapshot/README.md")
     evaluator = AgentFrameworkEvaluator(get_env_settings())
-    prompt = load_rule_prompt(PROMPT_FILENAME)
-    if expected == "uncertain":
-        with pytest.raises(AgentError, match="Agent could not judge"):
-            evaluator.evaluate(snapshot, prompt)
-    else:
-        result = evaluator.evaluate(snapshot, prompt)
-        assert result.passed is (expected == "pass"), result.message
+    prompt = (
+        "Inspect README.md and determine whether it contains instructions for running "
+        "tests. Pass if it does; fail if it does not. Cite the line containing the "
+        "test command as evidence."
+    )
+    result = evaluator.evaluate(snapshot, prompt)
+    assert result.passed is True, result.message
+    assert any(
+        evidence.path == "README.md" and evidence.line == 3
+        for evidence in result.evidence
+    ), result.evidence

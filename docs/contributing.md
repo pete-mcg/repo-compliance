@@ -23,7 +23,7 @@ uv run --locked pytest -m serena tests/integration
 uv run --locked pytest -m azure tests/integration
 ```
 
-Azure tests send fixture files to the configured deployment and use paid model calls. They are optional and excluded from the quality gate.
+Azure/live AI tests send fixture files to the configured deployment and use paid model calls. The live AI test uses one generic, test-only rule to check source inspection, the verdict, and evidence; it covers the infrastructure shared by all agentic rules. You do not need to add an integration test per agentic rule.
 
 ## Quality Gate
 
