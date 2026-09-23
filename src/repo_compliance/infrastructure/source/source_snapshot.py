@@ -18,6 +18,15 @@ ZIP_UNIX_MODE_SHIFT = 16
 ZIP_ENCRYPTED_FLAG = 1
 
 
+@contextmanager
+def extracted_source_snapshot(snapshot_path: Path) -> Generator[Path]:
+    """Yield the repository root, removing extracted files even after failure."""
+    with TemporaryDirectory(prefix="repo-compliance-source-") as temporary_directory:
+        destination = Path(temporary_directory)
+        _extract_source_snapshot(snapshot_path, destination)
+        yield destination
+
+
 def safe_relative_path(value: str) -> PurePosixPath:
     """Reject traversal and names unsafe on either Windows or Linux."""
     parts = value.split("/")
@@ -26,15 +35,6 @@ def safe_relative_path(value: str) -> PurePosixPath:
     if "\\" in value or ":" in value:
         raise ValueError("Unsafe source path.")
     return PurePosixPath(value)
-
-
-@contextmanager
-def extracted_source_snapshot(snapshot_path: Path) -> Generator[Path]:
-    """Yield the repository root, removing extracted files even after failure."""
-    with TemporaryDirectory(prefix="repo-compliance-source-") as temporary_directory:
-        destination = Path(temporary_directory)
-        _extract_source_snapshot(snapshot_path, destination)
-        yield destination
 
 
 def _extract_source_snapshot(snapshot_path: Path, destination: Path) -> None:

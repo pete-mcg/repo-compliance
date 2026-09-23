@@ -43,6 +43,21 @@ def passing_check(_context: RuleContext) -> RuleEvaluation:
     return RuleEvaluation(True, "passed")
 
 
+def get_source_snapshot_evaluation(context: RuleContext) -> RuleEvaluation:
+    assert context.source_snapshot_path is not None
+    assert context.source_snapshot_path.exists()
+    return RuleEvaluation(True, "source snapshot inspected")
+
+
+def file_check(context: RuleContext) -> RuleEvaluation:
+    passed = context.github.file_exists_on_main(context.repository, "required.txt")
+    return RuleEvaluation(passed, "file checked")
+
+
+def config_for(*repositories: RepositoryConfig) -> ComplianceConfig:
+    return ComplianceConfig(repositories=repositories)
+
+
 def test_logs_progress_and_distinguishes_failure_from_error(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -77,21 +92,6 @@ def test_logs_progress_and_distinguishes_failure_from_error(
     ]
     assert "Required file missing" in result_records[0].getMessage()
     assert "Service unavailable" in result_records[1].getMessage()
-
-
-def get_source_snapshot_evaluation(context: RuleContext) -> RuleEvaluation:
-    assert context.source_snapshot_path is not None
-    assert context.source_snapshot_path.exists()
-    return RuleEvaluation(True, "source snapshot inspected")
-
-
-def file_check(context: RuleContext) -> RuleEvaluation:
-    passed = context.github.file_exists_on_main(context.repository, "required.txt")
-    return RuleEvaluation(passed, "file checked")
-
-
-def config_for(*repositories: RepositoryConfig) -> ComplianceConfig:
-    return ComplianceConfig(repositories=repositories)
 
 
 def test_fully_exempt_repository_skips_all_github_work() -> None:
