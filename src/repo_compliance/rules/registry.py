@@ -1,5 +1,8 @@
 """Explicit ordered registry of enabled compliance rules."""
 
+from repo_compliance.rules.agentic.artefact_generation_manual_only import (
+    RULE as ARTEFACT_GENERATION_MANUAL_ONLY,
+)
 from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import (
     RULE as CI_WORKFLOW_ON_PULL_REQUESTS,
 )
@@ -29,6 +32,7 @@ RULES = (
     NO_CRITICAL_DEPENDABOT_ALERTS,
     NO_KEY_BASED_AUTHENTICATION,
     CI_WORKFLOW_ON_PULL_REQUESTS,
+    ARTEFACT_GENERATION_MANUAL_ONLY,
     FRONTEND_BUILD_IDENTIFIER_VISIBLE,
 )
 RULE_IDS = frozenset(rule.id for rule in RULES)
