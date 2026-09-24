@@ -11,11 +11,6 @@ tasks:
     cmds:
       - uv sync --upgrade
 
-  spelling:
-    desc: Adhoc check that the repository spelling uses British English
-    cmds:
-      - npx --yes cspell@10.3.3 --locale en-GB --gitignore --dot --exclude .git --exclude uv.lock .
-
   ci:
     desc: Run all CI checks excluding integration tests
     cmds:
@@ -30,3 +25,13 @@ tasks:
     cmds:
       - task: ci
       - uv run --locked pytest -m integration
+
+  adhoc:spelling:
+    desc: Adhoc check that the repository spelling uses British English
+    cmds:
+      - npx --yes cspell@10.3.3 --locale en-GB --gitignore --dot --exclude .git --exclude uv.lock .
+
+  adhoc:format:
+    desc: Adhoc check that files which Ruff will not touch, are formatted correctly
+    cmds:
+      - npx --yes oxfmt@0.70.0 "." "!**/.agents/**" "!**/src/**" "!**/tests/**"

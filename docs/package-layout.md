@@ -6,21 +6,21 @@ All paths below are inside [src/repo_compliance/](../src/repo_compliance/).
 
 A layer is a group of responsibilities. It can be one file; it does not need its own folder.
 
-| Location | Responsibility |
-| --- | --- |
-| `app.py`, `__main__.py` | Start the command, connect the parts, and write the report. |
-| `config.py` | Read and validate repositories and exemptions from YAML. |
-| `settings.py` | Load and validate environment and `.env` settings. |
-| `domain.py` | Define shared rule inputs, evaluations, results, and service interfaces. |
-| `runner.py` | Apply exemptions, check access, share source downloads, and run rules. |
-| `report.py` | Turn completed results into Markdown. |
-| `errors.py` | Define expected errors. |
-| `timing.py` | Define log function timings. |
-| `infrastructure/github/` | Make GitHub requests and define shared response models. |
-| `infrastructure/source/` | Safely extract temporary source files and remove them afterwards. |
-| `infrastructure/agentic/` | Connect Azure and Serena, run AI checks, and validate replies. |
-| `rules/registry.py` | List enabled rules in order. |
-| `rules/deterministic/`, `rules/agentic/` | Decide whether each standard is met. |
+| Location                                 | Responsibility                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `app.py`, `__main__.py`                  | Start the command, connect the parts, and write the report.              |
+| `config.py`                              | Read and validate repositories and exemptions from YAML.                 |
+| `settings.py`                            | Load and validate environment and `.env` settings.                       |
+| `domain.py`                              | Define shared rule inputs, evaluations, results, and service interfaces. |
+| `runner.py`                              | Apply exemptions, check access, share source downloads, and run rules.   |
+| `report.py`                              | Turn completed results into Markdown.                                    |
+| `errors.py`                              | Define expected errors.                                                  |
+| `timing.py`                              | Define log function timings.                                             |
+| `infrastructure/github/`                 | Make GitHub requests and define shared response models.                  |
+| `infrastructure/source/`                 | Safely extract temporary source files and remove them afterwards.        |
+| `infrastructure/agentic/`                | Connect Azure and Serena, run AI checks, and validate replies.           |
+| `rules/registry.py`                      | List enabled rules in order.                                             |
+| `rules/deterministic/`, `rules/agentic/` | Decide whether each standard is met.                                     |
 
 ## Dependency direction
 
@@ -48,6 +48,7 @@ domain, errors, timing, infrastructure.github.models -> (no internal imports)
 ```
 
 Note:
+
 - `individual rules` excludes helpers and the registry.
 - This list covers all internal imports, including those inside functions or used only for type checks.
 - `domain.py`, `errors.py`, and `timing.py` use only Python's standard library.

@@ -1,17 +1,17 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python: Repo Compliance",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "repo_compliance",
-            "python": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            // Temporary workaround for debugpy corrupting StrEnum construction while stepping.
-            "showReturnValue": false
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Repo Compliance",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "repo_compliance",
+      "python": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      // Temporary workaround for debugpy corrupting StrEnum construction while stepping.
+      "showReturnValue": false
+    }
+  ]
 }

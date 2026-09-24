@@ -4,16 +4,16 @@ version = "0.1.0"
 description = "Monitor GitHub repositories for compliance with team standards"
 requires-python = ">=3.14"
 dependencies = [
-    "agent-framework-core>=1.19,<2", # agent-framework-openai currently requires agent-framework-core below 2.0
-    "agent-framework-openai>=1.14.4",
-    "azure-core>=1.41",
-    "azure-identity>=1.25",
-    "httpx>=0.28.1",
-    "mcp>=1.26,<2", # agent-framework currently caps the MCP Python SDK below 2.0
-    "openai>=3.15,<4", # agent-framework-openai currently caps the OpenAI Python SDK below 4.0
-    "pydantic>=2.13.4",
-    "pydantic-settings>=2.12",
-    "pyyaml>=6.0.2",
+  "agent-framework-core>=1.19,<2", # agent-framework-openai currently requires agent-framework-core below 2.0
+  "agent-framework-openai>=1.14.4",
+  "azure-core>=1.41",
+  "azure-identity>=1.25",
+  "httpx>=0.28.1",
+  "mcp>=1.26,<2", # agent-framework currently caps the MCP Python SDK below 2.0
+  "openai>=3.15,<4", # agent-framework-openai currently caps the OpenAI Python SDK below 4.0
+  "pydantic>=2.13.4",
+  "pydantic-settings>=2.12",
+  "pyyaml>=6.0.2",
 ]
 
 [project.scripts]
@@ -27,13 +27,7 @@ build-backend = "hatchling.build"
 packages = ["src/repo_compliance"]
 
 [dependency-groups]
-dev = [
-    "deptry>=0.25.1",
-    "pyrefly>=1.0.0",
-    "pytest>=9.1.0",
-    "pytest-cov>=7.1.0",
-    "ruff>=0.16.3",
-]
+dev = ["deptry>=0.25.1", "pyrefly>=1.0.0", "pytest>=9.1.0", "pytest-cov>=7.1.0", "ruff>=0.16.3"]
 
 [tool.coverage.run]
 branch = true
@@ -48,21 +42,21 @@ strict = true
 testpaths = ["tests"]
 addopts = "-m 'not integration'" # By default, skip tests marked integration.
 markers = [
-    "integration: opt-in checks requiring Serena or Azure",
-    "serena: local Docker/MCP smoke check",
-    "azure: live prompt checks using the approved Azure deployment",
+  "integration: opt-in checks requiring Serena or Azure",
+  "serena: local Docker/MCP smoke check",
+  "azure: live prompt checks using the approved Azure deployment",
 ]
 
 [tool.ruff]
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-preview = true  # Look to disable when new preview defaults are stable.
+preview = true # Look to disable when new preview defaults are stable.
 extend-select = [
-    "D",        # We like docstrings
-    "N",        # We like naming conventions
-    "C901",     # We like enforcing complexity
-    "PLR1702",  # We like restricting nesting
+  "D", # We like docstrings
+  "N", # We like naming conventions
+  "C901", # We like enforcing complexity
+  "PLR1702", # We like restricting nesting
 ]
 ignore = ["D203", "D213"] # These rules are incompatible with other D rules.
 

@@ -39,6 +39,7 @@ repositories:
 
 **Option 1: Fine-grained token**
 For the monitored repositories, grant read access to:
+
 - Metadata
 - Contents
 - Administration
@@ -46,6 +47,7 @@ For the monitored repositories, grant read access to:
 
 **Option 2: Tokens (classic)**
 Select the following scopes:
+
 - repo (repo:status, repo_deployment, public_repo, repo:invite, security_events)
 - read:packages
 
@@ -55,11 +57,11 @@ Select the following scopes:
 Copy-Item .env.example .env
 ```
 
-| Setting | Value |
-| --- | --- |
-| `GITHUB_TOKEN` | Your GitHub token. |
-| `AZURE_OPENAI_ENDPOINT` | Your resource URL: `https://<resource>.openai.azure.com`. |
-| `AZURE_OPENAI_DEPLOYMENT` | Your Azure model deployment name. |
+| Setting                    | Value                                                                       |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `GITHUB_TOKEN`             | Your GitHub token.                                                          |
+| `AZURE_OPENAI_ENDPOINT`    | Your resource URL: `https://<resource>.openai.azure.com`.                   |
+| `AZURE_OPENAI_DEPLOYMENT`  | Your Azure model deployment name.                                           |
 | `AZURE_OPENAI_API_VERSION` | The API version supported by your deployment, such as `YYYY-MM-DD-preview`. |
 
 Note that all settings are required at startup, even if AI checks are skipped.
