@@ -7,7 +7,6 @@ A repository must declare a GitHub Actions workflow that performs meaningful con
 - lints
 - type checks
 - tests
-- builds
 - undertakes static analysis
 
 Decide whether this rule is satisfied.
