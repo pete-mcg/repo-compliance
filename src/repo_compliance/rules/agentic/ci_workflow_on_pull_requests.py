@@ -23,8 +23,8 @@ def check(context: RuleContext) -> RuleEvaluation:
 
 RULE = RuleDefinition(
     id=RULE_ID,
-    title="CI runs on pull requests to main",
-    description="A GitHub Actions CI workflow must run for every pull request to main.",
+    title="CI runs on pull requests to development",
+    description="A GitHub Actions CI workflow must run for every pull request to development.",
     category=RuleCategory.AGENTIC,
     confidence=Confidence.MEDIUM,
     documentation_url="https://confluence.example.com/display/COMPLIANCE/ci+workflow+on+pull+requests",

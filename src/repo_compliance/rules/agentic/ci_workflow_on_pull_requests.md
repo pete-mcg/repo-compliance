@@ -1,5 +1,13 @@
 # Rule
 
-Decide whether the repository declares a GitHub Actions workflow that performs meaningful continuous integration for every pull request targeting `main`.
+A repository must declare a GitHub Actions workflow that performs meaningful continuous integration for every pull request targeting the `development` branch.
 
-"Meaningful continuous integration" = the workflow builds, tests, lints, type checks, or undertakes static analysis.
+"Meaningful continuous integration" = the workflow must perform at least one of: 
+- formats
+- lints
+- type checks
+- tests
+- builds
+- undertakes static analysis
+
+Decide whether this rule is satisfied.
