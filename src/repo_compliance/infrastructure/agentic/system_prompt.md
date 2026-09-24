@@ -25,7 +25,7 @@ Evidence uses:
 ### Conditions
 
 - **ALWAYS** assume `uncertain` until evidence proves otherwise.
-- A `pass` verdict occurs if, and only if, a rule is satisfied in its entirety and supported by evidence.
+- A `pass` verdict occurs if, and only if, a rule is satisfied **in its entirety**.
 - Cite actual inspected files and lines.
 - Never include secret values or long source excerpts in the explanation or evidence descriptions.
 - Do not include the ZIP wrapper or `/repository` in paths.
