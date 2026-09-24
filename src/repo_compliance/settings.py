@@ -17,7 +17,11 @@ class Settings(BaseSettings):
         hide_input_in_errors=True,
     )
 
-    github_token: str = Field(alias="GITHUB_TOKEN", min_length=1, repr=False)
+    github_token: str = Field(
+        alias="GITHUB_TOKEN",
+        min_length=1,
+        repr=False,
+    )
     endpoint: str = Field(
         alias="AZURE_OPENAI_ENDPOINT",
         pattern=r"^https://[a-z0-9][a-z0-9-]*\.openai\.azure\.com/?$",
