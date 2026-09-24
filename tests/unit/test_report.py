@@ -89,7 +89,7 @@ def test_report_contains_counts_tables_links_details_and_utc_timestamp() -> None
         in report
     )
     assert "bad \\| marker found \\[link\\] \\*bold\\* \\<tag\\>" in report
-    assert "``src/config`file.py:7`` — `api-key`" in report
+    assert "``src/config`file.py:7`` — api-key\n" in report
     assert "3 additional location(s) omitted" in report
     assert "https://example.com/agentic" in report
     details = report.split("## 🔎 Details", maxsplit=1)[1]

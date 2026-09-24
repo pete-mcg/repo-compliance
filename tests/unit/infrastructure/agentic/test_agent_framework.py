@@ -28,7 +28,7 @@ def _judgement(verdict: str = "pass") -> dict[str, object]:
         "verdict": verdict,
         "explanation": "CI tests run on pull requests to main.",
         "evidence": [
-            {"path": ".github/workflows/ci.yml", "line": 3, "marker": "pr-trigger"}
+            {"path": ".github/workflows/ci.yml", "line": 3, "description": "pr-trigger"}
         ],
     }
 
@@ -57,11 +57,11 @@ def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
         {"explanation": " "},
         {"explanation": "x" * 1001},
         {"unexpected": "value"},
-        {"evidence": [{"path": "../secret", "line": 1, "marker": "trigger"}]},
-        {"evidence": [{"path": "ci.yml", "line": 0, "marker": "trigger"}]},
-        {"evidence": [{"path": "ci.yml", "line": "2", "marker": "trigger"}]},
-        {"evidence": [{"path": "ci.yml", "line": True, "marker": "trigger"}]},
-        {"evidence": [{"path": "ci.yml", "line": 1, "marker": " "}]},
+        {"evidence": [{"path": "../secret", "line": 1, "description": "trigger"}]},
+        {"evidence": [{"path": "ci.yml", "line": 0, "description": "trigger"}]},
+        {"evidence": [{"path": "ci.yml", "line": "2", "description": "trigger"}]},
+        {"evidence": [{"path": "ci.yml", "line": True, "description": "trigger"}]},
+        {"evidence": [{"path": "ci.yml", "line": 1, "description": " "}]},
     ],
 )
 def test_rejects_invalid_structured_output(changes: dict[str, object]) -> None:

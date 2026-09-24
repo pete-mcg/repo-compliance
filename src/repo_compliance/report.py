@@ -164,7 +164,7 @@ def _filter_results(
 
 def _build_evidence_list(result: RuleResult) -> list[str]:
     return [
-        f"  - {_format_markdown_code_span(f'{item.path}:{item.line}')} — {_format_markdown_code_span(item.marker)}"
+        f"  - {_format_markdown_code_span(f'{item.path}:{item.line}')} — {_format_markdown_plain_text(item.description)}"
         for item in result.evidence
     ]
 

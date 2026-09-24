@@ -54,9 +54,9 @@ def test_detects_all_markers_case_separators_and_camel_case(tmp_path: Path) -> N
 
     assert not result.passed
     assert len(result.evidence) == len(lines)
-    assert result.evidence[0].marker == "api-key"
-    assert result.evidence[3].marker == "x-api-key"
-    assert result.evidence[-1].marker == "shared-access-key"
+    assert result.evidence[0].description == "api-key"
+    assert result.evidence[3].description == "x-api-key"
+    assert result.evidence[-1].description == "shared-access-key"
     assert result.evidence[-1].line == len(lines)
 
 
@@ -122,7 +122,7 @@ def test_reports_each_distinct_marker_once_per_line(tmp_path: Path) -> None:
 
     result = run_check(source_snapshot_path)
 
-    assert [item.marker for item in result.evidence] == ["api-key", "secret-key"]
+    assert [item.description for item in result.evidence] == ["api-key", "secret-key"]
 
 
 def test_clean_source_snapshot_passes(tmp_path: Path) -> None:

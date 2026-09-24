@@ -37,7 +37,7 @@ class Evidence:
 
     path: str
     line: int
-    marker: str
+    description: str
 
 
 @dataclass(frozen=True)

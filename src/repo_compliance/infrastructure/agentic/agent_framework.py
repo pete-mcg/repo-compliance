@@ -32,7 +32,7 @@ from repo_compliance.settings import Settings
 EVALUATION_TIMEOUT_SECONDS = 120
 MCP_REQUEST_TIMEOUT_SECONDS = 30
 DOCKER_CLEANUP_TIMEOUT_SECONDS = 10
-MAX_EVIDENCE_MARKER_LENGTH = 100
+MAX_EVIDENCE_DESCRIPTION_LENGTH = 200
 MAX_EXPLANATION_LENGTH = 1000
 SERENA_IMAGE = (
     "ghcr.io/oraios/serena:1.7.0@"
@@ -69,9 +69,9 @@ class AgentEvidence(BaseModel):
         description="Source line number must be one-based (1 or greater).",
         examples=[5, 12, 24],
     )
-    marker: str = Field(
-        description="Short, non-empty evidence label.",
-        examples=["pull-request-trigger", "test-task", "run-tests"],
+    description: str = Field(
+        description="One short sentence explaining the significance of the cited line.",
+        examples=["This workflow runs on pull requests.", "This task runs the tests."],
     )
 
     @field_validator("path")
@@ -88,13 +88,13 @@ class AgentEvidence(BaseModel):
             raise ValueError("Evidence line must be positive.")
         return value
 
-    @field_validator("marker")
+    @field_validator("description")
     @classmethod
-    def validate_marker(cls, value: str) -> str:
-        """Require a short, non-empty evidence label."""
-        if not value or len(value) > MAX_EVIDENCE_MARKER_LENGTH:
+    def validate_description(cls, value: str) -> str:
+        """Require a short, non-empty evidence description."""
+        if not value or len(value) > MAX_EVIDENCE_DESCRIPTION_LENGTH:
             raise ValueError(
-                f"Evidence marker must contain 1 to {MAX_EVIDENCE_MARKER_LENGTH} characters."
+                f"Evidence description must contain 1 to {MAX_EVIDENCE_DESCRIPTION_LENGTH} characters."
             )
         return value
 
@@ -384,7 +384,7 @@ def _convert_agent_verdict_to_rule_evaluation(
     result: AgentStructuredResponse,
 ) -> RuleEvaluation:
     evidence = tuple(
-        Evidence(item.path, item.line, item.marker) for item in result.evidence
+        Evidence(item.path, item.line, item.description) for item in result.evidence
     )
     return RuleEvaluation(
         result.verdict is AgentVerdict.PASS, result.explanation, evidence
