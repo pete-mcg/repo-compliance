@@ -70,7 +70,7 @@ class AgentEvidence(BaseModel):
         examples=[5, 12, 24],
     )
     description: str = Field(
-        description="One short sentence explaining the significance of the cited line.",
+        description="One short sentence explaining the significance of the cited line. No fluff or waffle; straight to the point.",
         examples=["This workflow runs on pull requests.", "This task runs the tests."],
     )
 
@@ -106,7 +106,7 @@ class AgentStructuredResponse(BaseModel):
 
     verdict: AgentVerdict = Field(examples=["pass", "fail", "uncertain"])
     explanation: str = Field(
-        description="Succinct, efficient explanation. No fluff; straight to the point. One paragraph."
+        description="Succinct, efficient explanation. No fluff or waffle; straight to the point. One paragraph."
     )
     evidence: list[AgentEvidence]
 
