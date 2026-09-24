@@ -40,14 +40,12 @@ def test_converts_structured_response(verdict: str) -> None:
     assert result.evidence == (Evidence(".github/workflows/ci.yml", 3, "pr-trigger"),)
 
 
-def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
+def test_uncertainty_and_definitive_verdict_without_evidence_are_errors() -> None:
     with pytest.raises(AgentError, match="could not judge"):
         adapter._parse_agent_response(_judgement("uncertain"))
-    with pytest.raises(AgentError, match="without supporting evidence"):
-        adapter._parse_agent_response({**_judgement(), "evidence": []})
-    assert not adapter._parse_agent_response(
-        {**_judgement("fail"), "evidence": []}
-    ).passed
+    for verdict in ("pass", "fail"):
+        with pytest.raises(AgentError, match="without supporting evidence"):
+            adapter._parse_agent_response({**_judgement(verdict), "evidence": []})
 
 
 @pytest.mark.parametrize(

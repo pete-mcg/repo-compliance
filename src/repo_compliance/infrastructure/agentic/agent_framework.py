@@ -376,8 +376,10 @@ def _parse_agent_response(output: object) -> RuleEvaluation:
 def _ensure_usable_agent_verdict(result: AgentStructuredResponse) -> None:
     if result.verdict is AgentVerdict.UNCERTAIN:
         raise AgentError(f"Agent could not judge: {result.explanation}")
-    if result.verdict is AgentVerdict.PASS and not result.evidence:
-        raise AgentError("Agent returned a pass without supporting evidence.")
+    if not result.evidence:
+        raise AgentError(
+            f"Agent returned a {result.verdict} verdict without supporting evidence."
+        )
 
 
 def _convert_agent_verdict_to_rule_evaluation(
