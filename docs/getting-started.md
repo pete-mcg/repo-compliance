@@ -74,18 +74,18 @@ az login
 
 Repeat `az login` when Azure requires a fresh sign-in or you switch accounts.
 
-### 5. Download the Serena image
+### 5. Build the repository file server
 
-Serena provides the AI rule's file-reading tools.
+The project-owned MCP server provides the AI rule's read-only file tools.
 
 1. Ensure Rancher Desktop is running.
 2. Run the following command:
 
 ```shell
-docker pull ghcr.io/oraios/serena:1.7.0@sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730
+task mcp:build
 ```
 
-Repeat `docker pull` in future only if the local image is removed or the project changes the required image version. The checker reuses the local image and never downloads it during a run.
+Repeat this command if the local image is removed or the file server changes. The checker reuses the local image and never downloads it during a run.
 
 ### 6. Run the checker
 

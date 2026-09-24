@@ -42,8 +42,8 @@ strict = true
 testpaths = ["tests"]
 addopts = "-m 'not integration'" # By default, skip tests marked integration.
 markers = [
-  "integration: opt-in checks requiring Serena or Azure",
-  "serena: local Docker/MCP smoke check",
+  "integration: opt-in checks requiring the local MCP server or Azure",
+  "mcp: local Docker/MCP smoke check",
   "azure: live prompt checks using the approved Azure deployment",
 ]
 

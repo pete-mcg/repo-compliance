@@ -118,15 +118,13 @@ def test_evaluation_validates_output_and_cleans_resources(
 
     async def run(
         repository: Path,
-        state: Path,
         _name: str,
         _settings: Settings,
         prompt: str,
     ) -> object:
         assert prompt == "rule prompt"
         assert (repository / ".github/workflows/ci.yml").is_file()
-        assert (state / "project/project.yml").is_file()
-        paths.extend([repository, state])
+        paths.append(repository)
         if isinstance(output, Exception):
             raise output
         return output
@@ -157,12 +155,16 @@ def test_agent_requests_schema_and_closes_resources(
     credential = AsyncMock()
     monkeypatch.chdir(tmp_path)
     azure = AsyncMock()
-    serena = AsyncMock()
+    repository_files = AsyncMock()
     run = AsyncMock(return_value=SimpleNamespace(value=_judgement()))
     agent = Mock(return_value=SimpleNamespace(run=run))
     monkeypatch.setattr(adapter, "AzureCliCredential", Mock(return_value=credential))
     monkeypatch.setattr(adapter, "_create_azure_client", Mock(return_value=azure))
-    monkeypatch.setattr(adapter, "_create_serena_tool", Mock(return_value=serena))
+    monkeypatch.setattr(
+        adapter,
+        "_create_repository_files_tool",
+        Mock(return_value=repository_files),
+    )
     monkeypatch.setattr(adapter, "OpenAIChatCompletionClient", Mock())
     monkeypatch.setattr(adapter, "Agent", agent)
     if times_out:
@@ -174,15 +176,11 @@ def test_agent_requests_schema_and_closes_resources(
         run.side_effect = slow_run
         with pytest.raises(TimeoutError):
             asyncio.run(
-                adapter._get_agent_response(
-                    tmp_path, tmp_path, "test", Settings(), "prompt"
-                )
+                adapter._get_agent_response(tmp_path, "test", Settings(), "prompt")
             )
     else:
         output = asyncio.run(
-            adapter._get_agent_response(
-                tmp_path, tmp_path, "test", Settings(), "prompt"
-            )
+            adapter._get_agent_response(tmp_path, "test", Settings(), "prompt")
         )
         assert output == _judgement()
         run.assert_awaited_once_with(
@@ -194,7 +192,7 @@ def test_agent_requests_schema_and_closes_resources(
         "allow_multiple_tool_calls": False,
         "store": False,
     }
-    for resource in (serena, azure, credential):
+    for resource in (repository_files, azure, credential):
         resource.__aexit__.assert_awaited_once()
 
 
@@ -223,15 +221,15 @@ def test_azure_routing_ignores_unrelated_environment(
     asyncio.run(inspect())
 
 
-def test_serena_launch_is_local_and_restricted(tmp_path: Path) -> None:
-    tool = adapter._create_serena_tool(tmp_path / "source", tmp_path / "state", "test")
+def test_repository_file_server_launch_is_local_and_restricted(tmp_path: Path) -> None:
+    tool = adapter._create_repository_files_tool(tmp_path / "source", "test")
     arguments = tool.args
     assert tool.command == "docker"
-    assert tool.allowed_tools == adapter.SERENA_TOOLS
+    assert tool.allowed_tools == adapter.REPOSITORY_FILE_TOOLS
     assert not tool.load_prompts_flag
     assert "--read-only" in arguments
     assert arguments[arguments.index("--network") + 1] == "none"
     assert arguments[arguments.index("--pull") + 1] == "never"
-    assert adapter.SERENA_IMAGE in arguments and "@sha256:" in adapter.SERENA_IMAGE
+    assert adapter.REPOSITORY_FILES_IMAGE in arguments
     assert any(argument.endswith("dst=/repository,readonly") for argument in arguments)
     assert not any("TOKEN" in argument or "AZURE" in argument for argument in arguments)

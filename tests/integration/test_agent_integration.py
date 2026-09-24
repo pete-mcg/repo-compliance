@@ -9,10 +9,9 @@ import pytest
 from agent_framework import Content
 
 from repo_compliance.infrastructure.agentic.agent_framework import (
-    SERENA_TOOLS,
+    REPOSITORY_FILE_TOOLS,
     AgentFrameworkEvaluator,
-    _create_serena_tool,
-    _write_serena_configurations,
+    _create_repository_files_tool,
 )
 from repo_compliance.settings import get_env_settings
 
@@ -20,24 +19,13 @@ pytestmark = pytest.mark.integration
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "agent_repository"
 
 
-@pytest.mark.serena
-def test_serena_reads_isolated_source(tmp_path: Path) -> None:
+@pytest.mark.mcp
+def test_repository_file_server_reads_isolated_source(tmp_path: Path) -> None:
     repository = tmp_path / "repository"
     shutil.copytree(FIXTURE, repository)
-    untrusted_config = repository / ".serena"
-    untrusted_config.mkdir()
-    (untrusted_config / "project.yml").write_text(
-        "activation_command: touch /state/repository-config-was-executed\n"
-        "language_servers: [python]\nfixed_tools: [execute_shell_command]\n",
-        encoding="utf-8",
-    )
-    (repository / ".gitignore").write_text("README.md\n", encoding="utf-8")
-    state = tmp_path / "state"
-    state.mkdir()
-    _write_serena_configurations(state)
     container_name = f"repo-compliance-smoke-{uuid4().hex}"
     try:
-        asyncio.run(_inspect_serena(repository, state, container_name))
+        asyncio.run(_inspect_repository_files(repository, container_name))
     finally:
         subprocess.run(
             ["docker", "rm", "--force", container_name],
@@ -45,24 +33,27 @@ def test_serena_reads_isolated_source(tmp_path: Path) -> None:
             check=False,
             timeout=10,
         )
-    assert not (state / "repository-config-was-executed").exists()
     assert (repository / "README.md").read_bytes() == (
         FIXTURE / "README.md"
     ).read_bytes()
 
 
-async def _inspect_serena(repository: Path, state: Path, container_name: str) -> None:
+async def _inspect_repository_files(repository: Path, container_name: str) -> None:
     async with (
         asyncio.timeout(90),
-        _create_serena_tool(repository, state, container_name) as serena,
+        _create_repository_files_tool(repository, container_name) as repository_files,
     ):
-        assert serena.session is not None
-        tools = await serena.session.list_tools()
-        assert {tool.name for tool in tools.tools} == set(SERENA_TOOLS)
-        listing = await serena.call_tool("list_dir", relative_path=".", recursive=True)
+        assert repository_files.session is not None
+        tools = await repository_files.session.list_tools()
+        assert {tool.name for tool in tools.tools} == set(REPOSITORY_FILE_TOOLS)
+        listing = await repository_files.call_tool("list_files")
         assert "README.md" in _tool_text(listing)
-        readme = await serena.call_tool("read_file", relative_path="README.md")
+        readme = await repository_files.call_tool(
+            "read_lines", path="README.md", start_line=1, end_line=3
+        )
         assert "Run tests with `python -m unittest discover`." in _tool_text(readme)
+        search = await repository_files.call_tool("search_text", query="unittest")
+        assert "README.md:3:" in _tool_text(search)
         _assert_docker_isolation(container_name)
 
 
@@ -79,7 +70,8 @@ def _assert_docker_isolation(container_name: str) -> None:
             "inspect",
             "--format",
             (
-                "{{.HostConfig.ReadonlyRootfs}} {{.HostConfig.NetworkMode}} "
+                "{{.Config.User}} {{.HostConfig.ReadonlyRootfs}} "
+                "{{.HostConfig.NetworkMode}} "
                 '{{range .Mounts}}{{if eq .Destination "/repository"}}{{.RW}}{{end}}{{end}}'
             ),
             container_name,
@@ -89,7 +81,7 @@ def _assert_docker_isolation(container_name: str) -> None:
         check=True,
         timeout=10,
     )
-    assert inspected.stdout.strip() == "true none false"
+    assert inspected.stdout.strip() == "65532:65532 true none false"
     write = subprocess.run(
         ["docker", "exec", container_name, "touch", "/repository/should-not-exist"],
         capture_output=True,

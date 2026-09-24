@@ -11,6 +11,11 @@ tasks:
     cmds:
       - uv sync --upgrade
 
+  mcp:build:
+    desc: Build the local read-only repository file server
+    cmds:
+      - docker build --tag repo-compliance-repository-files:0.1.0 --file docker/repository-files/Dockerfile .
+
   ci:
     desc: Run all CI checks excluding integration tests
     cmds:
@@ -24,6 +29,7 @@ tasks:
     desc: Run all CI checks including integration tests
     cmds:
       - task: ci
+      - task: mcp:build
       - uv run --locked pytest -m integration
 
   adhoc:spelling:

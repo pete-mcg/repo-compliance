@@ -18,7 +18,7 @@ A layer is a group of responsibilities. It can be one file; it does not need its
 | `timing.py`                              | Define log function timings.                                             |
 | `infrastructure/github/`                 | Make GitHub requests and define shared response models.                  |
 | `infrastructure/source/`                 | Safely extract temporary source files and remove them afterwards.        |
-| `infrastructure/agentic/`                | Connect Azure and Serena, run AI checks, and validate replies.           |
+| `infrastructure/agentic/`                | Connect Azure and the local MCP server, run AI checks, and validate replies. |
 | `rules/registry.py`                      | List enabled rules in order.                                             |
 | `rules/deterministic/`, `rules/agentic/` | Decide whether each standard is met.                                     |
 

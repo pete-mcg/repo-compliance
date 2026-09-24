@@ -10,7 +10,7 @@ flowchart TD
     registry[rules/registry.py] --> app
     app --> runner[runner.py<br/>For each repository:<br/>skip exempt rules,<br/>check GitHub access,<br/>download main ZIP if needed]
     runner --> deterministic[Deterministic rules<br/>GitHub API / ZIP]
-    runner --> agentic[Agentic rules<br/>Agent Framework<br/>Azure OpenAI +<br/>Serena in Docker]
+    runner --> agentic[Agentic rules<br/>Agent Framework<br/>Azure OpenAI +<br/>read-only file server in Docker]
     deterministic --> results[Rule results]
     agentic --> results
     results --> report[report.py]
@@ -20,5 +20,5 @@ flowchart TD
 
 - Repositories run in configuration order; rules run in registry order.
 - Source rules share one temporary ZIP per repository.
-- For AI checks, Serena reads extracted source files in Docker. The Python process sends the prompt and inspected content to Azure OpenAI. Serena has read-only source access and no network access. Temporary files and containers are cleaned up after evaluation.
+- For AI checks, the project-owned MCP server reads extracted source files in Docker. It can only list files, search literal text, and read numbered lines. The Python process sends the prompt and inspected content to Azure OpenAI. The server has read-only source access and no network access. Temporary files and containers are cleaned up after evaluation.
 - Expected check errors become `ERROR` results while other checks continue.

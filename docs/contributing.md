@@ -10,14 +10,14 @@
 ## Tests
 
 - Mirror `src/repo_compliance/` beneath `tests/unit/`, and prefix test filenames with `test_`:
-- Integration tests check real services. Keep them in `tests/integration/`, mark them `integration` and either `serena` or `azure`, and put sample repositories in `tests/fixtures/`.
+- Integration tests check real services. Keep them in `tests/integration/`, mark them `integration` and either `mcp` or `azure`, and put sample repositories in `tests/fixtures/`.
 
 ```powershell
 # Unit tests; integration tests are excluded by default.
 uv run --locked pytest
 
-# Real Serena: requires Docker and the Serena image
-uv run --locked pytest -m serena tests/integration
+# Local MCP server: requires Docker and `task mcp:build`
+uv run --locked pytest -m mcp tests/integration
 
 # Live AI checks: also requires all settings configured and az login.
 uv run --locked pytest -m azure tests/integration

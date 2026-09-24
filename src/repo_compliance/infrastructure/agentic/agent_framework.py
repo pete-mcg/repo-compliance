@@ -1,14 +1,12 @@
-"""Evaluate local source with Microsoft Agent Framework, Azure, and Serena."""
+"""Evaluate local source with Microsoft Agent Framework and Azure OpenAI."""
 
 import asyncio
 import subprocess
 from enum import StrEnum
 from importlib.resources import files
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from uuid import uuid4
 
-import yaml  # pyrefly: ignore [untyped-import]
 from agent_framework import Agent, MCPStdioTool
 from agent_framework.exceptions import AgentFrameworkException
 from agent_framework_openai import (
@@ -34,13 +32,8 @@ MCP_REQUEST_TIMEOUT_SECONDS = 30
 DOCKER_CLEANUP_TIMEOUT_SECONDS = 10
 MAX_EVIDENCE_DESCRIPTION_LENGTH = 200
 MAX_EXPLANATION_LENGTH = 1000
-SERENA_IMAGE = (
-    "ghcr.io/oraios/serena:1.7.0@"
-    "sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730"
-)
-# Full Serena Tools catalogue: https://oraios.github.io/serena/01-about/035_tools.html
-# Runtime list: tests/integration/test_agent_integration.py:list_tools()
-SERENA_TOOLS = ("list_dir", "read_file", "find_file", "search_for_pattern")
+REPOSITORY_FILES_IMAGE = "repo-compliance-repository-files:0.1.0"
+REPOSITORY_FILE_TOOLS = ("list_files", "search_text", "read_lines")
 
 
 class AgentVerdict(StrEnum):
@@ -162,16 +155,11 @@ def _load_system_prompt() -> str:
 def _evaluate_source_snapshot_with_agent(
     snapshot_path: Path, prompt: str, settings: Settings
 ) -> RuleEvaluation:
-    with (
-        extracted_source_snapshot(snapshot_path) as repository,
-        TemporaryDirectory(prefix="repo-compliance-serena-") as temporary_state,
-    ):
-        state = Path(temporary_state)
-        _write_serena_configurations(state)
+    with extracted_source_snapshot(snapshot_path) as repository:
         container_name = f"repo-compliance-{uuid4().hex}"
         try:
             output = asyncio.run(
-                _get_agent_response(repository, state, container_name, settings, prompt)
+                _get_agent_response(repository, container_name, settings, prompt)
             )
         finally:
             _remove_container(container_name)
@@ -180,7 +168,6 @@ def _evaluate_source_snapshot_with_agent(
 
 async def _get_agent_response(
     repository: Path,
-    state: Path,
     container_name: str,
     settings: Settings,
     prompt: str,
@@ -189,9 +176,9 @@ async def _get_agent_response(
         asyncio.timeout(EVALUATION_TIMEOUT_SECONDS),
         AzureCliCredential() as credential,
         _create_azure_client(settings, credential) as azure_client,
-        _create_serena_tool(repository, state, container_name) as serena,
+        _create_repository_files_tool(repository, container_name) as repository_files,
     ):
-        agent = _create_agent(settings, azure_client, serena)
+        agent = _create_agent(settings, azure_client, repository_files)
         response = await agent.run(
             prompt, options={"response_format": AgentStructuredResponse}
         )
@@ -199,7 +186,9 @@ async def _get_agent_response(
 
 
 def _create_agent(
-    settings: Settings, azure_client: AsyncAzureOpenAI, serena: MCPStdioTool
+    settings: Settings,
+    azure_client: AsyncAzureOpenAI,
+    repository_files: MCPStdioTool,
 ) -> Agent:
     client = OpenAIChatCompletionClient(
         model=settings.deployment, async_client=azure_client
@@ -212,7 +201,7 @@ def _create_agent(
         client=client,
         name="repository-compliance",
         instructions=_load_system_prompt(),
-        tools=[serena],
+        tools=[repository_files],
         default_options=options,
     )
 
@@ -234,21 +223,21 @@ def _create_azure_client(
     )
 
 
-def _create_serena_tool(
-    repository: Path, state: Path, container_name: str
+def _create_repository_files_tool(
+    repository: Path, container_name: str
 ) -> MCPStdioTool:
     return MCPStdioTool(
         name="repository-files",
         command="docker",
-        args=_serena_docker_arguments(repository, state, container_name),
-        allowed_tools=SERENA_TOOLS,
+        args=_repository_files_docker_arguments(repository, container_name),
+        allowed_tools=REPOSITORY_FILE_TOOLS,
         load_prompts=False,
         request_timeout=MCP_REQUEST_TIMEOUT_SECONDS,
     )
 
 
-def _serena_docker_arguments(
-    repository: Path, state: Path, container_name: str
+def _repository_files_docker_arguments(
+    repository: Path, container_name: str
 ) -> list[str]:
     # Keep each option beside its value for readability.
     # fmt: off
@@ -266,79 +255,17 @@ def _serena_docker_arguments(
         "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges",
 
-        # Share repository files and provide writable working storage.
+        # Share repository files and provide small writable temporary storage.
         "--mount", f"type=bind,src={repository.resolve()},dst=/repository,readonly",
-        "--mount", f"type=bind,src={state.resolve()},dst=/state",
         "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m",
 
-        # Set Serena's home folder and disable Python cache files.
-        "--env", "SERENA_HOME=/state",
+        # Keep any library state temporary and disable Python cache files.
+        "--env", "HOME=/tmp",
         "--env", "PYTHONDONTWRITEBYTECODE=1",
 
-        # Select Serena's executable and image, then configure its tool server.
-        "--entrypoint", "/workspaces/serena/.venv/bin/serena",
-        SERENA_IMAGE,
-        "start-mcp-server",
-        "--transport", "stdio",
-        "--project", "/repository",
-        "--context", "/state/context.yml",
+        REPOSITORY_FILES_IMAGE,
     ]
     # fmt: on
-
-
-def _write_serena_configurations(state: Path) -> None:
-    project_state = _create_serena_project_state(state)
-    _write_yaml(state / "serena_config.yml", _serena_global_configuration())
-    _write_yaml(project_state / "project.yml", _serena_project_configuration())
-    _write_yaml(state / "context.yml", _serena_context_configuration())
-
-
-def _create_serena_project_state(state: Path) -> Path:
-    project_state = state / "project"
-    project_state.mkdir()
-    return project_state
-
-
-def _serena_global_configuration() -> dict[str, str | bool | int | list[str]]:
-    # See: https://github.com/oraios/serena/blob/main/src/serena/resources/serena_config.template.yml
-    return {
-        "web_dashboard": False,
-        "web_dashboard_open_on_launch": False,
-        "gui_log_window": False,
-        "log_level": 40,
-        "token_count_estimator": "CHAR_COUNT",
-        "project_serena_folder_location": "/state/project",
-        "trusted_project_path_patterns": [],
-        "projects": [],
-        "base_modes": [],
-        "default_modes": [],
-        "fixed_tools": list(SERENA_TOOLS),
-    }
-
-
-def _serena_project_configuration() -> dict[str, str | bool | list[str] | None]:
-    # See: https://github.com/oraios/serena/blob/main/src/serena/resources/project.template.yml
-    return {
-        "project_name": "repository",
-        "language_servers": [],
-        "read_only": True,
-        "ignore_all_files_in_gitignore": False,
-        "initial_prompt": "",
-        "activation_command": None,
-    }
-
-
-def _serena_context_configuration() -> dict[str, str | bool]:
-    # See: https://github.com/oraios/serena/blob/main/src/serena/resources/config/contexts/context.template.yml
-    return {
-        "name": "compliance",
-        "prompt": "",
-        "single_project": True,
-    }
-
-
-def _write_yaml(path: Path, configuration: object) -> None:
-    path.write_text(yaml.safe_dump(configuration), encoding="utf-8")
 
 
 def _remove_container(container_name: str) -> None:
