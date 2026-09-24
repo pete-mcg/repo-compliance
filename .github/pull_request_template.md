@@ -30,7 +30,7 @@ Before submitting this PR, please make sure:
 
 - [ ] My PR is small, focused and fulfils a single purpose. Greater than 400 line changes are **by exception**.
 - [ ] CI passes locally (`task ci`).
-- [ ] I have ran the tool locally and interregoted the outputs, and not just relied on automated quality checks.
+- [ ] I have run the tool locally and interrogated the outputs, and not just relied on automated quality checks.
 - [ ] I have updated relevant documentation.
 - [ ] Where AI has been used, I have reviewed the code produced and can defend it.
 - [ ] I have self-reviewed my code, following `docs/contributing.md`.

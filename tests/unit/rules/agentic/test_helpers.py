@@ -32,7 +32,7 @@ def test_load_rule_prompt_outside_working_directory(
 def test_evaluate_agentic_rule(tmp_path: Path) -> None:
     snapshot = tmp_path / "source.zip"
     snapshot.touch()
-    evaluation = RuleEvaluation(True, "Judgment")
+    evaluation = RuleEvaluation(True, "Judgement")
     evaluator = FakeAgentEvaluator(evaluation)
     context = RuleContext("example/service", FakeGitHub(), snapshot, evaluator)
 

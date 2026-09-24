@@ -1,6 +1,6 @@
 # Quick start
 
-This tool may be ran locally on your developer machine or via GitHub ations.
+This tool may be run locally on your developer machine or via GitHub Actions.
 
 ## Run Locally: First-time setup
 

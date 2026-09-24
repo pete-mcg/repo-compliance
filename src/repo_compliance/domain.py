@@ -54,7 +54,7 @@ class AgentEvaluator(Protocol):
     """Reason about a local source ZIP using a supplied rule prompt."""
 
     def evaluate(self, snapshot_path: Path, prompt: str) -> RuleEvaluation:
-        """Return a validated judgment or raise AgentError when unavailable."""
+        """Return a validated judgement or raise AgentError when unavailable."""
 
 
 class GitHubApi(Protocol):

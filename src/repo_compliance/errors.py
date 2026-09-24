@@ -18,7 +18,7 @@ class SourceSnapshotError(ComplianceError):
 
 
 class AgentError(ComplianceError):
-    """Raised when an agent cannot provide a reliable rule judgment."""
+    """Raised when an agent cannot provide a reliable rule judgement."""
 
 
 class CliError(ComplianceError):

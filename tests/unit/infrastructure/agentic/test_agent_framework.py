@@ -23,7 +23,7 @@ def _configure_azure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("AZURE_OPENAI_API_VERSION", "2024-10-21")
 
 
-def _judgment(verdict: str = "pass") -> dict[str, object]:
+def _judgement(verdict: str = "pass") -> dict[str, object]:
     return {
         "verdict": verdict,
         "explanation": "CI tests run on pull requests to main.",
@@ -35,18 +35,18 @@ def _judgment(verdict: str = "pass") -> dict[str, object]:
 
 @pytest.mark.parametrize("verdict", ["pass", "fail"])
 def test_converts_structured_response(verdict: str) -> None:
-    result = adapter._parse_agent_response(_judgment(verdict))
+    result = adapter._parse_agent_response(_judgement(verdict))
     assert result.passed is (verdict == "pass")
     assert result.evidence == (Evidence(".github/workflows/ci.yml", 3, "pr-trigger"),)
 
 
 def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
     with pytest.raises(AgentError, match="could not judge"):
-        adapter._parse_agent_response(_judgment("uncertain"))
+        adapter._parse_agent_response(_judgement("uncertain"))
     with pytest.raises(AgentError, match="without supporting evidence"):
-        adapter._parse_agent_response({**_judgment(), "evidence": []})
+        adapter._parse_agent_response({**_judgement(), "evidence": []})
     assert not adapter._parse_agent_response(
-        {**_judgment("fail"), "evidence": []}
+        {**_judgement("fail"), "evidence": []}
     ).passed
 
 
@@ -66,7 +66,7 @@ def test_uncertainty_and_pass_without_evidence_are_errors() -> None:
 )
 def test_rejects_invalid_structured_output(changes: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
-        adapter._parse_agent_response({**_judgment(), **changes})
+        adapter._parse_agent_response({**_judgement(), **changes})
 
 
 def test_schema_uses_supported_azure_keywords() -> None:
@@ -106,7 +106,8 @@ def test_expected_failures_are_safe_rule_errors(
 
 
 @pytest.mark.parametrize(
-    "output", [_judgment(), None, {"verdict": "pass"}, ToolException("MCP unavailable")]
+    "output",
+    [_judgement(), None, {"verdict": "pass"}, ToolException("MCP unavailable")],
 )
 def test_evaluation_validates_output_and_cleans_resources(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, output: object
@@ -135,7 +136,7 @@ def test_evaluation_validates_output_and_cleans_resources(
     monkeypatch.setattr(adapter, "_get_agent_response", run)
     remove = Mock()
     monkeypatch.setattr(adapter, "_remove_container", remove)
-    if output == _judgment():
+    if output == _judgement():
         assert (
             adapter.AgentFrameworkEvaluator(Settings())
             .evaluate(snapshot, "rule prompt")
@@ -159,7 +160,7 @@ def test_agent_requests_schema_and_closes_resources(
     monkeypatch.chdir(tmp_path)
     azure = AsyncMock()
     serena = AsyncMock()
-    run = AsyncMock(return_value=SimpleNamespace(value=_judgment()))
+    run = AsyncMock(return_value=SimpleNamespace(value=_judgement()))
     agent = Mock(return_value=SimpleNamespace(run=run))
     monkeypatch.setattr(adapter, "AzureCliCredential", Mock(return_value=credential))
     monkeypatch.setattr(adapter, "_create_azure_client", Mock(return_value=azure))
@@ -185,7 +186,7 @@ def test_agent_requests_schema_and_closes_resources(
                 tmp_path, tmp_path, "test", Settings(), "prompt"
             )
         )
-        assert output == _judgment()
+        assert output == _judgement()
         run.assert_awaited_once_with(
             "prompt", options={"response_format": adapter.AgentStructuredResponse}
         )

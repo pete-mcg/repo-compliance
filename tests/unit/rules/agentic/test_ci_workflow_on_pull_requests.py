@@ -26,7 +26,9 @@ def test_rule_loads_prompt_outside_working_directory(
     monkeypatch.chdir(tmp_path)
     snapshot = tmp_path / "source.zip"
     snapshot.touch()
-    evaluation = RuleEvaluation(passed, "Judgment", (Evidence("ci.yml", 1, "trigger"),))
+    evaluation = RuleEvaluation(
+        passed, "Judgement", (Evidence("ci.yml", 1, "trigger"),)
+    )
     evaluator = FakeAgentEvaluator(evaluation)
     context = RuleContext("example/service", FakeGitHub(), snapshot, evaluator)
 

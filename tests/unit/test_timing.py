@@ -7,7 +7,7 @@ from repo_compliance import timing
 
 
 @pytest.mark.parametrize("raises", [False, True])
-def test_timing_preserves_behavior_and_logs_elapsed_time(
+def test_timing_preserves_behaviour_and_logs_elapsed_time(
     raises: bool, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     monkeypatch.setattr(timing, "perf_counter", Mock(side_effect=[10.0, 12.5]))

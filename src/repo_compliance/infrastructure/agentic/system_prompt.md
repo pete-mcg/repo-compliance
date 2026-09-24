@@ -12,7 +12,7 @@ Evaluate the local repository at `/repository`, a snapshot of its `main` branch,
 ## Structured response
 
 Return the requested schema: 
-- `verdict` (`pass`, `fail`, or `uncertain`). `pass` and `fail` imply you have positive justification for that classification; `uncertain` implies you are not sure, are suspending judgment, or the evidence is not favourably `pass` or `fail` (is a wash).   
+- `verdict` (`pass`, `fail`, or `uncertain`). `pass` and `fail` imply you have positive justification for that classification; `uncertain` implies you are not sure, are suspending judgement, or the evidence is not favourably `pass` or `fail` (is a wash).
 - a short `explanation`
 - an `evidence` list. 
 

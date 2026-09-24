@@ -44,7 +44,7 @@ SERENA_TOOLS = ("list_dir", "read_file", "find_file", "search_for_pattern")
 
 
 class AgentVerdict(StrEnum):
-    """Judgments accepted from the model."""
+    """Judgements accepted from the model."""
 
     PASS = "pass"
     FAIL = "fail"
