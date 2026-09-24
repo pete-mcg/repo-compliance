@@ -33,4 +33,4 @@ Before submitting this PR, please make sure:
 - [ ] I have ran the tool locally and interregoted the outputs, and not just relied on automated quality checks.
 - [ ] I have updated relevant documentation.
 - [ ] Where AI has been used, I have reviewed the code produced and can defend it.
-- [ ] I have self-reviewed my code, following `docs/development.md`.
+- [ ] I have self-reviewed my code, following `docs/contributing.md`.
