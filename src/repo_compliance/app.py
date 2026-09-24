@@ -13,6 +13,7 @@ from repo_compliance.report import build_report
 from repo_compliance.rules.registry import RULE_IDS, RULES
 from repo_compliance.runner import run_all_compliance_checks
 from repo_compliance.settings import get_env_settings
+from repo_compliance.timing import timed
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ CONFIG_PATH = Path("config/repositories.yml")
 REPORT_PATH = Path("compliance-report.md")
 
 
+@timed
 def main() -> int:
     """Run checks, write the report, and return a process exit code."""
     try:
