@@ -27,11 +27,11 @@ tasks:
       - uv run --locked pytest -m integration
 
   adhoc:spelling:
-    desc: Adhoc check that the repository spelling uses British English
+    desc: Adhoc check that the repository spelling uses British English. Non-priority; just convenience.
     cmds:
       - npx --yes cspell@10.3.3 --locale en-GB --gitignore --dot --exclude .git --exclude uv.lock .
 
   adhoc:format:
-    desc: Adhoc check that files which Ruff will not touch, are formatted correctly
+    desc: Adhoc check that files which Ruff will not touch, are formatted correctly. Non-priority; just convenience.
     cmds:
       - npx --yes oxfmt@0.70.0 "." "!**/src/**" "!**/tests/**"
