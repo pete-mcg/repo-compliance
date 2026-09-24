@@ -34,4 +34,4 @@ tasks:
   adhoc:format:
     desc: Adhoc check that files which Ruff will not touch, are formatted correctly
     cmds:
-      - npx --yes oxfmt@0.70.0 "." "!**/.agents/**" "!**/src/**" "!**/tests/**"
+      - npx --yes oxfmt@0.70.0 "." "!**/src/**" "!**/tests/**"
