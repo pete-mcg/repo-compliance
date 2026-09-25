@@ -49,12 +49,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: 🐳 Build the local Serena image
-        run: |
-          uv run --frozen python - <<'PY'
-          import subprocess
-          from repo_compliance.infrastructure.agentic.agent_framework import SERENA_IMAGE
-          subprocess.run(["docker", "build", "--tag", SERENA_IMAGE, "mcp"], check=True)
-          PY
+        run: docker build --tag repo-compliance-serena mcp
 
       - name: ✅ Run compliance checks
         run: uv run --frozen repo-compliance
