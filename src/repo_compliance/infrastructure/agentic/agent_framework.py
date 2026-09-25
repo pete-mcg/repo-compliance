@@ -29,11 +29,22 @@ from repo_compliance.infrastructure.source.source_snapshot import (
 )
 from repo_compliance.settings import Settings
 
+# Execution limits.
 EVALUATION_TIMEOUT_SECONDS = 120
 MCP_REQUEST_TIMEOUT_SECONDS = 30
 DOCKER_CLEANUP_TIMEOUT_SECONDS = 10
+
+# Function invocation limits.
+MAX_FUNCTION_CALLS: int | None = None
+MAX_ITERATIONS = 40
+MAX_CONSECUTIVE_ERRORS_PER_REQUEST = 3
+INCLUDE_DETAILED_ERRORS = True
+
+# Response validation limits.
 MAX_EVIDENCE_DESCRIPTION_LENGTH = 200
 MAX_EXPLANATION_LENGTH = 1000
+
+# Serena configuration.
 SERENA_IMAGE = "repo-compliance-serena"
 # Read-only File Tools and Symbol Tools used.
 # Full Serena Tools catalogue: https://oraios.github.io/serena/01-about/035_tools.html
@@ -209,7 +220,14 @@ def _create_agent(
     settings: Settings, azure_client: AsyncAzureOpenAI, serena: MCPStdioTool
 ) -> Agent:
     client = OpenAIChatCompletionClient(
-        model=settings.deployment, async_client=azure_client
+        model=settings.deployment,
+        async_client=azure_client,
+        function_invocation_configuration={
+            "max_function_calls": MAX_FUNCTION_CALLS,
+            "max_iterations": MAX_ITERATIONS,
+            "max_consecutive_errors_per_request": MAX_CONSECUTIVE_ERRORS_PER_REQUEST,
+            "include_detailed_errors": INCLUDE_DETAILED_ERRORS,
+        },
     )
     options: OpenAIChatCompletionOptions = {
         "allow_multiple_tool_calls": False,
