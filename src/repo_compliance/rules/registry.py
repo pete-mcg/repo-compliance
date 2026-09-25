@@ -9,6 +9,9 @@ from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import (
 from repo_compliance.rules.agentic.frontend_build_identifier_visible import (
     RULE as FRONTEND_BUILD_IDENTIFIER_VISIBLE,
 )
+from repo_compliance.rules.agentic.local_azure_authentication_uses_developer_identity import (
+    RULE as LOCAL_AZURE_AUTHENTICATION_USES_DEVELOPER_IDENTITY,
+)
 from repo_compliance.rules.deterministic.codeowners_present import (
     RULE as CODEOWNERS_PRESENT,
 )
@@ -29,6 +32,7 @@ RULES = (
     ARTEFACT_GENERATION_MANUAL_ONLY,
     CI_WORKFLOW_ON_PULL_REQUESTS,
     FRONTEND_BUILD_IDENTIFIER_VISIBLE,
+    LOCAL_AZURE_AUTHENTICATION_USES_DEVELOPER_IDENTITY,
     CODEOWNERS_PRESENT,
     DEPLOY_WORKFLOW_PRESENT,
     MAIN_BRANCH_DELETION_PROTECTED,
