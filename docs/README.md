@@ -20,6 +20,10 @@ It's important to limit where data is sent in this repository. This checker inte
 
 The chosen Serena MCP runs from a local Docker image. It receives a read-only local copy of the source files to inspect, but its container has no network access, so it does not send data to OrAIOS (Serena's publisher) or any other external service.
 
+## Exploring GitHub MCP
+
+GitHub MCP looks very promising for a Serena MCP replacement, especially for future rules that need richer access to GitHub data. Before doing so, we need to confirm that we are comfortable with the service terms, processing region, data retention, and related governance (assuming the same as GitHub more broadly when we host our code on here?), and understand the additional GitHub API calls and rate-limit impact.
+
 ## Guides
 
 - [Quick start](getting-started.md): install, configure, and run.
