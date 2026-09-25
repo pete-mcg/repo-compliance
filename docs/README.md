@@ -11,6 +11,15 @@ This project checks a configured list of repositories against those standards an
 
 Checks may have different levels of certainty. Direct checks use GitHub data or repository files; AI-assisted checks inspect source and may return an uncertain result.
 
+## Where data is sent
+
+It's important to limit where data is sent in this repository. This checker intentionally **only** sends data to GitHub and the configured Azure OpenAI deployment; no other external services are permitted.
+
+- **GitHub** receives authenticated requests for the configured repositories. When the checker runs in GitHub Actions, GitHub also receives the generated report as the workflow summary and an artifact.
+- **Azure OpenAI** receives the prompt and source content inspected for an AI-assisted rule.
+
+The chosen Serena MCP runs from a local Docker image. It receives a read-only local copy of the source files to inspect, but its container has no network access, so it does not send data to OrAIOS (Serena's publisher) or any other external service.
+
 ## Guides
 
 - [Quick start](getting-started.md): install, configure, and run.
