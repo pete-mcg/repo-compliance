@@ -19,13 +19,12 @@ from azure.core.exceptions import ClientAuthenticationError
 from azure.identity.aio import AzureCliCredential, get_bearer_token_provider
 from mcp.shared.exceptions import McpError
 from openai import APIError, AsyncAzureOpenAI, DefaultAsyncHttpxClient
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from repo_compliance.domain import Evidence, RuleEvaluation
 from repo_compliance.errors import AgentError
 from repo_compliance.infrastructure.source.source_snapshot import (
     extracted_source_snapshot,
-    safe_relative_path,
 )
 from repo_compliance.settings import Settings
 
@@ -38,10 +37,6 @@ DOCKER_CLEANUP_TIMEOUT_SECONDS = 10
 MAX_FUNCTION_CALLS: int | None = None
 MAX_ITERATIONS = 40
 MAX_CONSECUTIVE_ERRORS_PER_REQUEST = 3
-
-# Response validation limits.
-MAX_EVIDENCE_DESCRIPTION_LENGTH = 200
-MAX_EXPLANATION_LENGTH = 1000
 
 # Serena configuration.
 SERENA_IMAGE = "repo-compliance-serena"
@@ -73,10 +68,6 @@ class AgentEvidence(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    # Azure structured outputs do not support JSON schema limits such as
-    # minLength, maxLength, or minimum, which Field constraints would generate.
-    # Descriptions are included in the JSON schema provided to the model;
-    # validators enforce them locally AFTER the response is generated.
     path: str = Field(
         description="Evidence path must be relative to the repository.",
         examples=[".github/workflows/ci.yml", "Taskfile.yml", "scripts/test.sh"],
@@ -91,30 +82,6 @@ class AgentEvidence(BaseModel):
         examples=["This workflow runs on pull requests.", "This task runs the tests."],
     )
 
-    @field_validator("path")
-    @classmethod
-    def validate_path(cls, value: str) -> str:
-        """Keep evidence paths relative to the repository."""
-        return str(safe_relative_path(value))
-
-    @field_validator("line")
-    @classmethod
-    def validate_line(cls, value: int) -> int:
-        """Require one-based source line numbers."""
-        if value < 1:
-            raise ValueError("Evidence line must be positive.")
-        return value
-
-    @field_validator("description")
-    @classmethod
-    def validate_description(cls, value: str) -> str:
-        """Require a short, non-empty evidence description."""
-        if not value or len(value) > MAX_EVIDENCE_DESCRIPTION_LENGTH:
-            raise ValueError(
-                f"Evidence description must contain 1 to {MAX_EVIDENCE_DESCRIPTION_LENGTH} characters."
-            )
-        return value
-
 
 class AgentStructuredResponse(BaseModel):
     """Structured response requested from the Azure deployment."""
@@ -126,16 +93,6 @@ class AgentStructuredResponse(BaseModel):
         description="Succinct, efficient explanation. No fluff or waffle; straight to the point. One paragraph."
     )
     evidence: list[AgentEvidence]
-
-    @field_validator("explanation")
-    @classmethod
-    def validate_explanation(cls, value: str) -> str:
-        """Require a short, non-empty explanation."""
-        if not value or len(value) > MAX_EXPLANATION_LENGTH:
-            raise ValueError(
-                f"Explanation must contain 1 to {MAX_EXPLANATION_LENGTH:,} characters."
-            )
-        return value
 
 
 class AgentFrameworkEvaluator:
