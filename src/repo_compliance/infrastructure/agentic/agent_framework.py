@@ -34,13 +34,20 @@ MCP_REQUEST_TIMEOUT_SECONDS = 30
 DOCKER_CLEANUP_TIMEOUT_SECONDS = 10
 MAX_EVIDENCE_DESCRIPTION_LENGTH = 200
 MAX_EXPLANATION_LENGTH = 1000
-SERENA_IMAGE = (
-    "ghcr.io/oraios/serena:1.7.0@"
-    "sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730"
-)
+SERENA_IMAGE = "repo-compliance-serena"
+# Read-only File Tools and Symbol Tools used.
 # Full Serena Tools catalogue: https://oraios.github.io/serena/01-about/035_tools.html
-# Runtime list: tests/integration/test_agent_integration.py:list_tools()
-SERENA_TOOLS = ("list_dir", "read_file", "find_file", "search_for_pattern")
+SERENA_TOOLS = (
+    "list_dir",
+    "read_file",
+    "find_file",
+    "search_for_pattern",
+    "get_symbols_overview",
+    "find_symbol",
+    "find_referencing_symbols",
+    "find_implementations",
+    "find_declaration",
+)
 
 
 class AgentVerdict(StrEnum):
@@ -273,6 +280,7 @@ def _serena_docker_arguments(
 
         # Set Serena's home folder and disable Python cache files.
         "--env", "SERENA_HOME=/state",
+        "--env", "HOME=/state",
         "--env", "PYTHONDONTWRITEBYTECODE=1",
 
         # Select Serena's executable and image, then configure its tool server.
@@ -299,7 +307,7 @@ def _create_serena_project_state(state: Path) -> Path:
     return project_state
 
 
-def _serena_global_configuration() -> dict[str, str | bool | int | list[str]]:
+def _serena_global_configuration() -> dict[str, object]:
     # See: https://github.com/oraios/serena/blob/main/src/serena/resources/serena_config.template.yml
     return {
         "web_dashboard": False,
@@ -313,6 +321,13 @@ def _serena_global_configuration() -> dict[str, str | bool | int | list[str]]:
         "base_modes": [],
         "default_modes": [],
         "fixed_tools": list(SERENA_TOOLS),
+        # Installed in the image; never download language servers during a check.
+        "ls_specific_settings": {
+            "python_pyrefly": {"ls_path": "/opt/pyrefly/bin/pyrefly"},
+            "typescript": {
+                "ls_path": "/opt/typescript/node_modules/.bin/typescript-language-server"
+            },
+        },
     }
 
 
@@ -320,7 +335,7 @@ def _serena_project_configuration() -> dict[str, str | bool | list[str] | None]:
     # See: https://github.com/oraios/serena/blob/main/src/serena/resources/project.template.yml
     return {
         "project_name": "repository",
-        "language_servers": [],
+        "language_servers": ["python_pyrefly", "typescript"],
         "read_only": True,
         "ignore_all_files_in_gitignore": False,
         "initial_prompt": "",

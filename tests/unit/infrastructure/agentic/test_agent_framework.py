@@ -232,6 +232,6 @@ def test_serena_launch_is_local_and_restricted(tmp_path: Path) -> None:
     assert "--read-only" in arguments
     assert arguments[arguments.index("--network") + 1] == "none"
     assert arguments[arguments.index("--pull") + 1] == "never"
-    assert adapter.SERENA_IMAGE in arguments and "@sha256:" in adapter.SERENA_IMAGE
+    assert adapter.SERENA_IMAGE in arguments
     assert any(argument.endswith("dst=/repository,readonly") for argument in arguments)
     assert not any("TOKEN" in argument or "AZURE" in argument for argument in arguments)
