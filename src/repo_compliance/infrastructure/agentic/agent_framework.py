@@ -36,12 +36,10 @@ DOCKER_CLEANUP_TIMEOUT_SECONDS = 10
 # Function invocation limits.
 MAX_FUNCTION_CALLS: int | None = None
 MAX_ITERATIONS = 40
-MAX_CONSECUTIVE_ERRORS_PER_REQUEST = 3
+MAX_CONSECUTIVE_ERRORS_PER_REQUEST = 5
 
 # Serena configuration.
 SERENA_IMAGE = "repo-compliance-serena"
-# Read-only File Tools and Symbol Tools used.
-# Full Serena Tools catalogue: https://oraios.github.io/serena/01-about/035_tools.html
 SERENA_TOOLS = (
     "list_dir",
     "read_file",
@@ -53,6 +51,8 @@ SERENA_TOOLS = (
     "find_implementations",
     "find_declaration",
 )
+# Read-only File Tools and Symbol Tools used.
+# Full Serena Tools catalogue: https://oraios.github.io/serena/01-about/035_tools.html
 
 
 class AgentVerdict(StrEnum):
@@ -295,7 +295,6 @@ def _serena_global_configuration() -> dict[str, object]:
         "base_modes": [],
         "default_modes": [],
         "fixed_tools": list(SERENA_TOOLS),
-        # Installed in the image; never download language servers during a check.
         "ls_specific_settings": {
             "python_pyrefly": {"ls_path": "/opt/pyrefly/bin/pyrefly"},
             "typescript": {
