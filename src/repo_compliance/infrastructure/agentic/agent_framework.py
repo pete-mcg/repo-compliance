@@ -38,7 +38,6 @@ DOCKER_CLEANUP_TIMEOUT_SECONDS = 10
 MAX_FUNCTION_CALLS: int | None = None
 MAX_ITERATIONS = 40
 MAX_CONSECUTIVE_ERRORS_PER_REQUEST = 3
-INCLUDE_DETAILED_ERRORS = True
 
 # Response validation limits.
 MAX_EVIDENCE_DESCRIPTION_LENGTH = 200
@@ -226,7 +225,7 @@ def _create_agent(
             "max_function_calls": MAX_FUNCTION_CALLS,
             "max_iterations": MAX_ITERATIONS,
             "max_consecutive_errors_per_request": MAX_CONSECUTIVE_ERRORS_PER_REQUEST,
-            "include_detailed_errors": INCLUDE_DETAILED_ERRORS,
+            "include_detailed_errors": True,
         },
     )
     options: OpenAIChatCompletionOptions = {
