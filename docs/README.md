@@ -7,7 +7,7 @@ This project checks a configured list of repositories against those standards an
 ## Where to make changes
 
 - Add or remove monitored repositories in [config/repositories.yml](../config/repositories.yml). You can also give a repository a reasoned exemption from a particular rule there.
-- Add or change rules in [src/repo_compliance/rules/](../src/repo_compliance/rules/). Each rule has its own file, grouped by evaluation method: `deterministic/` for direct checks and `agentic/` for AI-assisted judgments. Enable rules in [registry.py](../src/repo_compliance/rules/registry.py). See [Adding and removing rules](rules.md) for the steps.
+- Add or change rules in [src/repo_compliance/rules/](../src/repo_compliance/rules/). Each rule has its own file, grouped by evaluation method: `deterministic/` for direct checks and `agentic/` for AI-assisted judgements. Enable rules in [registry.py](../src/repo_compliance/rules/registry.py). See [Adding and removing rules](rules.md) for the steps.
 
 Checks may have different levels of certainty. Direct checks use GitHub data or repository files; AI-assisted checks inspect source and may return an uncertain result.
 
