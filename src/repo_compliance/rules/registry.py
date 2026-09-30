@@ -9,6 +9,9 @@ from repo_compliance.rules.agentic.ci_workflow_targeting_development import (
 from repo_compliance.rules.agentic.frontend_build_identifier_visible import (
     RULE as FRONTEND_BUILD_IDENTIFIER_VISIBLE,
 )
+from repo_compliance.rules.agentic.healthz_endpoint_present import (
+    RULE as HEALTHZ_ENDPOINT_PRESENT,
+)
 from repo_compliance.rules.agentic.local_azure_authentication_uses_developer_identity import (
     RULE as LOCAL_AZURE_AUTHENTICATION_USES_DEVELOPER_IDENTITY,
 )
@@ -47,6 +50,7 @@ RULES = (
     ARTEFACT_GENERATION_MANUAL_ONLY,
     CI_WORKFLOW_ON_PULL_REQUESTS,
     FRONTEND_BUILD_IDENTIFIER_VISIBLE,
+    HEALTHZ_ENDPOINT_PRESENT,
     LOCAL_AZURE_AUTHENTICATION_USES_DEVELOPER_IDENTITY,
     NO_PROHIBITED_TOOLING,
     PROJECT_DOCUMENTATION_PRESENT,
