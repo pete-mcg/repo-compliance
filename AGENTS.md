@@ -37,4 +37,5 @@ The chosen Serena MCP runs from a local Docker image. It receives a read-only lo
   - Do one thing per function;
   - Keep to one level of abstraction within a function;
   - Keep functions simple;
+- Always British English.
 - The quality gate is `task ci`.
