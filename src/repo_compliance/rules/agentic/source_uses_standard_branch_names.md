@@ -4,20 +4,32 @@ Source code must use `main` instead of `master` and `development` instead of `de
 
 ## Pass
 
-No active branch references use `master` or `dev`. A repository with no branch references also passes after inspection.
+No active branch reference uses `master` or `dev`; no branch references also passes after inspection.
 
-Ignore unrelated uses of these words, such as a `dev` environment, dependency group, or variable name, and historical comments or examples describing migration away from old branch names. Other branch names, such as `feature/dev-tools`, are allowed.
+Examples:
+- References use `main` and `development`.
+- `dev` names an environment or appears in `feature/dev-tools`.
+
+Ignore unrelated words and historical migration examples.
 
 ## Fail
 
-At least one active reference uses the exact branch name `master` or `dev`, including qualified forms such as `refs/heads/dev` or `origin/master`. Examples include workflow push or pull-request filters, checkout refs, Git commands, branch comparisons, and branch-specific URLs. Recommend `main` for `master` and `development` for `dev`.
+An active reference uses the exact branch name `master` or `dev`, including qualified forms. Recommend `main` or `development`, respectively.
 
-For example, `on: {push: {branches: [dev]}}` fails; `on: {push: {branches: [development]}}` complies.
+Examples:
+- Workflow filters or checkout refs target `dev` or `origin/master`.
+- Git commands, comparisons, or branch-specific URLs use either name.
 
 ## Uncertain
 
-Branch references are constructed dynamically or inspection is incomplete, so compliance cannot be established. A confirmed violation still fails.
+Branch references are dynamic or inspection is incomplete, so compliance cannot be established. A confirmed violation still fails.
+
+Examples:
+- A branch name is assembled from variables.
+- A referenced workflow or script is unavailable.
 
 ## Evidence
 
-Cite files and lines containing non-compliant branch references. For a pass, cite compliant references or inspected files supporting the absence of old branch names. For uncertainty, cite the unresolved reference or explain the inspection gap.
+- Pass: cite compliant references or inspected files supporting absence of old names.
+- Fail: cite the active `master` or `dev` reference.
+- Uncertain: cite the unresolved reference or inspection gap.

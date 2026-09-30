@@ -10,20 +10,35 @@ Source code and documentation must not use or refer to:
 
 ## Pass
 
-No use of or reference to prohibited tooling is found after inspection. Docker via Rancher Desktop and `docker-ce` in WSL are approved. Generic Docker commands, Dockerfiles, Compose files, and container images do not by themselves imply Docker Desktop use.
+Inspection finds no use or reference to prohibited tooling. Rancher Desktop and `docker-ce` in WSL are approved; generic Docker files or commands do not imply Docker Desktop.
 
-Ignore unrelated meanings, such as anaconda the animal or postman a postal worker. Match tooling references regardless of case or spelling variants such as `DockerDesktop` and `miniconda3`.
+Examples:
+- Docker instructions use Rancher Desktop or `docker-ce` in WSL.
+- `postman` refers to a postal worker, not the tool.
+
+Match case and variants such as `DockerDesktop` or `miniconda3`; ignore unrelated meanings.
 
 ## Fail
 
-At least one use of or reference to prohibited tooling is found. This includes installation instructions, dependencies, executable paths, download links, Docker Desktop-specific settings, and Postman collections or environments. Historical, migration, and negative references also fail: the standard prohibits references, not only active use. For example, documentation saying "Do not use Docker Desktop; use Rancher Desktop" fails because it still refers to Docker Desktop.
+At least one source or documentation reference identifies prohibited tooling. Historical, migration, and negative references also fail.
 
-Do not treat generic Docker or Conda references as proof of a prohibited distribution; inspect context to establish whether they refer to prohibited tooling.
+Examples:
+- Install steps, dependencies, executable paths, download links, or Docker Desktop settings.
+- Postman collections or environments.
+- “Do not use Docker Desktop; use Rancher Desktop.”
+
+Generic Docker or Conda references alone do not establish a violation; use context.
 
 ## Uncertain
 
-Tooling references cannot be resolved to an approved or prohibited tool, or inspection is incomplete. A confirmed violation still fails.
+Tooling references cannot be resolved or inspection is incomplete. A confirmed violation still fails.
+
+Examples:
+- An ambiguous Conda setup does not identify the distribution.
+- Relevant source or documentation could not be inspected.
 
 ## Evidence
 
-Cite files and lines showing prohibited use or references, naming the tool. For a pass, cite inspected files supporting the absence of prohibited tooling or the use of approved Docker alternatives. For uncertainty, cite ambiguous references or explain the inspection gap.
+- Pass: cite inspected files showing approved alternatives or no prohibited reference.
+- Fail: cite the line naming the prohibited tool and its context.
+- Uncertain: cite ambiguous references or describe the inspection gap.
