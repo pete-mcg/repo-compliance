@@ -28,19 +28,19 @@ Agent rules require a prompt markdown file. Keep the prompt beside the Python fi
 
 ## Pass
 
-[insert clear criteria]
+[ennumerate clear criteria]
 
 ## Fail
 
-[insert clear criteria]
+[ennumerate clear criteria]
 
 ## Uncertain
 
-[insert clear criteria]
+[ennumerate clear criteria]
 
 ## Evidence
 
-[insert what to cite]
+[ennumerate what to cite]
 ```
 
 Shared instructions and response formatting already live in the [system prompt](../src/repo_compliance/infrastructure/agentic/system_prompt.md).

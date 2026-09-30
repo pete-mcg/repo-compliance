@@ -22,8 +22,6 @@ Return `fail` when **at least one** local path connects to an Azure resource usi
 - managed identity or workload identity with no local developer-user alternative;
 - a shared account or any other non-personal identity.
 
-Also return `fail` when the repository clearly supports local connections to Azure resources but provides no path that authenticates as the developer.
-
 ## Uncertain
 
 Return `uncertain` when the repository appears to connect to Azure resources but the local authentication path cannot be established, or when the evidence conflicts. Do not infer compliance from an Azure Identity package dependency or a credential class name alone; trace the credential used by the locally configured Azure client.
