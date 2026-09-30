@@ -74,6 +74,7 @@ The current direct rules examine whether:
 
 - `.github/CODEOWNERS` exists on `main`;
 - `.github/dependabot.yml` exists on `main`;
+- `github/pull_request_template.md` exists on `main`;
 - a required deployment workflow exists on `main`;
 - the `main` branch is protected from deletion;
 - Dependabot reports no open Critical vulnerabilities; and

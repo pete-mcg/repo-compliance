@@ -30,6 +30,9 @@ from repo_compliance.rules.deterministic.no_critical_dependabot_alerts import (
 from repo_compliance.rules.deterministic.no_key_based_authentication import (
     RULE as NO_KEY_BASED_AUTHENTICATION,
 )
+from repo_compliance.rules.deterministic.pull_request_template_present import (
+    RULE as PULL_REQUEST_TEMPLATE_PRESENT,
+)
 
 RULES = (
     ARTEFACT_GENERATION_MANUAL_ONLY,
@@ -42,5 +45,6 @@ RULES = (
     MAIN_BRANCH_DELETION_PROTECTED,
     NO_CRITICAL_DEPENDABOT_ALERTS,
     NO_KEY_BASED_AUTHENTICATION,
+    PULL_REQUEST_TEMPLATE_PRESENT,
 )
 RULE_IDS = frozenset(rule.id for rule in RULES)
