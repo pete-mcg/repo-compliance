@@ -6,6 +6,9 @@ from repo_compliance.rules.agentic.artefact_generation_manual_only import (
 from repo_compliance.rules.agentic.ci_workflow_targeting_development import (
     RULE as CI_WORKFLOW_ON_PULL_REQUESTS,
 )
+from repo_compliance.rules.agentic.container_artefact_naming_convention import (
+    RULE as CONTAINER_ARTEFACT_NAMING_CONVENTION,
+)
 from repo_compliance.rules.agentic.frontend_build_identifier_visible import (
     RULE as FRONTEND_BUILD_IDENTIFIER_VISIBLE,
 )
@@ -49,6 +52,7 @@ from repo_compliance.rules.deterministic.pull_request_template_present import (
 RULES = (
     ARTEFACT_GENERATION_MANUAL_ONLY,
     CI_WORKFLOW_ON_PULL_REQUESTS,
+    CONTAINER_ARTEFACT_NAMING_CONVENTION,
     FRONTEND_BUILD_IDENTIFIER_VISIBLE,
     HEALTHZ_ENDPOINT_PRESENT,
     LOCAL_AZURE_AUTHENTICATION_USES_DEVELOPER_IDENTITY,
