@@ -61,23 +61,19 @@ Every repository is checked against the enabled rules in registry order. A repos
 
 Some rules are direct checks, such as checking for `.github/CODEOWNERS` or asking GitHub about branch protection. Other rules need to interpret source code or a workflow. Those are agentic rules.
 
-Current agentic rules examine whether:
+Agentic rules include for example, whether:
 
 - CI runs meaningful checks for pull requests to `development`;
 - GitHub Actions artefacts are generated only from manually triggered workflows;
 - a frontend displays a build, version, or commit identifier;
-- local use of Azure resources authenticates as the developer rather than with a shared key or non-personal identity; and
 - source code and workflows use `main` and `development` instead of the branch names `master` and `dev`.
 
 Each agentic rule has its own short Markdown instruction file beside its Python rule file. For example, the CI rule asks whether meaningful CI runs for every pull request to `development`; the other instruction files describe build identifiers, manual artefact generation, local Azure authentication, and standard branch names.
 
-The current direct rules examine whether:
+Direct rules include for example:
 
 - `.github/CODEOWNERS` exists on `main`;
 - `.github/dependabot.yml` exists on `main`;
-- `github/pull_request_template.md` exists on `main`;
-- a required deployment workflow exists on `main`;
-- the `main` branch is protected from deletion;
 - Dependabot reports no open Critical vulnerabilities; and
 - tracked source does not use key-based authentication markers.
 

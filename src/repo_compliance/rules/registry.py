@@ -15,6 +15,9 @@ from repo_compliance.rules.agentic.local_azure_authentication_uses_developer_ide
 from repo_compliance.rules.agentic.no_prohibited_tooling import (
     RULE as NO_PROHIBITED_TOOLING,
 )
+from repo_compliance.rules.agentic.project_documentation_present import (
+    RULE as PROJECT_DOCUMENTATION_PRESENT,
+)
 from repo_compliance.rules.agentic.source_uses_standard_branch_names import (
     RULE as SOURCE_USES_STANDARD_BRANCH_NAMES,
 )
@@ -46,6 +49,7 @@ RULES = (
     FRONTEND_BUILD_IDENTIFIER_VISIBLE,
     LOCAL_AZURE_AUTHENTICATION_USES_DEVELOPER_IDENTITY,
     NO_PROHIBITED_TOOLING,
+    PROJECT_DOCUMENTATION_PRESENT,
     SOURCE_USES_STANDARD_BRANCH_NAMES,
     CODEOWNERS_PRESENT,
     DEPENDABOT_PRESENT,
