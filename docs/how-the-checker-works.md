@@ -73,6 +73,7 @@ Each agentic rule has its own short Markdown instruction file beside its Python 
 The current direct rules examine whether:
 
 - `.github/CODEOWNERS` exists on `main`;
+- `.github/dependabot.yml` exists on `main`;
 - a required deployment workflow exists on `main`;
 - the `main` branch is protected from deletion;
 - Dependabot reports no open Critical vulnerabilities; and

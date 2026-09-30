@@ -15,6 +15,9 @@ from repo_compliance.rules.agentic.local_azure_authentication_uses_developer_ide
 from repo_compliance.rules.deterministic.codeowners_present import (
     RULE as CODEOWNERS_PRESENT,
 )
+from repo_compliance.rules.deterministic.dependabot_present import (
+    RULE as DEPENDABOT_PRESENT,
+)
 from repo_compliance.rules.deterministic.deploy_workflow_present import (
     RULE as DEPLOY_WORKFLOW_PRESENT,
 )
@@ -34,6 +37,7 @@ RULES = (
     FRONTEND_BUILD_IDENTIFIER_VISIBLE,
     LOCAL_AZURE_AUTHENTICATION_USES_DEVELOPER_IDENTITY,
     CODEOWNERS_PRESENT,
+    DEPENDABOT_PRESENT,
     DEPLOY_WORKFLOW_PRESENT,
     MAIN_BRANCH_DELETION_PROTECTED,
     NO_CRITICAL_DEPENDABOT_ALERTS,
