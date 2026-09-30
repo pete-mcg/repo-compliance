@@ -10,7 +10,8 @@
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": true,
-      // Temporary workaround for debugpy corrupting StrEnum construction while stepping.
+      // Disable return value display to work around a debugpy enum bug while stepping.
+      // Revisit when debugpy fixes the bug.
       "showReturnValue": false
     }
   ]

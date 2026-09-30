@@ -9,13 +9,13 @@ flowchart TD
     repositories[config/repositories.yml] --> app
     registry[rules/registry.py] --> app
     app --> runner[runner.py<br/>For each repository:<br/>skip exempt rules,<br/>check GitHub access,<br/>download main ZIP if needed]
-    runner --> deterministic[Deterministic rules<br/>GitHub API / ZIP]
+    runner --> deterministic[Deterministic rules<br/>GitHub REST API / ZIP]
     runner --> agentic[Agentic rules<br/>Agent Framework<br/>Azure OpenAI +<br/>Serena in Docker]
     deterministic --> results[Rule results]
     agentic --> results
     results --> report[report.py]
-    report --> write[app.py writes compliance-report.md]
-    write --> actions[Actions: summary + report artifact]
+    report --> write[compliance-report.md]
+    write --> actions[GitHub Actions: summary + report artifact]
 ```
 
 - Repositories run in configuration order; rules run in registry order.

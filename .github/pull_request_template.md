@@ -1,7 +1,5 @@
 <!--
 The PR title must follow Conventional Commits.
-Re-usable titles:
-dev -> main: chore(release): merge dev into main for release.
 -->
 
 ### Motivation
@@ -29,7 +27,7 @@ Before submitting this PR, please make sure:
 -->
 
 - [ ] My PR is small, focused and fulfils a single purpose. Greater than 400 line changes are **by exception**.
-- [ ] CI passes locally (`task ci`).
+- [ ] CI passes locally (`task ci:full`).
 - [ ] I have run the tool locally and interrogated the outputs, and not just relied on automated quality checks.
 - [ ] I have updated relevant documentation.
 - [ ] Where AI has been used, I have reviewed the code produced and can defend it.

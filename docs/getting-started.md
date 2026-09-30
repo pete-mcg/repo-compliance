@@ -2,14 +2,14 @@
 
 This tool may be run locally on your developer machine or via GitHub Actions.
 
-## Run Locally: First-time setup
+## Run Locally
 
 ### 1. Install pre-requisite tools
 
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) to manage Python
 - [Task](https://taskfile.dev/docs/installation) to run project commands
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows) to sign in
-- [Rancher Desktop](https://docs.rancherdesktop.io/getting-started/installation/#windows) to run `docker` commands used by the checker
+- [Rancher Desktop](https://docs.rancherdesktop.io/getting-started/installation/#windows) to run `docker` commands
 
 ### 2. Install Python dependencies
 
@@ -37,7 +37,15 @@ repositories:
 
 #### 4.1. Create a GitHub Personal Access Token
 
-**Option 1: Fine-grained token**
+**Option 1: Tokens (classic)**
+
+Select the following scopes:
+
+- repo (repo:status, repo_deployment, public_repo, repo:invite, security_events)
+- read:packages
+
+**Option 2: Fine-grained token**
+
 For the monitored repositories, grant read access to:
 
 - Metadata
@@ -45,17 +53,9 @@ For the monitored repositories, grant read access to:
 - Administration
 - Dependabot alerts
 
-**Option 2: Tokens (classic)**
-Select the following scopes:
-
-- repo (repo:status, repo_deployment, public_repo, repo:invite, security_events)
-- read:packages
-
 #### 4.2. Create a `.env`
 
-```shell
-Copy-Item .env.example .env
-```
+Copy `.env.example` into a `.env`. Configure:
 
 | Setting                    | Value                                                                       |
 | -------------------------- | --------------------------------------------------------------------------- |
@@ -64,9 +64,9 @@ Copy-Item .env.example .env
 | `AZURE_OPENAI_DEPLOYMENT`  | Your Azure model deployment name.                                           |
 | `AZURE_OPENAI_API_VERSION` | The API version supported by your deployment, such as `YYYY-MM-DD-preview`. |
 
-Note that all settings are required at startup, even if AI checks are skipped.
+Note that all settings are required at startup, even if agentic rules are not used.
 
-### 4. Sign in to Azure
+### 5. Sign in to Azure
 
 ```shell
 az login
@@ -74,23 +74,19 @@ az login
 
 Repeat `az login` when Azure requires a fresh sign-in or you switch accounts.
 
-### 5. Build the Serena image
+### 6. Build the MCP image
 
-Serena provides the AI rule's file-reading and symbol tools. The image includes Pyrefly (`python_pyrefly`) for Python and the TypeScript language server.
-
-1. Ensure Rancher Desktop is running.
-2. Run the following command:
+With Rancher Desktop running, run following command from the repository root:
 
 ```shell
 docker build --tag repo-compliance-serena mcp
 ```
 
-Run this from the repository root. Repeat the build if the local image is removed or `mcp/Dockerfile` changes.
+Repeat the build if the local image is removed or `mcp/Dockerfile` changes.
 
-### 6. Run the checker
+### 7. Run the checker
 
-1. Ensure Rancher Desktop is running.
-2. Run the following command:
+With Rancher Desktop running, run the following command from the repository root:
 
 ```shell
 uv run repo-compliance
@@ -103,8 +99,12 @@ When finished, output is `compliance-report.md` in the repository root.
 Set this up once. In the repository's **Settings > Secrets and variables > Actions**, add:
 
 - Secret: `REPO_COMPLIANCE_TOKEN` (the GitHub token).
-- Variables: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and the three `AZURE_OPENAI_*` settings above.
+- Variables:
+  - `AZURE_CLIENT_ID`
+  - `AZURE_TENANT_ID`
+  - `AZURE_SUBSCRIPTION_ID`
+  - `AZURE_OPENAI_ENDPOINT`
+  - `AZURE_OPENAI_DEPLOYMENT`
+  - `AZURE_OPENAI_API_VERSION`
 
-Configure [Azure Login federation](https://github.com/Azure/login#login-with-openid-connect-oidc-recommended) for the branch you will run. Give that Azure identity the same resource access as your local account.
-
-For each run, select **Actions > Repository compliance > Run workflow**. The [workflow](../.github/workflows/repository-compliance.yml) publishes the report in its summary and as the `repository-compliance-report` artifact. Scheduled runs are TBC.
+For each run, select **Actions > Repository compliance > Run workflow**. Scheduled runs are TBC.

@@ -6,21 +6,21 @@ All paths below are inside [src/repo_compliance/](../src/repo_compliance/).
 
 A layer is a group of responsibilities. It can be one file; it does not need its own folder.
 
-| Location                                 | Responsibility                                                           |
-| ---------------------------------------- | ------------------------------------------------------------------------ |
-| `app.py`, `__main__.py`                  | Start the command, connect the parts, and write the report.              |
-| `config.py`                              | Read and validate repositories and exemptions from YAML.                 |
-| `settings.py`                            | Load and validate environment and `.env` settings.                       |
-| `domain.py`                              | Define shared rule inputs, evaluations, results, and service interfaces. |
-| `runner.py`                              | Apply exemptions, check access, share source downloads, and run rules.   |
-| `report.py`                              | Turn completed results into Markdown.                                    |
-| `errors.py`                              | Define expected errors.                                                  |
-| `timing.py`                              | Define log function timings.                                             |
-| `infrastructure/github/`                 | Make GitHub requests and define shared response models.                  |
-| `infrastructure/source/`                 | Safely extract temporary source files and remove them afterwards.        |
-| `infrastructure/agentic/`                | Connect Azure and Serena, run AI checks, and validate replies.           |
-| `rules/registry.py`                      | List enabled rules in order.                                             |
-| `rules/deterministic/`, `rules/agentic/` | Decide whether each standard is met.                                     |
+| Location                                 | Responsibility                                                                          |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| `app.py`, `__main__.py`                  | Start the tool, connect the parts, and write the report.                                |
+| `config.py`                              | Read and validate the `config/repositories.yml`.                                        |
+| `settings.py`                            | Load and validate environment / `.env` settings.                                        |
+| `domain.py`                              | Define shared rule inputs, evaluations, results, and service interfaces.                |
+| `runner.py`                              | Runs the rules (apply rule exemptions, check repository access, share source downloads) |
+| `report.py`                              | Turn completed results into Markdown.                                                   |
+| `errors.py`                              | Define expected errors.                                                                 |
+| `timing.py`                              | Define timing helper.                                                                   |
+| `infrastructure/github/`                 | Make GitHub requests and define shared response models.                                 |
+| `infrastructure/source/`                 | Safely extract temporary source files and remove them afterwards.                       |
+| `infrastructure/agentic/`                | Connect Azure and MCP Server, run AI checks, and validate replies.                      |
+| `rules/registry.py`                      | List enabled rules in order.                                                            |
+| `rules/deterministic/`, `rules/agentic/` | Contains each rule. Decides whether each rule is met.                                   |
 
 ## Dependency direction
 

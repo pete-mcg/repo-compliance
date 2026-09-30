@@ -7,6 +7,10 @@
 - Keep changes focused. Update the relevant docs and review your own diff.
 - Follow the [package boundaries](package-layout.md) and [rule structure](rules.md).
 
+## Branch Strategy
+
+This repository uses **GitHub Flow**. "Squash and Merge" into main branch; only "Merge" by expection.
+
 ## Tests
 
 - Mirror `src/repo_compliance/` beneath `tests/unit/`, and prefix test filenames with `test_`:

@@ -1,8 +1,10 @@
 # Repository compliance
 
-Our live-service team maintains many applications across separate GitHub repositories. As we agree on common engineering and security standards, we need a way to see which repositories meet them and which need attention. An example is requiring `.github/CODEOWNERS` on the `main` branch.
+Our live-service team maintains many applications across separate GitHub repositories. As we agree on common engineering and security standards, we need a way to quickly determine which repositories meet them and which need attention.
 
-This project checks a configured list of repositories against those standards and produces one Markdown report. It reports findings; it does not change the repositories. The same Python command runs locally or in GitHub Actions. Python owns the configuration, rule logic, and report; Actions supplies credentials, runs the command, and publishes the report. The workflow can be triggered manually (a schedule is planned but is not enabled yet).
+This project checks a configured list of repositories against those standards and produces one Markdown report. It reports findings; it does not change the repositories.
+
+The same Python command runs locally or in GitHub Actions. Python owns the configuration, rule logic, and report; Actions supplies credentials, runs the command, and publishes the report. The workflow can be triggered manually (a schedule is planned but is not enabled yet).
 
 ## Where to make changes
 
@@ -13,7 +15,7 @@ Checks may have different levels of certainty. Direct checks use GitHub data or 
 
 ## Where data is sent
 
-It's important to limit where data is sent in this repository. This checker intentionally **only** sends data to GitHub and the configured Azure OpenAI deployment; no other external services are permitted.
+This checker intentionally **only** sends data to GitHub and the configured Azure OpenAI deployment; no other external services are permitted.
 
 - **GitHub** receives authenticated requests for the configured repositories. When the checker runs in GitHub Actions, GitHub also receives the generated report as the workflow summary and an artifact.
 - **Azure OpenAI** receives the prompt and source content inspected for an AI-assisted rule.

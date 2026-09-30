@@ -1,7 +1,7 @@
 name: ✅ Repository compliance
 
 on:
-  # Schedule TBD
+  # Schedule (if any) TBD
   # schedule:
   #   - cron: "0 6 * * 1"
   workflow_dispatch:
@@ -48,7 +48,7 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: 🐳 Build the local Serena image
+      - name: 🐳 Build the local MCP image
         run: docker build --tag repo-compliance-serena mcp
 
       - name: ✅ Run compliance checks
