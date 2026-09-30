@@ -3,7 +3,7 @@
 from repo_compliance.rules.agentic.artefact_generation_manual_only import (
     RULE as ARTEFACT_GENERATION_MANUAL_ONLY,
 )
-from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import (
+from repo_compliance.rules.agentic.ci_workflow_targeting_development import (
     RULE as CI_WORKFLOW_ON_PULL_REQUESTS,
 )
 from repo_compliance.rules.agentic.frontend_build_identifier_visible import (

@@ -14,8 +14,8 @@ from repo_compliance.rules.agentic.helpers import (
 
 def test_rule_prompt_filename() -> None:
     assert (
-        rule_prompt_filename("ci-workflow-on-pull-requests")
-        == "ci_workflow_on_pull_requests.md"
+        rule_prompt_filename("ci-workflow-targeting-development")
+        == "ci_workflow_targeting_development.md"
     )
 
 
@@ -24,7 +24,7 @@ def test_load_rule_prompt_outside_working_directory(
 ) -> None:
     monkeypatch.chdir(tmp_path)
 
-    prompt = load_rule_prompt("ci_workflow_on_pull_requests.md")
+    prompt = load_rule_prompt("ci_workflow_targeting_development.md")
 
     assert prompt.strip()
 
@@ -36,11 +36,11 @@ def test_evaluate_agentic_rule(tmp_path: Path) -> None:
     evaluator = FakeAgentEvaluator(evaluation)
     context = RuleContext("example/service", FakeGitHub(), snapshot, evaluator)
 
-    result = evaluate_agentic_rule(context, "ci_workflow_on_pull_requests.md")
+    result = evaluate_agentic_rule(context, "ci_workflow_targeting_development.md")
 
     assert result == evaluation
     assert evaluator.calls == [
-        (snapshot, load_rule_prompt("ci_workflow_on_pull_requests.md"))
+        (snapshot, load_rule_prompt("ci_workflow_targeting_development.md"))
     ]
 
 
@@ -48,11 +48,11 @@ def test_missing_source_snapshot_is_clear() -> None:
     context = RuleContext("example/service", FakeGitHub())
 
     with pytest.raises(RuntimeError, match="requires a source snapshot"):
-        evaluate_agentic_rule(context, "ci_workflow_on_pull_requests.md")
+        evaluate_agentic_rule(context, "ci_workflow_targeting_development.md")
 
 
 def test_missing_agent_evaluator_is_clear(tmp_path: Path) -> None:
     context = RuleContext("example/service", FakeGitHub(), tmp_path / "source.zip")
 
     with pytest.raises(AgentError, match="No agent evaluator"):
-        evaluate_agentic_rule(context, "ci_workflow_on_pull_requests.md")
+        evaluate_agentic_rule(context, "ci_workflow_targeting_development.md")

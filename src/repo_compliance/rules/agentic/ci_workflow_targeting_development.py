@@ -1,4 +1,4 @@
-"""Judge whether GitHub Actions declares CI for pull requests to main."""
+"""Judge whether GitHub Actions declares CI for pull requests and pushes to development."""
 
 from repo_compliance.domain import (
     Confidence,
@@ -12,7 +12,7 @@ from repo_compliance.rules.agentic.helpers import (
     rule_prompt_filename,
 )
 
-RULE_ID = "ci-workflow-on-pull-requests"
+RULE_ID = "ci-workflow-targeting-development"
 PROMPT_FILENAME = rule_prompt_filename(RULE_ID)
 
 
@@ -23,11 +23,11 @@ def check(context: RuleContext) -> RuleEvaluation:
 
 RULE = RuleDefinition(
     id=RULE_ID,
-    title="CI runs on pull requests to development",
-    description="A GitHub Actions CI workflow must run for every pull request to development.",
+    title="CI runs on pull requests and pushes to development",
+    description="A GitHub Actions CI workflow must run for every pull request and push to development.",
     category=RuleCategory.AGENTIC,
     confidence=Confidence.MEDIUM,
-    documentation_url="https://confluence.example.com/display/COMPLIANCE/ci+workflow+on+pull+requests",
+    documentation_url="https://confluence.example.com/display/COMPLIANCE/ci+workflow+targeting+development",
     check=check,
     requires_source_snapshot=True,
 )

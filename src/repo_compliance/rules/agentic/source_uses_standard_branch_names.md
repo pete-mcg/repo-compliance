@@ -1,6 +1,6 @@
 # Rule
 
-Source code must use `main` instead of `master` and `development` instead of `dev` when referring to Git branches. Inspect application code, GitHub Actions workflows, scripts, and configuration.
+Source code must use `main` instead of `master` and `development` instead of `dev` when referring to Git branches. 
 
 ## Pass
 

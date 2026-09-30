@@ -6,7 +6,9 @@ import pytest
 from repo_compliance import app
 from repo_compliance.app import main
 from repo_compliance.errors import CliError
-from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import RULE as CI_RULE
+from repo_compliance.rules.agentic.ci_workflow_targeting_development import (
+    RULE as CI_RULE,
+)
 
 from .fakes import FakeAgentEvaluator, FakeGitHub
 

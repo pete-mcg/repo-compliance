@@ -10,7 +10,7 @@ from repo_compliance.domain import (
     RuleContext,
     RuleEvaluation,
 )
-from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import (
+from repo_compliance.rules.agentic.ci_workflow_targeting_development import (
     PROMPT_FILENAME,
     RULE,
     check,

@@ -1,6 +1,12 @@
 # Rule
 
-Source code and documentation must not use or refer to Docker Desktop, Anaconda, Miniconda, or Postman. Inspect repository source, comments, scripts, configuration, workflows, and documentation, including tool-specific files and links.
+Source code and documentation must not use or refer to:
+- Docker Desktop*
+- Anaconda
+- Miniconda
+- Postman
+
+* Docker via Rancher Desktop and `docker-ce` in WSL are approved.
 
 ## Pass
 

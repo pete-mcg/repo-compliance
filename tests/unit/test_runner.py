@@ -14,7 +14,9 @@ from repo_compliance.domain import (
     RuleEvaluation,
 )
 from repo_compliance.errors import AgentError, GitHubError, SourceSnapshotError
-from repo_compliance.rules.agentic.ci_workflow_on_pull_requests import RULE as CI_RULE
+from repo_compliance.rules.agentic.ci_workflow_targeting_development import (
+    RULE as CI_RULE,
+)
 from repo_compliance.runner import run_all_compliance_checks
 
 from .fakes import FakeAgentEvaluator, FakeGitHub
