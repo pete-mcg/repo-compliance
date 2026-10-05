@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Project Name logo" width="260" src="docs/assets/logo.png">
+  <img alt="Repository logo" width="260" src="docs/assets/logo.png">
 </p>
 
 <h1 align="center">Repository Compliance Checker</h1>
