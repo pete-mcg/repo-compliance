@@ -9,7 +9,7 @@
 
 ## Branch Strategy
 
-This repository uses **GitHub Flow**. "Squash and Merge" into main branch; only "Merge" by expection.
+This repository uses **GitHub Flow**. "Squash and Merge" into main branch; only "Merge" by exception.
 
 ## Tests
 
