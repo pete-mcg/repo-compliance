@@ -1,4 +1,4 @@
-name: 🚀 Publish release
+name: 🚀 Release
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - name: 🏷️ Create release PR or GitHub release
+      - name: 🏷️ Run Release Please # Creates release PR or GitHub release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
