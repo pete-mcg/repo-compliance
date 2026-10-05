@@ -9,7 +9,7 @@ from repo_compliance.domain import (
 )
 
 RULE_ID = "pull-request-template-present"
-REQUIRED_PATH = "github/pull_request_template.md"
+REQUIRED_PATH = ".github/pull_request_template.md"
 
 
 def check(context: RuleContext) -> RuleEvaluation:

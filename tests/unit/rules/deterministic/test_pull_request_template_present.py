@@ -14,9 +14,9 @@ REPOSITORY = "example/service"
 @pytest.mark.parametrize(
     ("files", "passed"),
     [
-        ({"github/pull_request_template.md"}, True),
+        ({".github/pull_request_template.md"}, True),
         (set(), False),
-        ({"pull_request_template.md", ".github/pull_request_template.md"}, False),
+        ({"github/pull_request_template.md", "pull_request_template.md"}, False),
     ],
 )
 def test_checks_exact_file_on_main(files: set[str], passed: bool) -> None:
@@ -25,5 +25,5 @@ def test_checks_exact_file_on_main(files: set[str], passed: bool) -> None:
     result = check(RuleContext(REPOSITORY, github))
 
     assert result.passed is passed
-    assert github.file_calls == [(REPOSITORY, "github/pull_request_template.md")]
+    assert github.file_calls == [(REPOSITORY, ".github/pull_request_template.md")]
     assert RULE in RULES
