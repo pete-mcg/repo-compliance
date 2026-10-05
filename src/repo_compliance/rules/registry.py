@@ -42,6 +42,9 @@ from repo_compliance.rules.deterministic.deploy_workflow_present import (
 from repo_compliance.rules.deterministic.main_branch_deletion_protected import (
     RULE as MAIN_BRANCH_DELETION_PROTECTED,
 )
+from repo_compliance.rules.deterministic.main_latest_commit_checks_passed import (
+    RULE as MAIN_LATEST_COMMIT_CHECKS_PASSED,
+)
 from repo_compliance.rules.deterministic.no_critical_dependabot_alerts import (
     RULE as NO_CRITICAL_DEPENDABOT_ALERTS,
 )
@@ -67,6 +70,7 @@ RULES = (
     DEPENDABOT_PRESENT,
     DEPLOY_WORKFLOW_PRESENT,
     MAIN_BRANCH_DELETION_PROTECTED,
+    MAIN_LATEST_COMMIT_CHECKS_PASSED,
     NO_CRITICAL_DEPENDABOT_ALERTS,
     NO_KEY_BASED_AUTHENTICATION,
     PULL_REQUEST_TEMPLATE_PRESENT,

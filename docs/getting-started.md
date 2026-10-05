@@ -50,6 +50,8 @@ For the monitored repositories, grant read access to:
 
 - Metadata
 - Contents
+- Checks
+- Commit statuses
 - Administration
 - Dependabot alerts
 
