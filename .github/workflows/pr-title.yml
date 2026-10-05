@@ -1,0 +1,40 @@
+# This workflow deliberately keeps commitlint config and installation self-contained,
+# rather than adding a package.json & commitlint.config.cjs to the repository root.
+
+name: 🏷️ PR Title
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    name: Validate PR title
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🟩 Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: 🏷️ Lint PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          cat > commitlint.config.cjs <<'EOF'
+          module.exports = {
+            extends: ["@commitlint/config-conventional"],
+            rules: {
+              "header-max-length": [2, "always", 120],
+            },
+          };
+          EOF
+
+          printf '%s\n' "$PR_TITLE" |
+            npx --yes \
+              -p @commitlint/cli@21.2.0 \
+              -p @commitlint/config-conventional@21.2.0 \
+              commitlint --config commitlint.config.cjs
