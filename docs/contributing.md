@@ -11,6 +11,10 @@
 
 This repository uses **GitHub Flow**. "Squash and Merge" into main branch; only "Merge" by exception.
 
+## Releases
+
+`Release Please` runs on pushes to `main` and can also be triggered manually. It uses Conventional Commits to maintain a release pull request. Use a Conventional Commit PR title and retain it as the squash commit message.
+
 ## Tests
 
 - Mirror `src/repo_compliance/` beneath `tests/unit/`, and prefix test filenames with `test_`:
