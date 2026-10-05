@@ -30,6 +30,9 @@ from repo_compliance.rules.agentic.source_uses_standard_branch_names import (
 from repo_compliance.rules.deterministic.codeowners_present import (
     RULE as CODEOWNERS_PRESENT,
 )
+from repo_compliance.rules.deterministic.default_branch_is_development import (
+    RULE as DEFAULT_BRANCH_IS_DEVELOPMENT,
+)
 from repo_compliance.rules.deterministic.dependabot_present import (
     RULE as DEPENDABOT_PRESENT,
 )
@@ -60,6 +63,7 @@ RULES = (
     PROJECT_DOCUMENTATION_PRESENT,
     SOURCE_USES_STANDARD_BRANCH_NAMES,
     CODEOWNERS_PRESENT,
+    DEFAULT_BRANCH_IS_DEVELOPMENT,
     DEPENDABOT_PRESENT,
     DEPLOY_WORKFLOW_PRESENT,
     MAIN_BRANCH_DELETION_PROTECTED,
