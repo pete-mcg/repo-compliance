@@ -64,7 +64,7 @@ class AgentVerdict(StrEnum):
 
 
 class AgentEvidence(BaseModel):
-    """Validated location metadata, without source excerpts."""
+    """Evidence cited by the AI Agent to supports its judgement."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -78,19 +78,36 @@ class AgentEvidence(BaseModel):
         examples=[5, 12, 24],
     )
     description: str = Field(
-        description="One short sentence explaining the significance of the cited line. No fluff or waffle; straight to the point.",
-        examples=["This workflow runs on pull requests.", "This task runs the tests."],
+        description=(
+            "One short sentence explaining the significance of the cited line. "
+            "No fluff or waffle; straight to the point. "
+            "Never include secret values or long source excerpts."
+        )
     )
 
 
 class AgentStructuredResponse(BaseModel):
-    """Structured response requested from the Azure deployment."""
+    """Structured response requested from the AI Agent."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    verdict: AgentVerdict = Field(examples=["pass", "fail", "uncertain"])
+    verdict: AgentVerdict = Field(
+        description=(
+            "Whether the repository satisfies or fails the rule, or cannot be assessed confidently. "
+            "Use pass or fail only when supported by evidence. "
+            "Use uncertain when the rule cannot be assessed confidently. "
+            "A pass occurs if, and only if, the rule is satisfied in its entirety. "
+            "Always assume uncertain until evidence shows otherwise."
+        ),
+        examples=["pass", "fail", "uncertain"],
+    )
     explanation: str = Field(
-        description="Succinct, efficient explanation. No fluff or waffle; straight to the point. One paragraph."
+        description=(
+            "Succinct, efficient explanation. "
+            "No fluff or waffle; straight to the point. "
+            "One paragraph. "
+            "Never include secret values or long source excerpts."
+        )
     )
     evidence: list[AgentEvidence]
 

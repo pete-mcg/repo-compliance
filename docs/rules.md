@@ -25,7 +25,11 @@ Agent rules require a prompt markdown file. Keep the prompt beside the Python fi
 # Rule
 
 [insert clear desription]
+```
 
+The following may be optionally appended, where appropriate. Do not add if it is not appropriate; it adds unnecessary tokens.
+
+```md
 ## Pass
 
 [ennumerate clear criteria]
