@@ -22,36 +22,17 @@ A layer is a group of responsibilities. It can be one file; it does not need its
 | `rules/registry.py`                      | List enabled rules in order.                                                            |
 | `rules/deterministic/`, `rules/agentic/` | Contains each rule. Decides whether each rule is met.                                   |
 
-## Dependency direction
+## Boundaries to preserve
 
-An arrow means "may import from". This list is complete: **no arrow means the import is forbidden**, even within the same folder. Permission goes only in the shown direction; following several arrows does not permit a direct import.
+| Part | Boundary |
+| --- | --- |
+| Application (`app.py`) | Connects the parts. Leaves compliance decisions to rules, running checks to the runner, and formatting results to reporting. |
+| Runner (`runner.py`) | Must not import individual rules, the rule registry or service code. Receives rules and services from `app.py`. |
+| Individual rules (`rules/deterministic/`, `rules/agentic/`) | Must not import other rules, the rule registry or service code. Use services supplied through `RuleContext`. |
+| Infrastructure (`infrastructure/`) | Must not import rules, the runner, reporting or `app.py`. Provides services without deciding which rules to run. |
+| Reporting (`report.py`) | Must not import rules, the runner or service code. Formats supplied results without running checks or contacting services. |
+| Shared types and utilities (`domain.py`, `errors.py`, `timing.py` and GitHub response models) | Must not import application wiring, rules or service code. Remain independent of the parts that use them. |
 
-Names are inside `repo_compliance`.
-
-```text
-__main__ -> app
-__init__ -> domain
-app -> config, settings, runner, report, errors, rules.registry
-app -> infrastructure.github.client, infrastructure.agentic.agent_framework
-rules.registry -> individual rules
-runner -> config, domain, errors, timing
-report -> config, domain
-individual rules -> domain, errors, infrastructure.github.models
-rules.agentic rule modules -> rules.agentic.helpers
-rules.agentic.helpers -> domain, errors
-infrastructure.github.client -> errors, infrastructure.github.models
-infrastructure.agentic.agent_framework -> domain, errors, settings
-infrastructure.agentic.agent_framework -> infrastructure.source.source_snapshot
-infrastructure.source.source_snapshot -> errors
-config, settings -> errors
-domain, errors, timing, infrastructure.github.models -> (no internal imports)
-```
-
-Note:
-
-- `individual rules` excludes helpers and the registry.
-- This list covers all internal imports, including those inside functions or used only for type checks.
-- `domain.py`, `errors.py`, and `timing.py` use only Python's standard library.
-- The application passes rules and services to the runner. Rules use services through `RuleContext`. Neither imports service implementations. Rules may import shared GitHub models because these describe data and make no service calls.
-
-Import restrictions are checked during review, not automatically. Review and update this list before adding a new dependency.
+- Rules may share helpers and import GitHub response models, which describe data without contacting GitHub.
+- `domain.py`, `errors.py` and `timing.py` use only Python's standard library.
+- Avoid circular dependencies, where imports form a loop.
