@@ -4,8 +4,8 @@ Both local and GitHub Actions runs follow the same path:
 
 ```mermaid
 flowchart TD
-    command["Command-line command / GitHub Actions (manual)"] --> app[app.py]
-    environment[.env / environment] --> app
+    command["Local CLI or GitHub Actions"] --> app[app.py]
+    environment[.env locally or environment variables in Actions] --> app
     repositories[config/repositories.yml] --> app
     registry[rules/registry.py] --> app
     app --> runner[runner.py<br/>For each repository:<br/>skip exempt rules,<br/>check GitHub access,<br/>download main ZIP if needed]
@@ -15,7 +15,7 @@ flowchart TD
     agentic --> results
     results --> report[report.py]
     report --> write[compliance-report.md]
-    write --> actions[GitHub Actions: summary + report artifact]
+    write --> actions[GitHub Actions: report artifact]
 ```
 
 - Repositories run in configuration order; rules run in registry order.
