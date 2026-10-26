@@ -1,7 +1,7 @@
 # Install only tooling, without any repository source in the build.
 # Paths are configured in agent_framework.py, so runtime needs no downloads.
 
-FROM ghcr.io/oraios/serena:1.7.0@sha256:6c9459e4246a39c9deaa4f23fb05a526ac6e237b24c8e84a927a098fa1ab6730
+FROM ghcr.io/oraios/serena:2.1.0@sha256:eb52535ff1c292add25c2b2d37b2db4e2e20c60cda7d8e25f9d11490ce0e1bdf
 
 RUN uv venv /opt/pyrefly
 RUN uv pip install \
